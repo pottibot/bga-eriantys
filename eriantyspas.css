@@ -63,7 +63,7 @@
 }
 
 .point {
-    --size: 15px;
+    --size: 10px;
 
     width: var(--size);
     height: var(--size);
@@ -71,6 +71,8 @@
 
     /* top: calc(50% - (var(--size) / 2));
     left: calc(50% - (var(--size) / 2)); */
+
+    transform: translate(-50%,-50%);
 
     position: absolute;
 
@@ -123,9 +125,9 @@
     border-radius: 100%;
 
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%,-50%) scale(2);
+    /* left: 50%;
+    top: 50%; */
+    transform: translate(-50%,-50%) scale(1);
   }
 
 

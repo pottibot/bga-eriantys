@@ -14,7 +14,11 @@ CREATE TABLE IF NOT EXISTS `island` (
     `y` FLOAT(24) NOT NULL,
     `group` TINYINT UNSIGNED,
     `angle` INT UNSIGNED,
-    PRIMARY KEY (`id`)
+    PRIMARY KEY (`id`),
+    UNIQUE (`pos`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- attach side depends on po
+-- note:
+-- id used to identify island graphic art
+-- pos used to identify island pos in clockwise order
+-- attach side depends on pos

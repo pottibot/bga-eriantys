@@ -26,7 +26,7 @@ class eriantyspas extends Table
         parent::__construct();
         
         self::initGameStateLabels( array( 
-            //    "my_first_global_variable" => 10,
+            "next_available_group" => 10,
             //    "my_second_global_variable" => 11,
             //      ...
             //    "my_first_game_variant" => 100,
@@ -72,7 +72,7 @@ class eriantyspas extends Table
         /************ Start the game initialization *****/
 
         // Init global values with their initial values
-        //self::setGameStateInitialValue( 'my_first_global_variable', 0 );
+        self::setGameStateInitialValue('next_available_group', 0);
         
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
@@ -135,7 +135,12 @@ class eriantyspas extends Table
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Utility functions
-////////////    
+////////////
+
+    function reset() {
+        self::dbQuery("DELETE FROM island");
+        self::setupIslands();
+    }
 
     function setupIslands() {
 
@@ -151,26 +156,226 @@ class eriantyspas extends Table
         $idPool = range(1,12);
         shuffle($idPool);
 
-        $sql = "INSERT INTO island (pos, id, x, y) VALUES ";
+        $sql = "INSERT INTO island (pos, id, x, y, `group`) VALUES ";
         $values = array();
         for ($i=0; $i < 12; $i++) { 
 
-            $pos = $i+1;
             $id = array_pop($idPool);
 
             $the = -$i*M_PI/6 + M_PI_2;
-            $ro = 100 * (($i%2 == 0)? (sqrt(3)/2) : 1);
+            $ro = 300 * (($i%2 == 0)? 1 : (sqrt(3)/2));
 
             ['x'=>$x, 'y'=>$y] = EriantysPoint::createPolarVector($ro,$the)->coordinates();
 
-            $values[] = "($pos,$id,$x,$y)";
+            $values[] = "($i,$id,$x,$y,$i)";
         }
 
         $sql .= implode($values,',');
         self::DbQuery($sql);
     }
 
+    // TODO
+    // weight translation point with all group centers
+    // implement group to group join
+    // add safety throws
+    // add anim
+    function groupNewIslandAndReposition($island, $group) {
 
+        // --- checks ---
+        if (!is_null(self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos = $island"))) throw new BgaVisibleSystemException(_("Island $island is already part of a group"));
+        if (self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos = $island") == $group) throw new BgaVisibleSystemException(_("Island $island is already in group $group"));
+
+        // insert island in group
+        self::dbQuery("UPDATE island SET `group` = $group WHERE pos = $island");
+
+        // if group is size 1 (just the island just set) do nothing
+        if (self::getUniqueValueFromDb("SELECT COUNT(`group`) FROM island WHERE `group` = $group") == 1) return; // first island to join group, do nothing
+
+        // determine if attach side left or right
+        // (consider pos number are circular, so 11 is next to 0)
+
+        // --- calc attach point and translation ---
+        $side = '';
+        $groupBorderIsland = null;
+
+        if (self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos =".($island-1 + 12) % 12) == $group) { // if pos at the left of island to join is of group
+            $side = 'left';
+            $groupBorderIsland = ($island-1 + 12) % 12;
+            
+        } else if (self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos =".($island+1 + 12) % 12) == $group) { // else if at the right of island to join is of group
+            $side = 'right';
+            $groupBorderIsland = ($island+1 + 12) % 12;
+
+        } else throw new BgaVisibleSystemException(_("Island $island is not next to group $group"));
+
+
+        $islandAttPoint = new EriantysPoint(...array_values(self::getObjectFromDb("SELECT x, y FROM island WHERE pos = $island")));
+        $islandAttPoint = $islandAttPoint->translatePolar(
+            50 * sin(M_PI/3),
+            self::getAttachAngle($side,$island)
+        );
+
+        $groupAttPoint = new EriantysPoint(...array_values(self::getObjectFromDb("SELECT x, y FROM island WHERE pos = $groupBorderIsland")));
+        $groupAttPoint = $groupAttPoint->translatePolar(
+            50 * sin(M_PI/3),
+            self::getAttachAngle(($side == 'left')?'right':'left',$groupBorderIsland)
+        );
+
+        $midPointDest = EriantysPoint::midpoint($islandAttPoint,$groupAttPoint);
+        // --- --- ---
+
+        // --- apply translation on new island and group ---
+
+        // translate attached island
+        ['x'=>$x, 'y'=>$y] =  self::getObjectFromDb("SELECT x, y FROM island WHERE pos = $island");
+        $islandNewPos = new EriantysPoint($x,$y);
+        $islandDisplacement = EriantysPoint::displacementVector($islandAttPoint,$midPointDest);
+
+        ['x'=>$x, 'y'=>$y] = $islandNewPos->translate($islandDisplacement->x(), $islandDisplacement->y())->coordinates();
+        self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos = $island");
+
+        // translate group
+        $groupDisplacement = EriantysPoint::displacementVector($groupAttPoint,$midPointDest);
+        foreach (self::getCollectionFromDb("SELECT pos, x, y FROM island WHERE `group` = $group AND pos != $island") as $pos => $coords) {
+            $componentNewPos = new EriantysPoint($coords['x'],$coords['y']);
+            
+            ['x'=>$x, 'y'=>$y] = $componentNewPos->translate($groupDisplacement->x(), $groupDisplacement->y())->coordinates();
+            self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos = $pos");
+        }
+        // --- --- ---
+
+        self::displayPoints([$islandAttPoint,$groupAttPoint,$midPointDest]);
+    }
+
+    // second version of join algo
+    // first group joins second
+    function joinGroups($g1id, $g2id) {
+
+        // --- checks ---
+
+        // check if g1 has at least 1 island
+        $g1 = self::getCollectionFromDb("SELECT pos, x, y, `group` FROM island WHERE `group` = $g1id");
+        if (empty($g1)) throw new BgaVisibleSystemException(_("Island group $g1id doesn't exist"));
+        // if group is single function behaviour will be different
+        $g1isIsland = false;
+        if (count($g1) == 1) $g1isIsland = true;
+
+        // check if g2 has at least 1 island
+        $g2 = self::getCollectionFromDb("SELECT pos, x, y, `group` FROM island WHERE `group` = $g2id");
+        if (empty($g2)) throw new BgaVisibleSystemException(_("Island group $g2id doesn't exist"));
+        // if group is single function behaviour will be different
+        $g2isIsland = false;
+        if (count($g2) == 1) $g2isIsland = true;
+
+        // check if g1 and g2 are next to each others
+        $g1Extr = self::getGroupExtremes($g1id);
+        $g2Extr = self::getGroupExtremes($g2id);
+
+        if (($g1Extr['right']+1 +12)%12 == $g2Extr['left']) {
+            // mem stuff for next phase
+            $g1Extr = $g1[$g1Extr['right']];
+            $g2Extr = $g2[$g2Extr['left']];
+
+            $g1AttachSide = 'right';
+            $g2AttachSide = 'left';
+
+        } else if (($g1Extr['left']-1 +12)%12 == $g2Extr['right']) {
+            $g1Extr = $g1[$g1Extr['left']];
+            $g2Extr = $g2[$g2Extr['right']];
+
+            $g1AttachSide = 'left';
+            $g2AttachSide = 'right';
+
+        } else throw new BgaVisibleSystemException(_("Island groups $g1id and $g2id are not next to each others"));
+
+        // --- calculate join translation ---
+        $g1AttachAngle = self::getAttachAngle($g1AttachSide,$g1Extr['pos']);
+        $g1AttachPoint = new EriantysPoint($g1Extr['x'],$g1Extr['y']);
+        $g1AttachPoint = $g1AttachPoint->translatePolar(50 * sin(M_PI/3), $g1AttachAngle);
+
+        $g2AttachAngle = self::getAttachAngle($g2AttachSide,$g2Extr['pos']);
+        $g2AttachPoint = new EriantysPoint($g2Extr['x'],$g2Extr['y']);
+        $g2AttachPoint = $g2AttachPoint->translatePolar(50 * sin(M_PI/3), $g2AttachAngle);
+
+        $w = count($g1) / (count($g1) + count($g2));
+        $attachPoint = EriantysPoint::lerp($g1AttachPoint,$g2AttachPoint,1-$w); // inverse of weight as most numerous group should be moving less
+
+        $g1translation = EriantysPoint::displacementVector($g1AttachPoint,$attachPoint);
+        $g2translation = EriantysPoint::displacementVector($g2AttachPoint,$attachPoint);
+
+        // --- apply and notify translation ---
+        foreach ($g1 as $pos => $island) {
+            $coords = new EriantysPoint($island['x'],$island['y']);
+            ['x'=>$x, 'y'=>$y] = $coords->translate($g1translation->x(), $g1translation->y())->coordinates();
+
+            self::dbQuery("UPDATE island SET x=$x, y=$y, `group`=$g2id WHERE pos=$pos"); // here apply group change too
+        }
+
+        foreach ($g2 as $pos => $island) {
+            $coords = new EriantysPoint($island['x'],$island['y']);
+            ['x'=>$x, 'y'=>$y] = $coords->translate($g2translation->x(), $g2translation->y())->coordinates();
+
+            self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos=$pos");
+        }
+
+        self::displayPoints([$g1AttachPoint,$g2AttachPoint,$attachPoint]);
+
+    }
+
+    function getAttachAngle($side,$pos) {
+
+        // starting from a certain pos and angle depending on side, increse angle by 2*30deg every two islands
+        switch ($side) {
+            case 'left':
+                self::trace("// ISLAND $pos ATTACHING FROM LEFT");
+                return 7*M_PI/6 + -2*M_PI/6 * floor(($pos+1)/2);  
+                break;
+
+            case 'right':
+                self::trace("// ISLAND $pos ATTACHING FROM RIGHT");
+                return 11*M_PI/6 + -2*M_PI/6 * floor($pos/2);
+                break;
+
+            default:
+                throw new BgaVisibleSystemException(_("Invalid attach side"));
+                break;
+        }
+    }
+
+    function getGroupExtremes($gId) {
+        $group = self::getObjectListFromDb("SELECT pos FROM island WHERE `group` = $gId", true);
+
+        $l = count($group);
+
+        $rightExtr = null;
+        $leftExtr = null;
+
+        for ($i=0; $i < $l; $i++) {
+            $next = ($i+1 + $l)%$l; // wrap on group array
+            if ($group[$next] != (($group[$i]+1)+12)%12) // wrap on islands array
+                $rightExtr = $group[$i];
+        }
+
+        for ($i=$l-1; $i >= 0; $i--) {
+            $next = ($i-1 + $l)%$l; // wrap on group array
+            if ($group[$next] != (($group[$i]-1)+12)%12) // wrap on islands array
+                $leftExtr = $group[$i];
+        }
+
+        self::dump("// CALCULATING EXTREMES FOR ISLAND GROUP $gId",$group);
+        self::dump('// EXTREMES',['right'=>$rightExtr, 'left'=>$leftExtr]);
+
+        return ['right'=>$rightExtr, 'left'=>$leftExtr];
+    }
+
+    function displayPoints($points) {
+
+        foreach ($points as &$p) {
+            $p = $p->coordinates();
+        } unset($p);
+
+        self::notifyAllPlayers('displayPoints','',['points' => $points]);
+    }
 
 //////////////////////////////////////////////////////////////////////////////
 //////////// Player actions

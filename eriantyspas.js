@@ -44,7 +44,6 @@ function (dojo, declare) {
 
             console.log( "Ending game setup" );
         },
-       
 
         ///////////////////////////////////////////////////
         //// Game & client states
@@ -136,13 +135,24 @@ function (dojo, declare) {
             console.log(islands);
 
             islands.forEach(i => {
-                $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point', {left: i.x, top: -i.y}));
 
-                let hex = $('islands_cont').lastElementChild;
-                hex.style.backgroundColor = `hsl(${i.pos * 360/12}, 100%, 50%)`;
-                console.log(hex);
-                
+                /* $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point', {left: i.x, top: -i.y}));
+
+                let p = $('islands_cont').lastElementChild;
+                p.style.backgroundColor = `hsl(${i.pos * 360/12}, 100%, 50%)`; */
+
+
+                $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {id: i.id, left: i.x, top: -i.y}));
+
+                let island = $('islands_cont').lastElementChild;
+                //island.style.opacity = i.pos * 1/12;
             });
+        },
+
+        test: function() {
+
+
+
         },
 
 
@@ -207,8 +217,7 @@ function (dojo, declare) {
                   your eriantyspas.game.php file.
         
         */
-        setupNotifications: function()
-        {
+        setupNotifications: function() {
             console.log( 'notifications subscriptions setup' );
             
             // TODO: here, associate your game notifications with local methods
@@ -222,23 +231,25 @@ function (dojo, declare) {
             // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
             // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
             // 
+
+            dojo.subscribe('displayPoints', this, "notif_displayPoints");
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods
         
-        /*
-        Example:
         
-        notif_cardPlayed: function( notif )
-        {
-            console.log( 'notif_cardPlayed' );
-            console.log( notif );
-            
-            // Note: notif.args contains the arguments specified during you "notifyAllPlayers" / "notifyPlayer" PHP call
-            
-            // TODO: play the card in the user interface.
-        },    
-        
-        */
+        notif_displayPoints: function(notif) {
+            console.log('notif_displayPoints');
+            console.log(notif);
+
+            document.querySelectorAll('.point').forEach(p => {
+                p.remove();
+            });
+
+            notif.args.points.forEach(p => {
+                $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point', {left: p.x, top: -p.y}));
+            });
+        },
+
    });             
 });

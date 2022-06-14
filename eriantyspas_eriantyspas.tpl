@@ -28,6 +28,13 @@
 <script type="text/javascript">
 
 let jstpl_point = "<div class='point' style='left:${left}px; top:${top}px;'></div>";
+let jstpl_island = "<div id='island_${id}' class='hexwrap' style='left:${left}px; top:${top}px;'>\
+                        <div class='hex'>\
+                            <div class='hexpart1'></div>\
+                            <div class='hexpart2'></div>\
+                            <div class='hexpart3'></div>\
+                        </div>\
+                    </div>";
 
 </script>  
 

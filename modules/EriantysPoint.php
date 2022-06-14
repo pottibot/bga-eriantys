@@ -1,6 +1,6 @@
 <?php
 
-// copied from vektorace
+// copied from Eriantys
 class EriantysPoint {
     
     private $x;
@@ -67,7 +67,7 @@ class EriantysPoint {
     }
 
     // change reference origin and applies transformation (scale and rot), then return transformed point to previous reference origin
-    public function transformFromOrigin(VektoracePoint $origin, $sx, $sy, $the = 0) {
+    public function transformFromOrigin(EriantysPoint $origin, $sx, $sy, $the = 0) {
 
         $centered = $this->translate(-$origin->x, -$origin->y);
         $scaled = $centered->scale($sx,$sy);
@@ -77,13 +77,13 @@ class EriantysPoint {
     }
 
     // calculates euclidean distance between point1 and point2
-    public static function distance(VektoracePoint $p1, VektoracePoint $p2) {
+    public static function distance(EriantysPoint $p1, EriantysPoint $p2) {
 
         return sqrt(pow($p2->x - $p1->x, 2) + pow($p2->y - $p1->y, 2));
     }
 
     // find median midpoint between point1 and point2
-    public static function midpoint(VektoracePoint $p1, VektoracePoint $p2) {
+    public static function midpoint(EriantysPoint $p1, EriantysPoint $p2) {
 
         $mx = ($p1->x + $p2->x)/2;
         $my = ($p1->y + $p2->y)/2;
@@ -91,25 +91,32 @@ class EriantysPoint {
         return new self($mx, $my);
     }
 
+    public static function lerp(EriantysPoint $a, EriantysPoint $b, $t) {
+        $cx = $t * ($b->x - $a->x) + $a->x;
+        $cy = $t * ($b->y - $a->y) + $a->y;
+
+        return new self($cx, $cy);
+    }
+
     // calculates displacement vector between origin and end point
-    public static function displacementVector(VektoracePoint $origin, VektoracePoint $point) {
+    public static function displacementVector(EriantysPoint $origin, EriantysPoint $point) {
 
         $vx = $point->x - $origin->x;
         $vy = $point->y - $origin->y;
 
-        return new VektoracePoint($vx, $vy);
+        return new EriantysPoint($vx, $vy);
     }
 
     // calculates norm of point vector from origin
     public function normalize() {
 
-        $mag = self::distance(new VektoracePoint(0,0), $this);
+        $mag = self::distance(new EriantysPoint(0,0), $this);
 
         return new self($this->x / $mag, $this->y / $mag);
     }
 
     // calculates dot product between two points
-    public static function dot(VektoracePoint $v1, VektoracePoint $v2) {
+    public static function dot(EriantysPoint $v1, EriantysPoint $v2) {
 
         $d1 = $v1->x * $v2->x;
         $d2 = $v1->y * $v2->y;

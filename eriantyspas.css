@@ -1,0 +1,132 @@
+/**
+ *------
+ * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
+ * eriantyspas implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
+ *
+ * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
+ * See http://en.boardgamearena.com/#!doc/Studio for more information.
+ * -----
+ */
+
+/*
+    This is the CSS stylesheet of your game User Interface.
+    
+    Styles defined on this file will be applied to the HTML elements you define in your
+    HTML template (eriantyspas_eriantyspas.tpl), and to HTML elements you create dynamically
+    (in eriantyspas.js).
+    
+    Usually, you are using CSS to:
+    
+    1°) define the overall layout of your game
+        (ex: place the board on the top left, place player's hand beside, place the deck on the right, ...).
+
+    2°) create your CSS-sprites:
+        All images of your games should be gathered into a small number of image files. Then, using
+        background-image and background-position CSS properties, you create HTML blocks that can 
+        display these images correctly (see example below).
+    
+    3°) ... anything else:
+        It is really easy to add and remove CSS classes dynamically from your Javascript with
+        dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class
+        (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why,
+        very often, using CSS classes for the logic of your user interface allow you to do complex
+        thing easily.
+        
+        
+     Note: on the production platform, this file will be compressed and comments will be removed.
+           Consequently, don't hesitate to put as many comments as necessary.
+*/
+
+
+/* Note: you must not use any @import directive */
+
+
+/********* You can start writing your CSS below this line: **********/
+
+
+#main_game_area {
+    width: 100%;
+    height: 80vh;
+
+    position: relative;
+
+    overflow: hidden;
+    
+    background-color: rgb(255,255,255,0.5);
+}
+
+#islands_cont {
+    position: absolute;
+
+    top: 50%;
+    left: 50%;
+}
+
+.point {
+    --size: 15px;
+
+    width: var(--size);
+    height: var(--size);
+    border-radius: 100%;
+
+    /* top: calc(50% - (var(--size) / 2));
+    left: calc(50% - (var(--size) / 2)); */
+
+    position: absolute;
+
+    background-color: greenyellow;
+}
+
+
+/* -------------------- */
+
+.hexpart1 {
+    float: left;
+    border-right: calc(var(--scale) * 30px) solid var(--color);
+    border-top: calc(var(--scale) * 52px) solid transparent;
+    border-bottom: calc(var(--scale) * 52px) solid transparent;
+  }
+  
+  .hexpart2 {
+    float: left;
+    width: calc(var(--scale) * 60px);
+    height: calc(var(--scale) * 104px);
+    background-color: var(--color);
+  }
+  
+  .hexpart3 {
+    float: left;
+    border-left: calc(var(--scale) * 30px) solid var(--color);
+    border-top: calc(var(--scale) * 52px) solid transparent;
+    border-bottom: calc(var(--scale) * 52px) solid transparent;
+  }
+  
+  .hex {
+    --scale: 0.83339; /* 0.83339  is width 100*/
+    --color: rgb(0,0,0,0);
+    
+    width: 100px;
+    height: 100px;
+
+    filter: drop-shadow(0px 0px 5px red);
+
+
+    background-image: url('img/fakeisland.png');
+    background-size: 100px 100px;
+    background-position: 50% 50%;
+  }
+
+  .hexwrap {
+    padding: 10px;
+
+    border: solid yellow 1px;
+    border-radius: 100%;
+
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%) scale(2);
+  }
+
+
+

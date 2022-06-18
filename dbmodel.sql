@@ -9,13 +9,12 @@
 
 CREATE TABLE IF NOT EXISTS `island` (
     `pos` TINYINT UNSIGNED NOT NULL,
-    `id` TINYINT UNSIGNED NOT NULL,
+    `type` TINYINT UNSIGNED NOT NULL,
     `x` FLOAT(24) NOT NULL,
     `y` FLOAT(24) NOT NULL,
     `group` TINYINT UNSIGNED,
     `angle` INT UNSIGNED,
-    PRIMARY KEY (`id`),
-    UNIQUE (`pos`)
+    PRIMARY KEY (`pos`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- note:

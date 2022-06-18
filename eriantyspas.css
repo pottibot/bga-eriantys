@@ -8,59 +8,306 @@
  * -----
  */
 
-/*
-    This is the CSS stylesheet of your game User Interface.
-    
-    Styles defined on this file will be applied to the HTML elements you define in your
-    HTML template (eriantyspas_eriantyspas.tpl), and to HTML elements you create dynamically
-    (in eriantyspas.js).
-    
-    Usually, you are using CSS to:
-    
-    1°) define the overall layout of your game
-        (ex: place the board on the top left, place player's hand beside, place the deck on the right, ...).
-
-    2°) create your CSS-sprites:
-        All images of your games should be gathered into a small number of image files. Then, using
-        background-image and background-position CSS properties, you create HTML blocks that can 
-        display these images correctly (see example below).
-    
-    3°) ... anything else:
-        It is really easy to add and remove CSS classes dynamically from your Javascript with
-        dojo.addClass and dojo.removeClass. It is also easy to check if an element has a class
-        (dojo.hasClass) or to get all elements with a specific class (dojo.query). This is why,
-        very often, using CSS classes for the logic of your user interface allow you to do complex
-        thing easily.
-        
-        
-     Note: on the production platform, this file will be compressed and comments will be removed.
-           Consequently, don't hesitate to put as many comments as necessary.
-*/
-
-
-/* Note: you must not use any @import directive */
-
-
-/********* You can start writing your CSS below this line: **********/
-
+/* ---------------------------------- */
+/* #region MAIN GAME AREA SUBDIVISION */
+/* ---------------------------------- */
 
 #main_game_area {
+    --islands-fr: 0%;
     width: 100%;
-    height: 80vh;
+    height: fit-content;
 
     position: relative;
 
     overflow: hidden;
+
+    display: flex;
+    flex-wrap: wrap;
     
-    background-color: rgb(255,255,255,0.5);
+    /* background-color: rgb(255,255,255,0.5); */
+}
+
+#island_area {
+    width: calc(var(--islands-fr) + 50%);
+    height: fit-content;
+
+    min-width: 750px;
+    flex-grow: 1;
+
+    background-color: rgba(255, 255, 255, 0.5);
+
+    position: relative;
+}
+
+#game_area_bottom {
+    height: 200px;
+    background-color: rgba(255, 218, 52, 0.5);
+
+    display: flex;
+    align-items: center;
+}
+
+#player_school_area {
+    /* width: calc(50% - var(--islands-fr)); */
+    min-width: 600px;
+    flex-grow: 1;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    background-color: rgba(149, 35, 111, 0.5);
+}
+
+#opponents_school_area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+
+    background-color: rgba(58, 149, 35, 0.5);
+}
+
+/* #endregion */
+/* ---------------------------------- */
+
+
+/* ----------------------------- */
+/* #region ISLANDS CONTROLS AREA */
+/* ----------------------------- */
+
+#controls_div {
+    background-color: rgba(155, 50, 50, 0.5);
+
+    display: grid;
+    justify-content: space-between;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    justify-items: center;
+
+    position: absolute;
+    width: 100%;
+}
+
+.controls {
+    display: inline-block;
+    margin: 15px;
+}
+
+#control_rotation {
+    justify-self: start;
+}
+
+#control_zoom {
+    justify-self: end;
+}
+
+.svg_icon {
+    width: 25px;
+}
+
+.rotate_icon {
+    width: 40px;
+}
+
+#rotate_left {
+    transform: scaleX(-1);
+}
+
+/* #endregion */
+/* ----------------------------- */
+
+
+/* ------------------------- */
+/* #region ISLANDS AND GROUPS*/
+/* ------------------------- */
+
+#islands_div {
+    --scale: 1;
+
+    position: relative;
+
+    display: inline-block;
+    background-color: rgba(50, 116, 155, 0.5);
+    
+    /* transform-origin: 0px 0px;
+    width: calc(var(--scale) * 750px);
+    height: calc(var(--scale) * 400px); */
+
+    width: 100%;
+    height: 500px;
+}
+
+#scale_wrap {
+    transform: scale(calc(var(--scale) - 0.2));
+
+    position: absolute;
+    top: 32%;
+    left: 50%;
+}
+
+#perspective_wrap {
+    perspective: 750px;
 }
 
 #islands_cont {
+    --z-rot: 0deg;
+
+    transform: rotateX(60deg) rotateZ(var(--z-rot));
+
+    transition: transform 200ms ease-out;
+}
+  
+.island {
+    --angle: 0deg;
     position: absolute;
 
-    top: 50%;
-    left: 50%;
+    background-image: url('img/islands_and_pb.png');
+
+    width: 100px;
+    height: 100px;
+    background-size: 400px 272px;
+
+    transform: translate(-50%,-50%) rotate(var(--angle));
+
+    transition-property: left, top;
+    transition: 1.5s ease-in;
 }
+
+.island_type_1 {
+    background-position: 0px 0px;
+}
+
+.island_type_2 {
+    background-position: -100px 0px;
+}
+
+.island_type_3 {
+    background-position: -200px 0px;
+}
+
+.island_group:hover {
+    filter: drop-shadow(0px 0px 5px red);
+}
+
+/* #endregion */
+/* ------------------------- */
+
+
+/* --------------------------- */
+/* #region SCHOOL PLAYER BOARD */
+/* --------------------------- */
+
+.game_player_board {
+    --scale: 0.15;
+
+    display: inline-block;
+
+    width: calc(var(--scale) * 4000px);
+    height: calc(var(--scale) * 1714px);
+
+    background-image: url('img/islands_and_pb.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 2714px);
+
+    background-position: 0px calc(var(--scale) * -1000px);
+
+    border: solid #374649 2px;
+    border-radius: 5px;
+
+    margin: 10px;
+}
+
+/* #endregion */
+/* --------------------------- */
+
+/* -------------------------------- */
+/* #region ASSISTANT AND HERO CARDS */
+/* -------------------------------- */
+
+.card {
+    --scale: 0.18;
+
+    width: calc(var(--scale) * 660px);
+    height: calc(var(--scale) * 1000px);
+
+    background-image: url('img/cards.png');
+    background-size: calc(var(--scale) * 3960px) calc(var(--scale) * 4000px);
+
+    border-radius: 5px;
+    border: solid #374649 1px;
+}
+
+.hero {
+
+}
+
+#hero_1 {
+    background-position: calc(var(--scale) * 0px) calc(var(--scale) * -2000px);
+}
+
+#hero_2 {
+    background-position: calc(var(--scale) * -660px) calc(var(--scale) * -2000px);
+}
+
+#hero_3 {
+    background-position: calc(var(--scale) * -1320px) calc(var(--scale) * -2000px);
+}
+
+#hero_4 {
+    background-position: calc(var(--scale) * -1980px) calc(var(--scale) * -2000px);
+}
+
+#hero_5 {
+    background-position: calc(var(--scale) * -2640px) calc(var(--scale) * -2000px);
+}
+
+#hero_6 {
+    background-position: calc(var(--scale) * -3300px) calc(var(--scale) * -2000px);
+}
+
+#hero_7 {
+    background-position: calc(var(--scale) * 0px) calc(var(--scale) * -3000px);
+}
+
+#hero_8 {
+    background-position: calc(var(--scale) * -660px) calc(var(--scale) * -3000px);
+}
+
+#hero_9 {
+    background-position: calc(var(--scale) * -1320px) calc(var(--scale) * -3000px);
+}
+
+#hero_10 {
+    background-position: calc(var(--scale) * -1980px) calc(var(--scale) * -3000px);
+}
+
+#hero_11 {
+    background-position: calc(var(--scale) * -2640px) calc(var(--scale) * -3000px);
+}
+
+#hero_12 {
+    background-position: calc(var(--scale) * -3300px) calc(var(--scale) * -3000px);
+}
+
+#heroes {
+    display: flex;
+}
+
+/* #endregion */
+/* -------------------------------- */
+
+/* -------------------------------- */
+/* #region STUDENTS DRAFTING */
+/* -------------------------------- */
+
+
+
+/* #endregion */
+/* -------------------------------- */
+
+/* ------------ */
+/* #region MISC */
+/* ------------ */
 
 .point {
     --size: 10px;
@@ -69,9 +316,6 @@
     height: var(--size);
     border-radius: 100%;
 
-    /* top: calc(50% - (var(--size) / 2));
-    left: calc(50% - (var(--size) / 2)); */
-
     transform: translate(-50%,-50%);
 
     position: absolute;
@@ -79,56 +323,5 @@
     background-color: greenyellow;
 }
 
-
-/* -------------------- */
-
-.hexpart1 {
-    float: left;
-    border-right: calc(var(--scale) * 30px) solid var(--color);
-    border-top: calc(var(--scale) * 52px) solid transparent;
-    border-bottom: calc(var(--scale) * 52px) solid transparent;
-  }
-  
-  .hexpart2 {
-    float: left;
-    width: calc(var(--scale) * 60px);
-    height: calc(var(--scale) * 104px);
-    background-color: var(--color);
-  }
-  
-  .hexpart3 {
-    float: left;
-    border-left: calc(var(--scale) * 30px) solid var(--color);
-    border-top: calc(var(--scale) * 52px) solid transparent;
-    border-bottom: calc(var(--scale) * 52px) solid transparent;
-  }
-  
-  .hex {
-    --scale: 0.83339; /* 0.83339  is width 100*/
-    --color: rgb(0,0,0,0);
-    
-    width: 100px;
-    height: 100px;
-
-    filter: drop-shadow(0px 0px 5px red);
-
-
-    background-image: url('img/fakeisland.png');
-    background-size: 100px 100px;
-    background-position: 50% 50%;
-  }
-
-  .hexwrap {
-    padding: 10px;
-
-    border: solid yellow 1px;
-    border-radius: 100%;
-
-    position: absolute;
-    /* left: 50%;
-    top: 50%; */
-    transform: translate(-50%,-50%) scale(1);
-  }
-
-
-
+/* #endregion */
+/* ------------ */

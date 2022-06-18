@@ -24,8 +24,7 @@ function (dojo, declare) {
 
         },
         
-        setup: function( gamedatas )
-        {
+        setup: function(gamedatas) {
             console.log( "Starting game setup" );
             
             // Setting up player boards
@@ -33,11 +32,55 @@ function (dojo, declare) {
             {
                 var player = gamedatas.players[player_id];
                          
-                // TODO: Setting up players boards if needed
+                $((player_id == this.getCurrentPlayerId())? 'player_school_area' : 'opponents_school_area').insertAdjacentHTML('beforeend',this.format_block('jstpl_game_player_board', {
+                    id: player_id,
+                    color: gamedatas.players[player_id].color
+                }));
             }
 
-            this.displayIslands(gamedatas.islands);
-            
+            $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point',{left: 0, top: 0}));
+
+            gamedatas.islandGroups.forEach(g => {
+                $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island_group', {id: g}));
+                $('island_group_'+g).addEventListener('click', evt => {console.log(evt.target.parentElement.id);})
+            });
+
+            gamedatas.islands.forEach(i => {
+                $('island_group_'+i.group).insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {pos: i.pos, type: i.type, left: i.x, top: -i.y, angle: 60*Math.floor(Math.random() * (6 - 0) + 0)}));
+            });
+
+            // handle rot control
+            document.querySelectorAll('#control_rotation > input').forEach(el => {
+                el.addEventListener('click', evt => {
+                    let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
+                    r = +r + 30*((el.id == 'rotate_islands_right')?1:-1);
+
+                    $('islands_cont').style.setProperty("--z-rot", r+"deg");
+                })
+            })
+
+            // handle zoom control
+            document.querySelectorAll('#control_zoom > input').forEach(el => {
+                el.addEventListener('click', evt => {
+                    let s = getComputedStyle($('islands_div')).getPropertyValue("--scale");
+                    s = +s + 0.2*((el.id == 'scale_islands_plus')?1:-1);
+                    $('islands_div').style.setProperty("--scale", s);
+                })
+            })
+
+            $('islands_div').addEventListener('wheel', evt =>{
+                evt.preventDefault();
+
+                let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
+                r = +r + 30*evt.wheelDelta/120;
+
+                $('islands_cont').style.setProperty("--z-rot", r+"deg");
+            })
+
+
+            for (let i = 0; i < 3; i++) {
+                $('heroes').insertAdjacentHTML('beforeend',this.format_block('jstpl_hero', {n: i+1}));
+            }
  
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
@@ -129,25 +172,6 @@ function (dojo, declare) {
 
         ///////////////////////////////////////////////////
         //// Utility methods
-        
-        displayIslands: function(islands) {
-
-            console.log(islands);
-
-            islands.forEach(i => {
-
-                /* $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point', {left: i.x, top: -i.y}));
-
-                let p = $('islands_cont').lastElementChild;
-                p.style.backgroundColor = `hsl(${i.pos * 360/12}, 100%, 50%)`; */
-
-
-                $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {id: i.id, left: i.x, top: -i.y}));
-
-                let island = $('islands_cont').lastElementChild;
-                //island.style.opacity = i.pos * 1/12;
-            });
-        },
 
         test: function() {
 
@@ -233,6 +257,10 @@ function (dojo, declare) {
             // 
 
             dojo.subscribe('displayPoints', this, "notif_displayPoints");
+            this.notifqueue.setSynchronous( 'joinIslandGroups', 0);
+
+            dojo.subscribe('joinIslandGroups', this, "notif_joinIslandGroups");
+            this.notifqueue.setSynchronous( 'joinIslandGroups', 2000);
         },  
         
         // TODO: from this point and below, you can write your game notifications handling methods
@@ -251,5 +279,38 @@ function (dojo, declare) {
             });
         },
 
+        notif_joinIslandGroups: function(notif) {
+            console.log(notif.args);
+
+            let transitionCount = 0;
+
+            for (const gNum in notif.args.groups) {
+                let g = notif.args.groups[gNum];
+                document.querySelectorAll(`#island_group_${g.id} > .island`).forEach(island => {
+                    island.style.left = (+island.style.left.split('px').shift() + g.translation.x) + 'px';
+                    island.style.top = (+island.style.top.split('px').shift() - g.translation.y) + 'px';
+
+                    island.ontransitionend = () => {
+                        transitionCount++
+                        //console.log(transitionCount,notif.args.islandsCount);
+                        //console.log(transitionCount == notif.args.islandsCount*2);
+                        if (transitionCount == notif.args.islandsCount*2) {
+                            //console.log('in');
+
+                            let g1 = $('island_group_'+notif.args.groups.g1.id);
+                            let g2 = $('island_group_'+notif.args.groups.g2.id);
+                            //console.log(g1,g2);
+
+                            g2.innerHTML += g1.innerHTML;
+
+                            g1.remove();
+                        }
+                    }
+                })
+            };
+
+            /* let joinGroup = notif.args.groups.filter(g => g.id != notif.args.groupTo).pop()['id'];
+            console.log(joinGroup); */
+        },
    });             
 });

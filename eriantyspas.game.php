@@ -109,8 +109,10 @@ class eriantyspas extends Table
         $sql = "SELECT player_id id, player_score score FROM player ";
         $result['players'] = self::getCollectionFromDb($sql);
   
-        $sql = "SELECT id, pos, x, y, `group`, angle FROM island ORDER BY pos ASC";
+        $sql = "SELECT pos, x, y, `group`, `type`, angle FROM island ORDER BY pos ASC";
         $result['islands'] = self::getObjectListFromDb($sql);
+
+        $result['islandGroups'] = self::getObjectListFromDb("SELECT DISTINCT `group` FROM island ORDER BY `group` ASC", true);
 
         return $result;
     }
@@ -153,103 +155,32 @@ class eriantyspas extends Table
         //
 
 
-        $idPool = range(1,12);
-        shuffle($idPool);
+        $typePool = [1,1,1,1,2,2,2,2,3,3,3,3];
+        shuffle($typePool);
 
-        $sql = "INSERT INTO island (pos, id, x, y, `group`) VALUES ";
+        $sql = "INSERT INTO island (pos, `type`, x, y, `group`) VALUES ";
         $values = array();
         for ($i=0; $i < 12; $i++) { 
 
-            $id = array_pop($idPool);
+            $type = array_pop($typePool);
 
             $the = -$i*M_PI/6 + M_PI_2;
-            $ro = 300 * (($i%2 == 0)? 1 : (sqrt(3)/2));
+            $ro = 300 /* * (($i%2 == 0)? 1 : (sqrt(3)/2)) */;
 
-            ['x'=>$x, 'y'=>$y] = EriantysPoint::createPolarVector($ro,$the)->coordinates();
+            $center = EriantysPoint::createPolarVector($ro,$the)/* ->rotate(M_PI_2)->scale(1,1) */;
 
-            $values[] = "($i,$id,$x,$y,$i)";
+            ['x'=>$x, 'y'=>$y] = $center/* ->translate(-$center->x()*0.45,0) */->coordinates();
+
+            $values[] = "($i,$type,$x,$y,$i)";
         }
 
         $sql .= implode($values,',');
         self::DbQuery($sql);
     }
 
-    // TODO
-    // weight translation point with all group centers
-    // implement group to group join
-    // add safety throws
-    // add anim
-    function groupNewIslandAndReposition($island, $group) {
-
-        // --- checks ---
-        if (!is_null(self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos = $island"))) throw new BgaVisibleSystemException(_("Island $island is already part of a group"));
-        if (self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos = $island") == $group) throw new BgaVisibleSystemException(_("Island $island is already in group $group"));
-
-        // insert island in group
-        self::dbQuery("UPDATE island SET `group` = $group WHERE pos = $island");
-
-        // if group is size 1 (just the island just set) do nothing
-        if (self::getUniqueValueFromDb("SELECT COUNT(`group`) FROM island WHERE `group` = $group") == 1) return; // first island to join group, do nothing
-
-        // determine if attach side left or right
-        // (consider pos number are circular, so 11 is next to 0)
-
-        // --- calc attach point and translation ---
-        $side = '';
-        $groupBorderIsland = null;
-
-        if (self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos =".($island-1 + 12) % 12) == $group) { // if pos at the left of island to join is of group
-            $side = 'left';
-            $groupBorderIsland = ($island-1 + 12) % 12;
-            
-        } else if (self::getUniqueValueFromDb("SELECT `group` FROM island WHERE pos =".($island+1 + 12) % 12) == $group) { // else if at the right of island to join is of group
-            $side = 'right';
-            $groupBorderIsland = ($island+1 + 12) % 12;
-
-        } else throw new BgaVisibleSystemException(_("Island $island is not next to group $group"));
-
-
-        $islandAttPoint = new EriantysPoint(...array_values(self::getObjectFromDb("SELECT x, y FROM island WHERE pos = $island")));
-        $islandAttPoint = $islandAttPoint->translatePolar(
-            50 * sin(M_PI/3),
-            self::getAttachAngle($side,$island)
-        );
-
-        $groupAttPoint = new EriantysPoint(...array_values(self::getObjectFromDb("SELECT x, y FROM island WHERE pos = $groupBorderIsland")));
-        $groupAttPoint = $groupAttPoint->translatePolar(
-            50 * sin(M_PI/3),
-            self::getAttachAngle(($side == 'left')?'right':'left',$groupBorderIsland)
-        );
-
-        $midPointDest = EriantysPoint::midpoint($islandAttPoint,$groupAttPoint);
-        // --- --- ---
-
-        // --- apply translation on new island and group ---
-
-        // translate attached island
-        ['x'=>$x, 'y'=>$y] =  self::getObjectFromDb("SELECT x, y FROM island WHERE pos = $island");
-        $islandNewPos = new EriantysPoint($x,$y);
-        $islandDisplacement = EriantysPoint::displacementVector($islandAttPoint,$midPointDest);
-
-        ['x'=>$x, 'y'=>$y] = $islandNewPos->translate($islandDisplacement->x(), $islandDisplacement->y())->coordinates();
-        self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos = $island");
-
-        // translate group
-        $groupDisplacement = EriantysPoint::displacementVector($groupAttPoint,$midPointDest);
-        foreach (self::getCollectionFromDb("SELECT pos, x, y FROM island WHERE `group` = $group AND pos != $island") as $pos => $coords) {
-            $componentNewPos = new EriantysPoint($coords['x'],$coords['y']);
-            
-            ['x'=>$x, 'y'=>$y] = $componentNewPos->translate($groupDisplacement->x(), $groupDisplacement->y())->coordinates();
-            self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos = $pos");
-        }
-        // --- --- ---
-
-        self::displayPoints([$islandAttPoint,$groupAttPoint,$midPointDest]);
-    }
-
     // second version of join algo
     // first group joins second
-    function joinGroups($g1id, $g2id) {
+    function joinIslandGroups($g1id, $g2id) {
 
         // --- checks ---
 
@@ -318,7 +249,15 @@ class eriantyspas extends Table
             self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos=$pos");
         }
 
-        self::displayPoints([$g1AttachPoint,$g2AttachPoint,$attachPoint]);
+        //self::displayPoints([$g1AttachPoint,$g2AttachPoint,$attachPoint]);
+        self::notifyAllPlayers('joinIslandGroups','',[
+            'groups' => [
+                'g1' => ['id' => $g1id, 'translation' => $g1translation->coordinates()],
+                'g2' => ['id' => $g2id, 'translation' => $g2translation->coordinates()]
+            ],
+            'groupTo' => $g2id,
+            'islandsCount' => count($g1) + count($g2)
+        ]);
 
     }
 
@@ -343,7 +282,7 @@ class eriantyspas extends Table
     }
 
     function getGroupExtremes($gId) {
-        $group = self::getObjectListFromDb("SELECT pos FROM island WHERE `group` = $gId", true);
+        $group = self::getObjectListFromDb("SELECT pos FROM island WHERE `group` = $gId ORDER BY pos ASC", true);
 
         $l = count($group);
 

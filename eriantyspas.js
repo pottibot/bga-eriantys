@@ -17,11 +17,40 @@ function (dojo, declare) {
     return declare("bgagame.eriantyspas", ebg.core.gamegui, {
         constructor: function(){
             console.log('eriantyspas constructor');
-              
             // Here, you can init the global variables of your user interface
             // Example:
             // this.myGlobalValue = 0;
 
+            this.scaleMap = [
+                {
+                    scale: 0.8,
+                    width: 850
+                },
+                {
+                    scale: 1,
+                    width: 850
+                },
+                {
+                    scale: 1.2,
+                    width: 1020
+                },
+                {
+                    scale: 1.4,
+                    width: 1190
+                },
+                {
+                    scale: 1.6,
+                    width: 1360
+                },
+                {
+                    scale: 1.8,
+                    width: 1530
+                },
+                {
+                    scale: 2,
+                    width: 1700
+                }
+            ]
         },
         
         setup: function(gamedatas) {
@@ -50,22 +79,41 @@ function (dojo, declare) {
             });
 
             // handle rot control
-            document.querySelectorAll('#control_rotation > input').forEach(el => {
+            document.querySelectorAll('#control_rotation > svg').forEach(el => {
                 el.addEventListener('click', evt => {
                     let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
-                    r = +r + 30*((el.id == 'rotate_islands_right')?1:-1);
+                    r = +r + 30*((el.id == 'rotate_left')?1:-1);
 
                     $('islands_cont').style.setProperty("--z-rot", r+"deg");
                 })
             })
 
             // handle zoom control
-            document.querySelectorAll('#control_zoom > input').forEach(el => {
+            document.querySelectorAll('#control_zoom > .zoom_icon').forEach(el => {
                 el.addEventListener('click', evt => {
-                    let s = getComputedStyle($('islands_div')).getPropertyValue("--scale");
-                    s = +s + 0.2*((el.id == 'scale_islands_plus')?1:-1);
-                    $('islands_div').style.setProperty("--scale", s);
-                })
+                    this.zoomIslands((evt.target.closest('#zoom_in'))?1:-1);
+                });
+            })
+
+            // handle screen adapt control
+            document.querySelectorAll('#control_zoom > .adapt_screen_icon').forEach(el => {
+                el.addEventListener('click', evt => {
+                    console.log('adapting');
+
+                    let full = evt.target.closest('#screen_full');
+
+                    while (this.zoomIslands((full)? 1:-1)); // returns false and stops when zoom is no longer possible
+
+                    console.log((this.zoomIslands(1,false)));
+
+                    if (this.zoomIslands(1,false)) {
+                        $('screen_full').style.display= '';
+                        $('screen_normal').style.display= 'none';
+                    } else {
+                        $('screen_full').style.display= 'none';
+                        $('screen_normal').style.display= '';
+                    }
+                });
             })
 
             $('islands_div').addEventListener('wheel', evt =>{
@@ -81,11 +129,35 @@ function (dojo, declare) {
             for (let i = 0; i < 3; i++) {
                 $('heroes').insertAdjacentHTML('beforeend',this.format_block('jstpl_hero', {n: i+1}));
             }
+
+            for (let i = 0; i < 4; i++) {
+                $('students_clouds_div').insertAdjacentHTML('beforeend',this.format_block('jstpl_cloud', {n: 'multi'}));
+            }
  
             // Setup game notifications to handle (see "setupNotifications" method below)
             this.setupNotifications();
 
             console.log( "Ending game setup" );
+        },
+
+        onScreenWidthChange: function() {
+            console.log('SCREEND WIDTH CHANGED');
+
+            let ui_w = $('game_ui').clientWidth;
+
+            let newMin = Math.max(750, Math.min(ui_w, 850));
+            
+            $('main_game_area').style.minWidth = newMin + 'px';
+
+            let min_islands_w = this.scaleMap.filter(sw => sw.scale == getComputedStyle($('main_game_area')).getPropertyValue("--scale"))[0].width;
+
+            console.log('ui width',ui_w);
+            console.log('islands current min width to scale',min_islands_w);
+
+            if (ui_w < min_islands_w) {
+                this.zoomIslands(-1);
+            }
+                
         },
 
         ///////////////////////////////////////////////////
@@ -173,10 +245,36 @@ function (dojo, declare) {
         ///////////////////////////////////////////////////
         //// Utility methods
 
-        test: function() {
+        zoomIslands: function(d, effective=true) {
 
+            let f = getComputedStyle($('main_game_area')).getPropertyValue("--islands-fr").split('%')[0];
+            f = +f + 5*d;
 
+            let s = getComputedStyle($('main_game_area')).getPropertyValue("--scale");
+            s = Number.parseFloat(+s + 0.2*d).toFixed(1);
 
+            if (s < 1 || s > 2) return false;
+
+            console.log(s);
+
+            let w = this.scaleMap.filter(sw => sw.scale == s)[0].width;
+            if ($('game_ui').offsetWidth >= w) {
+                if (effective) {
+                    $('main_game_area').style.setProperty("--islands-fr", f+'%');
+                    $('main_game_area').style.setProperty("--scale", s);
+                    $('main_game_area').style.minWidth = w + 'px'; 
+                }
+                
+
+                console.log('new islands fraction diff', f+'%');
+                console.log('new islands scale',s);
+                console.log($('islands_div').offsetHeight, $('game_ui').offsetWidth);
+                console.log(s,w);
+
+                return true;
+            }
+            
+            return false
         },
 
 

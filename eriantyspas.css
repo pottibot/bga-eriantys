@@ -12,8 +12,11 @@
 /* #region MAIN GAME AREA SUBDIVISION */
 /* ---------------------------------- */
 
-#main_game_area {
-    --islands-fr: 0%;
+/* #game_ui * {
+    background-color: transparent !important;
+} */
+
+#game_ui {
     width: 100%;
     height: fit-content;
 
@@ -23,11 +26,12 @@
 
     display: flex;
     flex-wrap: wrap;
-    
-    /* background-color: rgb(255,255,255,0.5); */
 }
 
-#island_area {
+#main_game_area {
+    --islands-fr: 0%;
+    --scale: 1;
+
     width: calc(var(--islands-fr) + 50%);
     height: fit-content;
 
@@ -39,12 +43,39 @@
     position: relative;
 }
 
-#game_area_bottom {
-    height: 200px;
-    background-color: rgba(255, 218, 52, 0.5);
+#controls_div {
+    background-color: rgb(227 95 255 / 50%);
 
     display: flex;
     align-items: center;
+    justify-content: space-between;
+
+    position: absolute;
+    width: 100%;
+}
+
+#islands_div {
+
+    position: relative;
+
+    display: inline-block;
+    background-color: rgba(50, 116, 155, 0.5);
+
+    width: 100%;
+    height: calc(var(--scale) * 500px);
+    
+    border-radius: 100%;
+}
+
+#game_area_bottom {
+    background-color: rgba(255, 218, 52, 0.5);
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-around;
+
+    /* row-gap: 20px; */
 }
 
 #player_school_area {
@@ -76,38 +107,29 @@
 /* #region ISLANDS CONTROLS AREA */
 /* ----------------------------- */
 
-#controls_div {
-    background-color: rgba(155, 50, 50, 0.5);
-
-    display: grid;
-    justify-content: space-between;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    justify-items: center;
-
-    position: absolute;
-    width: 100%;
-}
-
 .controls {
     display: inline-block;
     margin: 15px;
 }
 
 #control_rotation {
-    justify-self: start;
+    display: flex;
+    width: 100px;
+    justify-content: space-between;
 }
 
 #control_zoom {
-    justify-self: end;
+    display: flex;
+    justify-content: space-between;
+    width: 120px;
 }
 
 .svg_icon {
-    width: 25px;
+    width: 30px;
 }
 
 .rotate_icon {
-    width: 40px;
+    width: 45px;
 }
 
 #rotate_left {
@@ -122,24 +144,8 @@
 /* #region ISLANDS AND GROUPS*/
 /* ------------------------- */
 
-#islands_div {
-    --scale: 1;
-
-    position: relative;
-
-    display: inline-block;
-    background-color: rgba(50, 116, 155, 0.5);
-    
-    /* transform-origin: 0px 0px;
-    width: calc(var(--scale) * 750px);
-    height: calc(var(--scale) * 400px); */
-
-    width: 100%;
-    height: 500px;
-}
-
 #scale_wrap {
-    transform: scale(calc(var(--scale) - 0.2));
+    transform: scale(calc(var(--scale) - 0.1));
 
     position: absolute;
     top: 32%;
@@ -162,11 +168,11 @@
     --angle: 0deg;
     position: absolute;
 
-    background-image: url('img/islands_and_pb.png');
+    background-image: url('img/pieces.png');
 
     width: 100px;
     height: 100px;
-    background-size: 400px 272px;
+    background-size: 400px 381px;
 
     transform: translate(-50%,-50%) rotate(var(--angle));
 
@@ -206,10 +212,10 @@
     width: calc(var(--scale) * 4000px);
     height: calc(var(--scale) * 1714px);
 
-    background-image: url('img/islands_and_pb.png');
-    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 2714px);
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3807px);
 
-    background-position: 0px calc(var(--scale) * -1000px);
+    background-position: 0px calc(var(--scale) * -2093px);
 
     border: solid #374649 2px;
     border-radius: 5px;
@@ -235,10 +241,6 @@
 
     border-radius: 5px;
     border: solid #374649 1px;
-}
-
-.hero {
-
 }
 
 #hero_1 {
@@ -291,6 +293,9 @@
 
 #heroes {
     display: flex;
+
+    gap: 15px;
+    margin: 15px;
 }
 
 /* #endregion */
@@ -300,7 +305,75 @@
 /* #region STUDENTS DRAFTING */
 /* -------------------------------- */
 
+#students_draft {
+    display: flex;
+    align-items: center;
 
+    width: 360px;
+
+    justify-content: space-between;
+
+    margin: 15px;
+}
+
+#students_clouds_div {
+
+    display: flex;
+    flex-wrap: wrap;
+
+    width: 200px;
+
+    row-gap: 15px;
+    column-gap: 15px;
+
+    justify-content: center;
+}
+
+.students_cloud {
+    --scale: 0.16;
+
+    display: inline-block;
+
+    width: calc(var(--scale) * 500px);
+    height: calc(var(--scale) * 500px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3807px);
+    border-radius: 100%;
+}
+
+#cloud_1 {
+    background-position: calc(var(--scale) * -2500px) calc(var(--scale) * -1000px);
+}
+
+#cloud_2 {
+    background-position: calc(var(--scale) * -3000px) calc(var(--scale) * -1000px);
+}
+
+#cloud_3 {
+    background-position: calc(var(--scale) * -3500px) calc(var(--scale) * -1000px);
+}
+
+#cloud_4 {
+    background-position: calc(var(--scale) * -2500px) calc(var(--scale) * -1500px);
+}
+
+#cloud_multi {
+    background-position: calc(var(--scale) * -3000px) calc(var(--scale) * -1500px);
+}
+
+#students_bag {
+    --scale: 0.16;
+
+    display: inline-block;
+
+    width: calc(var(--scale) * 800px);
+    height: calc(var(--scale) * 840px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3807px);
+    background-position: calc(var(--scale) * -3000px) 0px;
+}
 
 /* #endregion */
 /* -------------------------------- */

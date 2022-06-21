@@ -10,8 +10,8 @@
 -------
 -->
 
-<div id="main_game_area">
-    <div id="island_area"> <!-- rename, misleading -->
+<div id="game_ui">
+    <div id="main_game_area"> <!-- rename, misleading -->
         <div id='controls_div'>
             <div id='control_rotation' class='controls'>
                 <svg id="rotate_left" class="svg_icon rotate_icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -25,6 +25,16 @@
             </div>
             
             <div id='control_zoom' class='controls'>
+                <svg version="1.1" id="zoom_out" class="svg_icon zoom_icon"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
+                    <g>
+                        <path d="M497.938,430.063l-112-112c-0.367-0.367-0.805-0.613-1.18-0.965C404.438,285.332,416,248.035,416,208
+                            C416,93.313,322.695,0,208,0S0,93.313,0,208s93.305,208,208,208c40.035,0,77.332-11.563,109.098-31.242
+                            c0.354,0.375,0.598,0.813,0.965,1.18l112,112C439.43,507.313,451.719,512,464,512c12.281,0,24.57-4.688,33.938-14.063
+                            C516.688,479.203,516.688,448.797,497.938,430.063z M64,208c0-79.406,64.602-144,144-144s144,64.594,144,144
+                            c0,79.406-64.602,144-144,144S64,287.406,64,208z"/>
+                        <path d="M272,176H144c-17.672,0-32,14.328-32,32s14.328,32,32,32h128c17.672,0,32-14.328,32-32S289.672,176,272,176z"/>
+                    </g>
+                </svg>
                 <svg version="1.1" id="zoom_in" class="svg_icon zoom_icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
                     <g>
                         <path d="M497.938,430.063l-112-112c-0.313-0.313-0.637-0.607-0.955-0.909C404.636,285.403,416,248.006,416,208
@@ -34,17 +44,6 @@
                             c0,79.406-64.602,144-144,144S64,287.406,64,208z"/>
                         <path d="M272,176h-32v-32c0-17.672-14.328-32-32-32s-32,14.328-32,32v32h-32c-17.672,0-32,14.328-32,32s14.328,32,32,32h32v32
                             c0,17.672,14.328,32,32,32s32-14.328,32-32v-32h32c17.672,0,32-14.328,32-32S289.672,176,272,176z"/>
-                    </g>
-                </svg>
-                <svg version="1.1" id="zoom_out" class="svg_icon zoom_icon"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-                    viewBox="0 0 512 512" xml:space="preserve">
-                    <g>
-                        <path d="M497.938,430.063l-112-112c-0.367-0.367-0.805-0.613-1.18-0.965C404.438,285.332,416,248.035,416,208
-                            C416,93.313,322.695,0,208,0S0,93.313,0,208s93.305,208,208,208c40.035,0,77.332-11.563,109.098-31.242
-                            c0.354,0.375,0.598,0.813,0.965,1.18l112,112C439.43,507.313,451.719,512,464,512c12.281,0,24.57-4.688,33.938-14.063
-                            C516.688,479.203,516.688,448.797,497.938,430.063z M64,208c0-79.406,64.602-144,144-144s144,64.594,144,144
-                            c0,79.406-64.602,144-144,144S64,287.406,64,208z"/>
-                        <path d="M272,176H144c-17.672,0-32,14.328-32,32s14.328,32,32,32h128c17.672,0,32-14.328,32-32S289.672,176,272,176z"/>
                     </g>
                 </svg>
                 <svg version="1.1" id="screen_full" class="svg_icon adapt_screen_icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
@@ -59,7 +58,7 @@
                             S209.672,384,192,384z"/>
                     </g>
                 </svg>
-                <svg version="1.1" id="screen_normal" class="svg_icon adapt_screen_icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
+                <svg version="1.1" id="screen_normal" class="svg_icon adapt_screen_icon" style="display:none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
                     <g>
                         <path d="M192,64c-17.672,0-32,14.328-32,32v64H32c-17.672,0-32,14.328-32,32s14.328,32,32,32h160c17.672,0,32-14.328,32-32V96
                             C224,78.328,209.672,64,192,64z"/>
@@ -86,7 +85,7 @@
         <div id='game_area_bottom'>
             <div id='heroes'></div>
             <div id='students_draft'>
-                <div id='students_coulds'></div>
+                <div id='students_clouds_div'></div>
                 <div id='students_bag'></div>
             </div>
         </div>
@@ -106,6 +105,7 @@ let jstpl_island_group = "<div id='island_group_${id}' class='island_group'></di
 let jstpl_game_player_board = "<div id='game_player_board_${id}' class='game_player_board' style='border-color:#${color}'></div>";
 
 let jstpl_hero = "<div id='hero_${n}' class='hero card'></div>";
+let jstpl_cloud = "<div id='cloud_${n}' class='students_cloud'></div>";
 
 </script>  
 

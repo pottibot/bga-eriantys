@@ -26,7 +26,7 @@ class eriantyspas extends Table
         parent::__construct();
         
         self::initGameStateLabels( array( 
-            "next_available_group" => 10,
+            "mother_nature_pos" => 10,
             //    "my_second_global_variable" => 11,
             //      ...
             //    "my_first_game_variant" => 100,
@@ -53,34 +53,101 @@ class eriantyspas extends Table
         // The default below is red/green/blue/orange/brown
         // The number of colors defined here must correspond to the maximum number of players allowed for the gams
         $gameinfos = self::getGameinfos();
-        $default_colors = $gameinfos['player_colors'];
+        $default_colors = ['000000', 'ffffff', '7b7b7b'];
+        $fourPlayersColors = ['000000', 'ffffff', '000000', 'ffffff'];
+        $fourPlayersTeams = [0,1,0,1];
  
         // Create players
         // Note: if you added some extra field on "player" table in the database (dbmodel.sql), you can initialize it there.
         $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar) VALUES ";
         $values = array();
-        foreach( $players as $player_id => $player )
-        {
-            $color = array_shift( $default_colors );
+        foreach($players as $player_id => $player) {
+            $color = ((count($players) < 4)?array_shift($default_colors):array_shift($fourPlayersColors));
             $values[] = "('".$player_id."','$color','".$player['player_canal']."','".addslashes( $player['player_name'] )."','".addslashes( $player['player_avatar'] )."')";
         }
         $sql .= implode( $values, ',' );
         self::DbQuery( $sql );
-        self::reattributeColorsBasedOnPreferences( $players, $gameinfos['player_colors'] );
+
+        if (count($players) == 4) {
+            foreach ($players as $player_id => $player) {
+                $t = array_shift($fourPlayersTeams);
+                self::dbQuery("UPDATE player SET player_team = $t WHERE player_id = $player_id");
+            }
+        }
+
+        //self::reattributeColorsBasedOnPreferences( $players, $gameinfos['player_colors'] );
         self::reloadPlayersBasicInfos();
         
         /************ Start the game initialization *****/
 
         // Init global values with their initial values
-        self::setGameStateInitialValue('next_available_group', 0);
+        self::setGameStateInitialValue('mother_nature_pos', 0);
         
         // Init game statistics
         // (note: statistics used in this file must be defined in your stats.inc.php file)
         //self::initStat( 'table', 'table_teststat1', 0 );    // Init a table statistics
         //self::initStat( 'player', 'player_teststat1', 0 );  // Init a player statistics (for all players)
 
-        
+        // SETUP ISLANDS IN DB
         $this->setupIslands();
+
+        // DRAFT STUDENTS FOR ISLANDS (1 each)
+        $sql = "INSERT INTO influence (island, green, red, yellow, pink, blue) VALUES ";
+
+        $values = [];
+        for ($i=0; $i < 12; $i++) {
+            $students = array_fill(0,5,0);
+            if ($i != 0 && $i != 6) $students[bga_rand(0,4)] = 1; // draft initial students for given island;
+            $students = implode(',',$students);
+
+            $values[] = "($i,$students)";
+        }
+
+        self::dbQuery($sql . implode(',',$values));
+
+        // INIT PLAYERS SCHOOLS
+        $sql = "INSERT INTO school (player, towers) VALUES ";
+        $values = [];
+
+        foreach ($players as $pId => $player) {
+            $towers = (count($players) == 3)?6:(4 * ((count($players) == 2)?2:1));
+            
+            $values[] = "($pId, $towers)";
+        }
+        self::dbQuery($sql . implode(',',$values));
+
+        // DRAFT STUDENTS FOR PLAYERS SCHOOL (7 each, 9 for 3 player games)
+        $sql = "INSERT INTO school_entrance (player, green, red, yellow, pink, blue) VALUES ";
+        $values = [];
+
+        foreach($players as $player_id => $player) {
+            $students = array_fill(0,5,0);
+
+            for ($i=0; $i < ((count($players) == 3)?9:7); $i++) { 
+                $students[bga_rand(0,4)] += 1; // draft student
+            }
+
+            $students = implode(',',$students);
+
+            $values[] = "($player_id,$students)";
+        }
+        
+        self::dbQuery($sql . implode(',',$values));
+
+        // MAYBE DRAFT NOT THE MOST CORRECT WORD
+        // DRAFT CLOUDS STUDENTS
+        $sql = "INSERT INTO cloud (id, green, red, yellow, pink, blue) VALUES ";
+        $values = [];
+
+        for ($i=0; $i < count($players); $i++) {
+            $id = $i+1;
+            $students = array_fill(0,5,0);
+            $students = implode(',',$students);
+            $values[] = "($id,$students)";
+        }
+        
+        self::dbQuery($sql . implode(',',$values));
+        $this->refillClouds();
        
 
         // Activate first player (which is in general a good idea :) )
@@ -98,21 +165,29 @@ class eriantyspas extends Table
         _ when the game starts
         _ when a player refreshes the game page (F5)
     */
-    protected function getAllDatas()
-    {
+    protected function getAllDatas() {
         $result = array();
     
         $current_player_id = self::getCurrentPlayerId();    // !! We must only return informations visible by this player !!
     
         // Get information about players
         // Note: you can retrieve some extra field you added for "player" table in "dbmodel.sql" if you need it.
-        $sql = "SELECT player_id id, player_score score FROM player ";
+        $sql = "SELECT player_id id, player_score score, player_team team FROM player ";
         $result['players'] = self::getCollectionFromDb($sql);
   
         $sql = "SELECT pos, x, y, `group`, `type`, angle FROM island ORDER BY pos ASC";
-        $result['islands'] = self::getObjectListFromDb($sql);
+        $result['islands'] = self::getObjectListFromDb($sql); /* change to Collection? */
 
         $result['islandGroups'] = self::getObjectListFromDb("SELECT DISTINCT `group` FROM island ORDER BY `group` ASC", true);
+
+        $result['islands_influence'] = self::getObjectListFromDb("SELECT * FROM influence");
+
+        $result['schools'] = self::getCollectionFromDb("SELECT * FROM school");
+        $result['schools_entrance'] = self::getCollectionFromDb("SELECT * FROM school_entrance");
+
+        $result['clouds'] = self::getObjectListFromDb("SELECT * FROM cloud");
+
+        $result['mother_nature'] = self::getGameStateValue('mother_nature_pos');
 
         return $result;
     }
@@ -176,6 +251,26 @@ class eriantyspas extends Table
 
         $sql .= implode($values,',');
         self::DbQuery($sql);
+    }
+
+    function refillClouds() {
+        $allClouds = self::getObjectListFromDb("SELECT id FROM cloud", true);
+
+        foreach ($allClouds as $cloud) {
+            $students = array_fill(0,5,0);
+
+            for ($i=0; $i < ((count($allClouds)==3)?4:3); $i++) {
+                $students[bga_rand(0,4)] += 1;
+            }
+
+            $green = $students[0];
+            $red = $students[1];
+            $yellow = $students[2];
+            $pink = $students[3];
+            $blue = $students[4];
+
+            self::dbQuery("UPDATE cloud SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE id = $cloud");
+        }
     }
 
     // second version of join algo

@@ -57,54 +57,199 @@ function (dojo, declare) {
             console.log( "Starting game setup" );
             
             // Setting up player boards
-            for( var player_id in gamedatas.players )
-            {
+            for( var player_id in gamedatas.players ) {
                 var player = gamedatas.players[player_id];
+
+                let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
+
+                let schoolCont = document.querySelector(((isTeam)?'#team_school_area':'#opponents_school_area')+' .schools_cont');
                          
-                $((player_id == this.getCurrentPlayerId())? 'player_school_area' : 'opponents_school_area').insertAdjacentHTML('beforeend',this.format_block('jstpl_game_player_board', {
+                schoolCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_game_player_board', {
+                    name: gamedatas.players[player_id].name,
                     id: player_id,
                     color: gamedatas.players[player_id].color
                 }));
+
+                for (const color in gamedatas.schools_entrance[player_id]) {
+                    if (color != 'player') {
+                        for (let i = 0; i < gamedatas.schools_entrance[player_id][color]; i++) {
+                            document.querySelector(`#game_player_board_${player_id} .school_entrance`).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
+                        }
+                    }
+                }
+
+                for (const color in gamedatas.schools[player_id]) {
+
+                    switch (color) {
+                        case 'green':
+                        case 'red':
+                        case 'yellow':
+                        case 'pink':
+                        case 'blue':
+
+                            let table = document.querySelector(`#game_player_board_${player_id} .table_${color}`);
+
+                            for (let i = 0; i < gamedatas.schools[player_id][color]; i++) {
+                                table.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
+                            }
+                            
+                            break;
+
+                        case 'green_teacher':
+                        case 'red_teacher':
+                        case 'yellow_teacher':
+                        case 'pink_teacher':
+                        case 'blue_teacher':
+
+                            if (gamedatas.schools[player_id][color] == 1) {
+                                document.querySelector(`#game_player_board_${player_id} .teachers_table`).insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: color.split('_')[0]}));
+                            }
+                          
+                            break;
+                        
+                        case 'towers':
+                            let tcol = '';
+                            switch (gamedatas.players[player_id].color) {
+                                case '000000': tcol = 'black'; break; 
+                                case 'ffffff': tcol = 'white'; break;
+                                case '7b7b7b': tcol = 'grey'; break;
+                            }
+                            
+                            for (let i = 0; i < gamedatas.schools[player_id]['towers']; i++) {
+                                document.querySelector(`#game_player_board_${player_id} .school_yard`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: tcol}));
+                            }
+                    
+                        default:
+                            break;
+                    }
+                }
             }
 
+            if (Object.keys(this.gamedatas.players).length == 4) {
+
+                let currBlack = gamedatas.players[this.getCurrentPlayerId()].color == '000000'
+                console.log(currBlack);
+
+                if (currBlack) {
+                    document.querySelector('#team_school_area .team_name').innerHTML = _('Black Team');
+                    $('team_school_area').style.setProperty("--color", 'black');
+
+                    document.querySelector('#opponents_school_area .team_name').innerHTML = _('White Team');
+                    $('opponents_school_area').style.setProperty("--color", 'white');
+                } else {
+                    document.querySelector('#team_school_area .team_name').innerHTML = _('White Team');
+                    $('team_school_area').style.setProperty("--color", 'white');
+
+                    document.querySelector('#opponents_school_area .team_name').innerHTML = _('Black Team');
+                    $('opponents_school_area').style.setProperty("--color", 'black');
+                }
+            }
+
+            // render point, origin to islands placement
             $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point',{left: 0, top: 0}));
 
+            // create islands groups
             gamedatas.islandGroups.forEach(g => {
                 $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island_group', {id: g}));
                 $('island_group_'+g).addEventListener('click', evt => {console.log(evt.target.parentElement.id);})
             });
 
+            // place islands in groups
             gamedatas.islands.forEach(i => {
                 $('island_group_'+i.group).insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {pos: i.pos, type: i.type, left: i.x, top: -i.y, angle: 60*Math.floor(Math.random() * (6 - 0) + 0)}));
             });
 
+            // PLACE STUDENTS ON ISLANDS
+            gamedatas.islands_influence.forEach(island => {
+
+                for (const color in island) {
+                    switch (color) {
+                        case 'green':
+                        case 'red':
+                        case 'yellow':
+                        case 'pink':
+                        case 'blue':
+                            for (let i = 0; i < island[color]; i++) {
+                                document.querySelector(`#island_${island.island} .students_influence`).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
+                            }
+                            break;
+
+                        case 'white_tower':
+                        case 'grey_tower':
+                        case 'black_tower':
+                            if (island[color] == 1)
+                                document.querySelector(`#island_${island.island} .influence_cont`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: color.split('_')[0]}));
+                            break;
+                    }
+                }
+            });
+
+            // PLACE MONA
+            document.querySelector(`#island_${gamedatas.mother_nature} .influence_cont`).insertAdjacentHTML('afterbegin',this.format_block('jstpl_mother_nature'));
+
+            // SOME OF THIS PROBABLY SHOULD BE DONE WITH TEMPLATES
+
+            // PLACE HEROES
+            for (let i = 0; i < 3; i++) {
+                $('heroes').insertAdjacentHTML('beforeend',this.format_block('jstpl_hero', {n: i+1}));
+            }
+
+            // PLACE STUDENTS CLOUDS
+            for (let i = 0; i < 4; i++) {
+                $('students_clouds_div').insertAdjacentHTML('beforeend',this.format_block('jstpl_cloud', {id:i+1, type: 'multi'}));
+            }
+
+            // PLACE STUDENTS ON CLOUDS
+            gamedatas.clouds.forEach(cloud => {
+
+                for (const color in cloud) {
+                    if (color != 'id') {
+                        for (let i = 0; i < cloud[color]; i++) {
+                            $('cloud_'+cloud.id).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
+                        }
+                    }
+                }
+            });
+
+            // setup UI controls
+            this.setupControls();
+ 
+            // Setup game notifications to handle (see "setupNotifications" method below)
+            this.setupNotifications();
+
+            console.log( "Ending game setup" );
+        },
+
+        setupControls: function() {
+
             // handle rot control
             document.querySelectorAll('#control_rotation > svg').forEach(el => {
                 el.addEventListener('click', evt => {
-                    let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
-                    r = +r + 30*((el.id == 'rotate_left')?1:-1);
+                    this.rotateIslands(((el.id == 'rotate_left')?1:-1));
+                });
+            });
 
-                    $('islands_cont').style.setProperty("--z-rot", r+"deg");
-                })
-            })
+            // handle mouse wheel control
+            $('islands_div').addEventListener('wheel', evt =>{
+                evt.preventDefault();
+
+                this.rotateIslands(evt.wheelDelta/120);
+            });
 
             // handle zoom control
             document.querySelectorAll('#control_zoom > .zoom_icon').forEach(el => {
                 el.addEventListener('click', evt => {
                     this.zoomIslands((evt.target.closest('#zoom_in'))?1:-1);
                 });
-            })
+            });
 
             // handle screen adapt control
             document.querySelectorAll('#control_zoom > .adapt_screen_icon').forEach(el => {
                 el.addEventListener('click', evt => {
-                    console.log('adapting');
 
                     let full = evt.target.closest('#screen_full');
 
                     while (this.zoomIslands((full)? 1:-1)); // returns false and stops when zoom is no longer possible
-
-                    console.log((this.zoomIslands(1,false)));
 
                     if (this.zoomIslands(1,false)) {
                         $('screen_full').style.display= '';
@@ -114,30 +259,7 @@ function (dojo, declare) {
                         $('screen_normal').style.display= '';
                     }
                 });
-            })
-
-            $('islands_div').addEventListener('wheel', evt =>{
-                evt.preventDefault();
-
-                let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
-                r = +r + 30*evt.wheelDelta/120;
-
-                $('islands_cont').style.setProperty("--z-rot", r+"deg");
-            })
-
-
-            for (let i = 0; i < 3; i++) {
-                $('heroes').insertAdjacentHTML('beforeend',this.format_block('jstpl_hero', {n: i+1}));
-            }
-
-            for (let i = 0; i < 4; i++) {
-                $('students_clouds_div').insertAdjacentHTML('beforeend',this.format_block('jstpl_cloud', {n: 'multi'}));
-            }
- 
-            // Setup game notifications to handle (see "setupNotifications" method below)
-            this.setupNotifications();
-
-            console.log( "Ending game setup" );
+            });
         },
 
         onScreenWidthChange: function() {
@@ -247,7 +369,7 @@ function (dojo, declare) {
 
         zoomIslands: function(d, effective=true) {
 
-            let f = getComputedStyle($('main_game_area')).getPropertyValue("--islands-fr").split('%')[0];
+            let f = getComputedStyle($('game_ui')).getPropertyValue("--islands-fr").split('%')[0];
             f = +f + 5*d;
 
             let s = getComputedStyle($('main_game_area')).getPropertyValue("--scale");
@@ -260,7 +382,7 @@ function (dojo, declare) {
             let w = this.scaleMap.filter(sw => sw.scale == s)[0].width;
             if ($('game_ui').offsetWidth >= w) {
                 if (effective) {
-                    $('main_game_area').style.setProperty("--islands-fr", f+'%');
+                    $('game_ui').style.setProperty("--islands-fr", f+'%');
                     $('main_game_area').style.setProperty("--scale", s);
                     $('main_game_area').style.minWidth = w + 'px'; 
                 }
@@ -275,6 +397,18 @@ function (dojo, declare) {
             }
             
             return false
+        },
+
+        rotateIslands: function(d) {
+            let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
+            r = +r + 30*d;
+            $('islands_cont').style.setProperty("--z-rot", r+"deg");
+
+            document.querySelectorAll('.influence_cont').forEach(el => {
+                let r = getComputedStyle(el).getPropertyValue("--angle").split('deg')[0];
+                r = +r + 30*-d;
+                $(el).style.setProperty("--angle", r+"deg");
+            });
         },
 
 

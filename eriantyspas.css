@@ -8,15 +8,25 @@
  * -----
  */
 
+
+html {
+    background: url('img/background.jpg') #fff8f0;
+    background-repeat: repeat;
+    background-size: 100%;
+}
+
+
 /* ---------------------------------- */
 /* #region MAIN GAME AREA SUBDIVISION */
 /* ---------------------------------- */
 
-/* #game_ui * {
+#game_ui * {
     background-color: transparent !important;
-} */
+}
 
 #game_ui {
+    --islands-fr: 0%;
+
     width: 100%;
     height: fit-content;
 
@@ -29,7 +39,6 @@
 }
 
 #main_game_area {
-    --islands-fr: 0%;
     --scale: 1;
 
     width: calc(var(--islands-fr) + 50%);
@@ -62,7 +71,7 @@
     background-color: rgba(50, 116, 155, 0.5);
 
     width: 100%;
-    height: calc(var(--scale) * 500px);
+    height: calc(var(--scale) * 550px);
     
     border-radius: 100%;
 }
@@ -78,25 +87,43 @@
     /* row-gap: 20px; */
 }
 
-#player_school_area {
-    /* width: calc(50% - var(--islands-fr)); */
+#team_school_area {
+    width: calc(50% - var(--islands-fr));
     min-width: 600px;
     flex-grow: 1;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-
     background-color: rgba(149, 35, 111, 0.5);
+
+    position: relative;
+    row-gap: 20px;
 }
 
 #opponents_school_area {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
+    width: 100%;
 
     background-color: rgba(58, 149, 35, 0.5);
+    
+}
+
+.schools_area {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    row-gap: 30px;
+}
+
+.schools_cont {
+    flex-grow: 1;
+
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-items: center;
+    align-content: center;
+
+    row-gap: 20px;
 }
 
 /* #endregion */
@@ -148,7 +175,7 @@
     transform: scale(calc(var(--scale) - 0.1));
 
     position: absolute;
-    top: 32%;
+    top: 34%;
     left: 50%;
 }
 
@@ -158,8 +185,9 @@
 
 #islands_cont {
     --z-rot: 0deg;
+    --size: 0.15;
 
-    transform: rotateX(60deg) rotateZ(var(--z-rot));
+    transform: rotateX(50deg) rotateZ(var(--z-rot));
 
     transition: transform 200ms ease-out;
 }
@@ -170,9 +198,9 @@
 
     background-image: url('img/pieces.png');
 
-    width: 100px;
-    height: 100px;
-    background-size: 400px 381px;
+    width: calc(var(--size) * 1000px);
+    height: calc(var(--size) * 1000px);
+    background-size: calc(var(--size) * 4000px) calc(var(--size) * 3714px);
 
     transform: translate(-50%,-50%) rotate(var(--angle));
 
@@ -180,21 +208,69 @@
     transition: 1.5s ease-in;
 }
 
+.influence_cont {
+    /* --offLeft: 0px;
+    --offTop: 0px; */
+    /* transform: translate(calc(var(--offLeft) * -1), calc(var(--offTop) * -1)) rotateZ(calc(var(--z-rot) * -1)) rotateX(-0deg) translate(var(--offLeft),var(--offTop)) translate(-50%,-50%) rotate(var(--angle)); */
+
+    transform: translate(-50%,-50%) rotate(var(--angle));
+
+    width: 100%;
+    height: fit-content;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+
+    position: relative;
+    top: 50%;
+    left: 50%;
+
+    transition: transform 100ms ease-in;
+}
+
+.students_influence {
+    width: 40%;
+    height: 50px;
+
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+}
+
+.island .student {
+    --scale: 0.03
+}
+
+.island .tower {
+    --scale: 0.07;
+
+    /* position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%,-50%); */
+}
+
 .island_type_1 {
-    background-position: 0px 0px;
+    background-position-x: calc(var(--size) * 0px);
 }
 
 .island_type_2 {
-    background-position: -100px 0px;
+    background-position-x: calc(var(--size) * -1000px);
 }
 
 .island_type_3 {
-    background-position: -200px 0px;
+    background-position-x: calc(var(--size) * -2000px);
 }
 
-.island_group:hover {
+/* .island_group:hover {
     filter: drop-shadow(0px 0px 5px red);
-}
+} */
 
 /* #endregion */
 /* ------------------------- */
@@ -203,6 +279,21 @@
 /* --------------------------- */
 /* #region SCHOOL PLAYER BOARD */
 /* --------------------------- */
+
+.team_name {
+    font-size: large;
+    font-weight: bold;
+    margin: 15px;
+
+    color: var(--color);
+}
+
+.school_name {
+    position: absolute;
+    top: -25px;
+
+    color: var(--color);
+}
 
 .game_player_board {
     --scale: 0.15;
@@ -213,14 +304,148 @@
     height: calc(var(--scale) * 1714px);
 
     background-image: url('img/pieces.png');
-    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3807px);
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
 
-    background-position: 0px calc(var(--scale) * -2093px);
+    background-position: 0px calc(var(--scale) * -2000px);
 
     border: solid #374649 2px;
     border-radius: 5px;
 
-    margin: 10px;
+    margin: 15px;
+
+    display: flex;
+    justify-content: space-between;
+
+    position: relative;
+}
+
+.school_entrance {
+    width: 11.5%;
+    
+    display: flex;
+    flex-wrap: wrap;
+
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+
+    gap: 10px;
+}
+
+.school_hall {
+    width: 65%;
+
+    display: flex;
+    justify-content: space-around;
+}
+
+.students_tables {
+    width: 85%;
+    height: 83%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    position: relative;
+
+    top: 18px;
+    left: 29px;
+}
+
+.students_table {
+    display: flex;
+
+    column-gap: 6.1px;
+}
+
+.teachers_table {
+    width: 10%;
+    height: 88%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: flex-start;
+
+    position: relative;
+    top: 10px;
+}
+
+.game_player_board .student {
+    --scale: 0.06;
+}
+
+.game_player_board .teacher {
+    --scale: 0.07;
+}
+
+.school_yard {
+    width: 15%;
+    padding: 15px;
+
+    display: grid;
+    grid-template-columns: 40px 40px;
+    grid-template-rows: repeat(2,45px);
+    align-content: center;
+
+    position: relative;
+    top: -18px;
+}
+
+/* #endregion */
+/* --------------------------- */
+
+/* -------------------------------- */
+/* #region TOWERS AND MOTHER NATURE */
+/* -------------------------------- */
+
+#mother_nature {
+    --scale: 0.08;
+
+    display: inline-block;
+
+    width: calc(var(--scale) * 361px);
+    height: calc(var(--scale) * 500px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+
+    background-position:calc(var(--scale) * -2500px) calc(var(--scale) * -1000px);
+
+    filter: drop-shadow(calc(var(--scale) * -10px) calc(var(--scale) * 20px) calc(var(--scale) * 20px) black);
+
+    position: absolute;
+    top: -25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.tower {
+    --scale: 0.1;
+
+    display: inline-block;
+
+    width: calc(var(--scale) * 275px);
+    height: calc(var(--scale) * 500px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+
+    background-position-y:calc(var(--scale) * -1000px);
+
+    filter: drop-shadow(calc(var(--scale) * 0px) calc(var(--scale) * 20px) calc(var(--scale) * 20px) black);
+}
+
+.tower_white {
+    background-position-x:calc(var(--scale) * -2861px);
+}
+
+.tower_grey {
+    background-position-x:calc(var(--scale) * -3136px);
+}
+
+.tower_black {
+    background-position-x:calc(var(--scale) * -3411px);
 }
 
 /* #endregion */
@@ -301,7 +526,7 @@
 /* #endregion */
 /* -------------------------------- */
 
-/* -------------------------------- */
+/* ------------------------- */
 /* #region STUDENTS DRAFTING */
 /* -------------------------------- */
 
@@ -332,34 +557,50 @@
 .students_cloud {
     --scale: 0.16;
 
-    display: inline-block;
+    /* display: inline-block; */
 
     width: calc(var(--scale) * 500px);
     height: calc(var(--scale) * 500px);
 
     background-image: url('img/pieces.png');
-    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3807px);
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+    background-position-y: calc(var(--scale) * -1000px);
     border-radius: 100%;
+
+    /* display: flex;
+    align-items: center;
+    justify-content: space-evenly; */
+
+    display: grid;
+    grid-template-columns: 20px 20px;
+    row-gap: 5px;
+    justify-content: space-evenly;
+    justify-items: center;
+    align-content: center;
 }
 
-#cloud_1 {
-    background-position: calc(var(--scale) * -2500px) calc(var(--scale) * -1000px);
+.students_cloud div:first-child {
+    grid-column: span 2;
 }
 
-#cloud_2 {
-    background-position: calc(var(--scale) * -3000px) calc(var(--scale) * -1000px);
+.cloud_type_1 {
+    background-position-x: calc(var(--scale) * 0px);
 }
 
-#cloud_3 {
-    background-position: calc(var(--scale) * -3500px) calc(var(--scale) * -1000px);
+.cloud_type_2 {
+    background-position-x: calc(var(--scale) * -500px);
 }
 
-#cloud_4 {
-    background-position: calc(var(--scale) * -2500px) calc(var(--scale) * -1500px);
+.cloud_type_3 {
+    background-position-x: calc(var(--scale) * -1000px);
 }
 
-#cloud_multi {
-    background-position: calc(var(--scale) * -3000px) calc(var(--scale) * -1500px);
+.cloud_type_4 {
+    background-position-x: calc(var(--scale) * -1500px);
+}
+
+.cloud_type_multi {
+    background-position-x: calc(var(--scale) * -2000px);
 }
 
 #students_bag {
@@ -371,12 +612,85 @@
     height: calc(var(--scale) * 840px);
 
     background-image: url('img/pieces.png');
-    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3807px);
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
     background-position: calc(var(--scale) * -3000px) 0px;
 }
 
 /* #endregion */
-/* -------------------------------- */
+/* ------------------------- */
+
+/* ------------ */
+/* #region STUDENTS, PROFESSORS AND TOWERS */
+/* ------------ */
+
+.student {
+    --scale: 0.05;
+
+    width: calc(var(--scale) * 375px);
+    height: calc(var(--scale) * 375px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+    background-position-y: calc(var(--scale) * -1500px);
+
+    filter: drop-shadow(calc(var(--scale) * -20px) calc(var(--scale) * 20px) calc(var(--scale) * 20px) black);
+}
+
+.student_green {
+    background-position-x: calc(var(--scale) * 0px);
+}
+
+.student_red {
+    background-position-x: calc(var(--scale) * -375px);
+}
+
+.student_yellow {
+    background-position-x: calc(var(--scale) * -750px);
+}
+
+.student_pink {
+    background-position-x: calc(var(--scale) * -1125px);
+}
+
+.student_blue {
+    background-position-x: calc(var(--scale) * -1500px);
+}
+
+.teacher {
+    --scale: 0.1;
+
+    width: calc(var(--scale) * 375px);
+    height: calc(var(--scale) * 446px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+    background-position-y: calc(var(--scale) * -1500px);
+
+    filter: drop-shadow(calc(var(--scale) * -15px) calc(var(--scale) * 15px) calc(var(--scale) * 15px) rgb(0,0,0,0.7));
+}
+
+.teacher_green {
+    background-position-x: calc(var(--scale) * -1875px);
+}
+
+.teacher_red {
+    background-position-x: calc(var(--scale) * -2250px);
+}
+
+.teacher_yellow {
+    background-position-x: calc(var(--scale) * -2625px);
+}
+
+.teacher_pink {
+    background-position-x: calc(var(--scale) * -3000px);
+}
+
+.teacher_blue {
+    background-position-x: calc(var(--scale) * -3375px);
+}
+
+/* #endregion */
+/* ------------ */
 
 /* ------------ */
 /* #region MISC */

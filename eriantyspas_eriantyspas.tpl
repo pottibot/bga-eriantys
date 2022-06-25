@@ -90,22 +90,51 @@
             </div>
         </div>
     </div>
-    <div id="player_school_area">
+    <div id="team_school_area" class='schools_area'>
+        <div class='team_name'></div>
+        <div class='schools_cont'></div>
     </div>
-    <div id="opponents_school_area">
+    <div id="opponents_school_area" class='schools_area'>
+        <div class='team_name'></div>
+        <div class='schools_cont'></div>
     </div>    
 </div>
 
 <script type="text/javascript">
 
 let jstpl_point = "<div class='point' style='left:${left}px; top:${top}px;'></div>";
-let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='--angle: ${angle}deg; left:${left}px; top:${top}px;'></div>"
+let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='--angle: ${angle}deg; left:${left}px; top:${top}px;'>\
+                        <div class='influence_cont' style='--angle: -${angle}deg; --offLeft: ${left}px; --offTop: ${top}px;'>\
+                            <div class='students_influence'></div>\
+                        </div>\
+                    </div>"
 let jstpl_island_group = "<div id='island_group_${id}' class='island_group'></div>";
 
-let jstpl_game_player_board = "<div id='game_player_board_${id}' class='game_player_board' style='border-color:#${color}'></div>";
+let jstpl_game_player_board =  "<div id='game_player_board_${id}' class='game_player_board' style='border-color:#${color}'>\
+                                    <span class='school_name'>${name}</span>\
+                                    <div class='school_entrance school_room'></div>\
+                                    <div class='school_hall school_room'>\
+                                        <div class='students_tables'>\
+                                            <div class='table_green students_table'></div>\
+                                            <div class='table_red students_table'></div>\
+                                            <div class='table_yellow students_table'></div>\
+                                            <div class='table_pink students_table'></div>\
+                                            <div class='table_blue students_table'></div>\
+                                        </div>\
+                                        <div class='teachers_table'></div>\
+                                    </div>\
+                                    <div class='school_yard school_room'></div>\
+                                </div>";
 
 let jstpl_hero = "<div id='hero_${n}' class='hero card'></div>";
-let jstpl_cloud = "<div id='cloud_${n}' class='students_cloud'></div>";
+let jstpl_cloud = "<div id='cloud_${id}' class='cloud_type_${type} students_cloud'></div>";
+
+let jstpl_student = "<div class='student_${color} student'></div>";
+let jstpl_teacher = "<div class='teacher_${color} teacher'></div>";
+
+let jstpl_tower = "<div class='tower_${color} tower'></div>";
+let jstpl_mother_nature = "<div id='mother_nature'></div>";
+
 
 </script>  
 

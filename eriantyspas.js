@@ -21,6 +21,8 @@ function (dojo, declare) {
             // Example:
             // this.myGlobalValue = 0;
 
+            this.counters = {};
+
             this.scaleMap = [
                 {
                     scale: 0.8,
@@ -55,10 +57,23 @@ function (dojo, declare) {
         
         setup: function(gamedatas) {
             console.log( "Starting game setup" );
+
+            this.counters.playerBoard = {};
             
             // Setting up player boards
             for( var player_id in gamedatas.players ) {
                 var player = gamedatas.players[player_id];
+                this.counters.playerBoard[player_id] = {};
+
+                // setup counter
+                let pb = $('player_board_'+player_id);
+                pb.insertAdjacentHTML('beforeend',this.format_block('jstpl_player_board', {pId: player_id}));
+
+                let counter = new ebg.counter();
+                counter.create($('turn_order_'+player_id));
+                counter.setValue(0);
+                this.counters.playerBoard[player_id]['turnOrder'] = counter;
+
 
                 let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
 
@@ -85,7 +100,12 @@ function (dojo, declare) {
                         case 'red':
                         case 'yellow':
                         case 'pink':
-                        case 'blue':
+                        case 'blue': {
+
+                            let counter = new ebg.counter();
+                            counter.create($(color+'_students_'+player_id));
+                            counter.setValue(gamedatas.schools[player_id][color]);
+                            this.counters.playerBoard[player_id]['coins'] = counter; 
 
                             let table = document.querySelector(`#game_player_board_${player_id} .table_${color}`);
 
@@ -94,6 +114,7 @@ function (dojo, declare) {
                             }
                             
                             break;
+                        }
 
                         case 'green_teacher':
                         case 'red_teacher':
@@ -101,8 +122,16 @@ function (dojo, declare) {
                         case 'pink_teacher':
                         case 'blue_teacher':
 
+                            let tc = color.split('_')[0];
+                            let teachers_table = document.querySelector(`#game_player_board_${player_id} .teachers_table`);
+                            teachers_table.insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: tc}));
+
                             if (gamedatas.schools[player_id][color] == 1) {
-                                document.querySelector(`#game_player_board_${player_id} .teachers_table`).insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: color.split('_')[0]}));
+
+                                document.querySelector(`#player_board_${player_id} .${tc}_counter .teacher_marker`).style.visibility = 'unset';
+                            } else {
+
+                                teachers_table.lastElementChild.style.visibility = 'hidden';
                             }
                           
                             break;
@@ -119,8 +148,13 @@ function (dojo, declare) {
                                 document.querySelector(`#game_player_board_${player_id} .school_yard`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: tcol}));
                             }
                     
-                        default:
+                        case 'coins': {
+                            let counter = new ebg.counter();
+                            counter.create($('coins_'+player_id));
+                            counter.setValue(gamedatas.schools[player_id]['coins']);
+                            this.counters.playerBoard[player_id]['coins'] = counter; 
                             break;
+                        }
                     }
                 }
             }
@@ -133,15 +167,19 @@ function (dojo, declare) {
                 if (currBlack) {
                     document.querySelector('#team_school_area .team_name').innerHTML = _('Black Team');
                     $('team_school_area').style.setProperty("--color", 'black');
+                    $('team_school_area').style.setProperty("--alt-color", 'white');
 
                     document.querySelector('#opponents_school_area .team_name').innerHTML = _('White Team');
                     $('opponents_school_area').style.setProperty("--color", 'white');
+                    $('opponents_school_area').style.setProperty("--alt-color", 'black');
                 } else {
                     document.querySelector('#team_school_area .team_name').innerHTML = _('White Team');
                     $('team_school_area').style.setProperty("--color", 'white');
+                    $('team_school_area').style.setProperty("--alt-color", 'black');
 
                     document.querySelector('#opponents_school_area .team_name').innerHTML = _('Black Team');
                     $('opponents_school_area').style.setProperty("--color", 'black');
+                    $('opponents_school_area').style.setProperty("--alt-color", 'white');
                 }
             }
 

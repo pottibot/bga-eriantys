@@ -135,6 +135,50 @@ let jstpl_teacher = "<div class='teacher_${color} teacher'></div>";
 let jstpl_tower = "<div class='tower_${color} tower'></div>";
 let jstpl_mother_nature = "<div id='mother_nature'></div>";
 
+let jstpl_coin = "<div class='coin'></div>";
+
+let jstpl_player_board =    "<div id='inner_player_board_${pId}' class='inner_player_board'>\
+                                <div class='player_coins'><div class='coin'></div><span id='coins_${pId}'></span></div>\
+                                <div class='player_turn_order'><div class='mona_icon'></div><span id='turn_order_${pId}'></span></div>\
+                                <div class='player_students'>\
+                                    <div class='green_counter color_counter' style='--col:#25ac74'>\
+                                        <svg class='teacher_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
+                                            <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
+                                        </svg>\
+                                        <div class='student_green student'></div>\
+                                        <span id='green_students_${pId}'></span>\
+                                    </div>\
+                                    <div class='red_counter color_counter' style='--col:#e20913'>\
+                                        <svg  class='teacher_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
+                                            <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
+                                        </svg>\
+                                        <div class='student_red student'></div>\
+                                        <span id='red_students_${pId}'></span>\
+                                    </div>\
+                                    <div class='yellow_counter color_counter'  style='--col:#f9b01d'>\
+                                        <svg  class='teacher_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
+                                            <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
+                                        </svg>\
+                                        <div class='student_yellow student'></div>\
+                                        <span id='yellow_students_${pId}'></span>\
+                                    </div>\
+                                    <div class='pink_counter color_counter' style='--col:#f8c8df'>\
+                                        <svg  class='teacher_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
+                                            <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
+                                        </svg>\
+                                        <div class='student_pink student'></div>\
+                                        <span id='pink_students_${pId}'></span>\
+                                    </div>\
+                                    <div class='blue_counter color_counter' style='--col:#3abff0'>\
+                                        <svg  class='teacher_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
+                                            <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
+                                        </svg>\
+                                        <div class='student_blue student'></div>\
+                                        <span id='blue_students_${pId}'></span>\
+                                    </div>\
+                                </div>\
+                            </div>";
+
 
 </script>  
 

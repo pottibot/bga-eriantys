@@ -20,12 +20,13 @@ html {
 /* #region MAIN GAME AREA SUBDIVISION */
 /* ---------------------------------- */
 
-#game_ui * {
+/* #game_ui * {
     background-color: transparent !important;
-}
+} */
 
 #game_ui {
     --islands-fr: 0%;
+    --regions-bgcol: rgba(255, 255, 255, 0.5);
 
     width: 100%;
     height: fit-content;
@@ -38,6 +39,11 @@ html {
     flex-wrap: wrap;
 }
 
+/* #game_ui > div {
+    border: solid black 1px;
+    box-sizing: border-box;
+} */
+
 #main_game_area {
     --scale: 1;
 
@@ -47,13 +53,13 @@ html {
     min-width: 750px;
     flex-grow: 1;
 
-    background-color: rgba(255, 255, 255, 0.5);
+    /* background-color: var(--regions-bgcol); */
 
     position: relative;
 }
 
 #controls_div {
-    background-color: rgb(227 95 255 / 50%);
+    /* background-color: rgb(227 95 255 / 50%); */
 
     display: flex;
     align-items: center;
@@ -68,7 +74,7 @@ html {
     position: relative;
 
     display: inline-block;
-    background-color: rgba(50, 116, 155, 0.5);
+    /* background-color: rgba(50, 116, 155, 0.5); */
 
     width: 100%;
     height: calc(var(--scale) * 550px);
@@ -77,7 +83,7 @@ html {
 }
 
 #game_area_bottom {
-    background-color: rgba(255, 218, 52, 0.5);
+    /* background-color: rgba(255, 218, 52, 0.5); */
 
     display: flex;
     flex-wrap: wrap;
@@ -88,11 +94,11 @@ html {
 }
 
 #team_school_area {
-    width: calc(50% - var(--islands-fr));
-    min-width: 600px;
+    width: calc(40% - var(--islands-fr));
+    min-width: 650px;
     flex-grow: 1;
 
-    background-color: rgba(149, 35, 111, 0.5);
+    /* background-color: var(--regions-bgcol); */
 
     position: relative;
     row-gap: 20px;
@@ -101,7 +107,7 @@ html {
 #opponents_school_area {
     width: 100%;
 
-    background-color: rgba(58, 149, 35, 0.5);
+    /* background-color: var(--regions-bgcol); */
     
 }
 
@@ -110,25 +116,20 @@ html {
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    row-gap: 30px;
 }
 
 .schools_cont {
-    flex-grow: 1;
+    /* flex-grow: 1; */
 
     display: flex;
     flex-wrap: wrap;
     justify-content: space-evenly;
     align-items: center;
     align-content: center;
-
-    row-gap: 20px;
 }
 
 /* #endregion */
 /* ---------------------------------- */
-
 
 /* ----------------------------- */
 /* #region ISLANDS CONTROLS AREA */
@@ -143,12 +144,23 @@ html {
     display: flex;
     width: 100px;
     justify-content: space-between;
+
+    background-color: rgb(255, 255, 255, 0.5);
+    padding-right: 10px;
+    padding-left: 10px;
+    border-radius: 60px;
 }
 
 #control_zoom {
     display: flex;
     justify-content: space-between;
     width: 120px;
+
+    background-color: rgb(255, 255, 255, 0.5);
+    padding: 10px;
+    padding-right: 15px;
+    padding-left: 15px;
+    border-radius: 60px;
 }
 
 .svg_icon {
@@ -165,7 +177,6 @@ html {
 
 /* #endregion */
 /* ----------------------------- */
-
 
 /* ------------------------- */
 /* #region ISLANDS AND GROUPS*/
@@ -275,7 +286,6 @@ html {
 /* #endregion */
 /* ------------------------- */
 
-
 /* --------------------------- */
 /* #region SCHOOL PLAYER BOARD */
 /* --------------------------- */
@@ -283,16 +293,22 @@ html {
 .team_name {
     font-size: large;
     font-weight: bold;
-    margin: 15px;
 
-    color: var(--color);
+    padding: 15px;
+    margin: 15px;
+    border-radius: 10px;
+
+    color: var(--alt-color);
+    background-color: var(--color);
 }
 
 .school_name {
     position: absolute;
-    top: -25px;
+    padding: 5px;
+    border-radius: 0px 0px 5px 0px;
 
-    color: var(--color);
+    color: var(--alt-color);
+    background-color: var(--color);
 }
 
 .game_player_board {
@@ -692,9 +708,37 @@ html {
 /* #endregion */
 /* ------------ */
 
-/* ------------ */
-/* #region MISC */
-/* ------------ */
+/* ----------------------- */
+/* #region TOKENS AND MISC */
+/* ----------------------- */
+
+.coin {
+    --scale: 0.13;
+
+    width: calc(var(--scale) * 250px);
+    height: calc(var(--scale) * 250px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+
+    background-position:calc(var(--scale) * -3750px) calc(var(--scale) * -1750px);
+
+    filter: drop-shadow(0px 0px 0px black);
+}
+
+.mona_icon {
+    --scale: 0.15;
+
+    width: calc(var(--scale) * 250px);
+    height: calc(var(--scale) * 203px);
+
+    background-image: url('img/pieces.png');
+    background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
+
+    background-position:calc(var(--scale) * -3750px) calc(var(--scale) * -1250px);
+
+    filter: drop-shadow(0px 0px 0px black);
+}
 
 .point {
     --size: 10px;
@@ -711,4 +755,106 @@ html {
 }
 
 /* #endregion */
-/* ------------ */
+/* ----------------------- */
+
+/* ------------------------- */
+/* #region SIDE PLAYER BOARD */
+/* ------------------------- */
+
+.player-board {
+    background-color: rgb(176 209 233 / 50%);
+    border-width: 2px;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.inner_player_board {
+    height: 100px;
+
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    align-content: space-around;
+
+    position: relative;
+}
+
+.inner_player_board span {
+    z-index: 1;
+
+    font-weight: bold;
+    font-size: large;
+
+    filter: drop-shadow(0px 0px 2px white);
+}
+
+.player_coins {
+    display: flex;
+    align-items: center;
+
+    position: relative;
+    left: 10px;
+}
+
+.player_coins > span {
+    position: relative;
+    left: -10px;
+}
+
+.player_turn_order {
+    display: flex;
+    align-items: center;
+
+    position: relative;
+    left: -10px;
+}
+
+.player_turn_order > span {
+    position: relative;
+    left: -10px;
+}
+
+.player_students {
+    width: 100%;
+    height: 40px;
+
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.player_students > .student {
+    --scale: 0.05;
+}
+
+.player_students > .teacher {
+    --scale: 0.05;
+    display: none;
+}
+
+.color_counter {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+}
+
+.teacher_marker {
+    width: 40px;
+    height: 35px;
+
+    position: absolute;
+    top: -7px;
+    left: -11px;
+    
+    visibility: hidden;
+}
+
+.hex_shape {
+    fill: none;
+    stroke: var(--col);
+    stroke-width: 2px;
+}
+
+/* #endregion */
+/* ----------------------- */

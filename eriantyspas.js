@@ -26,31 +26,31 @@ function (dojo, declare) {
             this.scaleMap = [
                 {
                     scale: 0.8,
-                    width: 850
+                    width: 560
                 },
                 {
                     scale: 1,
-                    width: 850
+                    width: 700
                 },
                 {
                     scale: 1.2,
-                    width: 1020
+                    width: 840
                 },
                 {
                     scale: 1.4,
-                    width: 1190
+                    width: 980
                 },
                 {
                     scale: 1.6,
-                    width: 1360
+                    width: 1120
                 },
                 {
                     scale: 1.8,
-                    width: 1530
+                    width: 1260
                 },
                 {
                     scale: 2,
-                    width: 1700
+                    width: 1400
                 }
             ]
         },
@@ -194,7 +194,7 @@ function (dojo, declare) {
 
             // place islands in groups
             gamedatas.islands.forEach(i => {
-                $('island_group_'+i.group).insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {pos: i.pos, type: i.type, left: i.x, top: -i.y, angle: 60*Math.floor(Math.random() * (6 - 0) + 0)}));
+                $('island_group_'+i.group).insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {pos: i.pos, type: i.type, left: i.x, top: -i.y}));
             });
 
             // PLACE STUDENTS ON ISLANDS
@@ -260,20 +260,6 @@ function (dojo, declare) {
 
         setupControls: function() {
 
-            // handle rot control
-            document.querySelectorAll('#control_rotation > svg').forEach(el => {
-                el.addEventListener('click', evt => {
-                    this.rotateIslands(((el.id == 'rotate_left')?1:-1));
-                });
-            });
-
-            // handle mouse wheel control
-            $('islands_div').addEventListener('wheel', evt =>{
-                evt.preventDefault();
-
-                this.rotateIslands(evt.wheelDelta/120);
-            });
-
             // handle zoom control
             document.querySelectorAll('#control_zoom > .zoom_icon').forEach(el => {
                 el.addEventListener('click', evt => {
@@ -288,14 +274,6 @@ function (dojo, declare) {
                     let full = evt.target.closest('#screen_full');
 
                     while (this.zoomIslands((full)? 1:-1)); // returns false and stops when zoom is no longer possible
-
-                    if (this.zoomIslands(1,false)) {
-                        $('screen_full').style.display= '';
-                        $('screen_normal').style.display= 'none';
-                    } else {
-                        $('screen_full').style.display= 'none';
-                        $('screen_normal').style.display= '';
-                    }
                 });
             });
         },
@@ -304,18 +282,18 @@ function (dojo, declare) {
             console.log('SCREEND WIDTH CHANGED');
 
             let ui_w = $('game_ui').clientWidth;
-
-            let newMin = Math.max(750, Math.min(ui_w, 850));
             
-            $('main_game_area').style.minWidth = newMin + 'px';
-
             let min_islands_w = this.scaleMap.filter(sw => sw.scale == getComputedStyle($('main_game_area')).getPropertyValue("--scale"))[0].width;
+            $('main_game_area').style.minWidth = min_islands_w + 'px';
 
             console.log('ui width',ui_w);
             console.log('islands current min width to scale',min_islands_w);
 
             if (ui_w < min_islands_w) {
                 this.zoomIslands(-1);
+
+                min_islands_w = this.scaleMap.filter(sw => sw.scale == getComputedStyle($('main_game_area')).getPropertyValue("--scale"))[0].width;
+                $('main_game_area').style.minWidth = min_islands_w + 'px';
             }
                 
         },
@@ -413,9 +391,17 @@ function (dojo, declare) {
             let s = getComputedStyle($('main_game_area')).getPropertyValue("--scale");
             s = Number.parseFloat(+s + 0.2*d).toFixed(1);
 
-            if (s < 1 || s > 2) return false;
+            if (s < 0.8 || s > 2) return false;
 
             console.log(s);
+
+            if (s == 2) {
+                $('screen_full').style.display= 'none';
+                $('screen_normal').style.display= '';
+            } else {
+                $('screen_full').style.display= '';
+                $('screen_normal').style.display= 'none';
+            }
 
             let w = this.scaleMap.filter(sw => sw.scale == s)[0].width;
             if ($('game_ui').offsetWidth >= w) {
@@ -435,18 +421,6 @@ function (dojo, declare) {
             }
             
             return false
-        },
-
-        rotateIslands: function(d) {
-            let r = getComputedStyle($('islands_cont')).getPropertyValue("--z-rot").split('deg')[0];
-            r = +r + 30*d;
-            $('islands_cont').style.setProperty("--z-rot", r+"deg");
-
-            document.querySelectorAll('.influence_cont').forEach(el => {
-                let r = getComputedStyle(el).getPropertyValue("--angle").split('deg')[0];
-                r = +r + 30*-d;
-                $(el).style.setProperty("--angle", r+"deg");
-            });
         },
 
 

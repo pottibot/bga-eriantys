@@ -12,18 +12,7 @@
 
 <div id="game_ui">
     <div id="main_game_area"> <!-- rename, misleading -->
-        <div id='controls_div'>
-            <div id='control_rotation' class='controls'>
-                <svg id="rotate_left" class="svg_icon rotate_icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12,6C6.3,6,2,8.15,2,11c0,2.45,3.19,4.38,7.71,4.88l-.42.41a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l2-2a1,1,0,0,0,.21-.33,1,1,0,0,0,0-.76,1,1,0,0,0-.21-.33l-2-2a1,1,0,0,0-1.42,1.42l.12.11C6,13.34,4,12,4,11c0-1.22,3.12-3,8-3s8,1.78,8,3c0,.83-1.45,2-4.21,2.6A1,1,0,0,0,15,14.79a1,1,0,0,0,1.19.77C19.84,14.76,22,13.06,22,11,22,8.15,17.7,6,12,6Z"/>
-                </svg>
-                <svg id="rotate_right" class="svg_icon rotate_icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12,6C6.3,6,2,8.15,2,11c0,2.45,3.19,4.38,7.71,4.88l-.42.41a1,1,0,0,0,0,1.42,1,1,0,0,0,1.42,0l2-2a1,1,0,0,0,.21-.33,1,1,0,0,0,0-.76,1,1,0,0,0-.21-.33l-2-2a1,1,0,0,0-1.42,1.42l.12.11C6,13.34,4,12,4,11c0-1.22,3.12-3,8-3s8,1.78,8,3c0,.83-1.45,2-4.21,2.6A1,1,0,0,0,15,14.79a1,1,0,0,0,1.19.77C19.84,14.76,22,13.06,22,11,22,8.15,17.7,6,12,6Z"/>
-                </svg>
-                <!-- <input type="button" id='rotate_islands_left' value=' <- '>
-                <input type="button" id='rotate_islands_right' value=' -> '> -->
-            </div>
-            
+        <div id='controls_div'>            
             <div id='control_zoom' class='controls'>
                 <svg version="1.1" id="zoom_out" class="svg_icon zoom_icon"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
                     <g>
@@ -75,11 +64,7 @@
             </div>
         </div>
         <div id="islands_div">
-            <div id="scale_wrap">
-                <div id="perspective_wrap">
-                    <div id="islands_cont">
-                    </div>
-                </div>
+            <div id="islands_cont">
             </div>
         </div>
         <div id='game_area_bottom'>
@@ -103,8 +88,8 @@
 <script type="text/javascript">
 
 let jstpl_point = "<div class='point' style='left:${left}px; top:${top}px;'></div>";
-let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='--angle: ${angle}deg; left:${left}px; top:${top}px;'>\
-                        <div class='influence_cont' style='--angle: -${angle}deg; --offLeft: ${left}px; --offTop: ${top}px;'>\
+let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='left:${left}px; top:${top}px;'>\
+                        <div class='influence_cont' style='--offLeft: ${left}px; --offTop: ${top}px;'>\
                             <div class='students_influence'></div>\
                         </div>\
                     </div>"

@@ -14,15 +14,21 @@ define([
     "ebg/counter"
 ],
 function (dojo, declare) {
+
     return declare("bgagame.eriantyspas", ebg.core.gamegui, {
+
+        // ------------- //
+        // --- SETUP --- //
+        // ------------- //
+        // #region
+
         constructor: function(){
+
             console.log('eriantyspas constructor');
-            // Here, you can init the global variables of your user interface
-            // Example:
-            // this.myGlobalValue = 0;
 
             this.counters = {};
 
+            // needed for regulating UI containers size when "zooming" islands
             this.scaleMap = [
                 {
                     scale: 0.8,
@@ -56,11 +62,13 @@ function (dojo, declare) {
         },
         
         setup: function(gamedatas) {
+
             console.log( "Starting game setup" );
 
+            // INIT PLAYER BOARDS COUNTERS
             this.counters.playerBoard = {};
             
-            // Setting up player boards
+            // SETUP SCHOOLS, PLAYER BOARDS AND COUNTERS
             for( var player_id in gamedatas.players ) {
                 var player = gamedatas.players[player_id];
                 this.counters.playerBoard[player_id] = {};
@@ -74,25 +82,26 @@ function (dojo, declare) {
                 counter.setValue(0);
                 this.counters.playerBoard[player_id]['turnOrder'] = counter;
 
-
                 let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
 
                 let schoolCont = document.querySelector(((isTeam)?'#team_school_area':'#opponents_school_area')+' .schools_cont');
                          
-                schoolCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_game_player_board', {
+                schoolCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_school', {
                     name: gamedatas.players[player_id].name,
                     id: player_id,
                     color: gamedatas.players[player_id].color
                 }));
 
+                // PLACE STUDENTS AT SCHOOL ENTRANCE
                 for (const color in gamedatas.schools_entrance[player_id]) {
                     if (color != 'player') {
                         for (let i = 0; i < gamedatas.schools_entrance[player_id][color]; i++) {
-                            document.querySelector(`#game_player_board_${player_id} .school_entrance`).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
+                            document.querySelector(`#school_${player_id} .school_entrance`).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
                         }
                     }
                 }
 
+                // PLACE STUDENTS TEACHERS AND TOWERS IN SCHOOL
                 for (const color in gamedatas.schools[player_id]) {
 
                     switch (color) {
@@ -107,7 +116,7 @@ function (dojo, declare) {
                             counter.setValue(gamedatas.schools[player_id][color]);
                             this.counters.playerBoard[player_id]['coins'] = counter; 
 
-                            let table = document.querySelector(`#game_player_board_${player_id} .table_${color}`);
+                            let table = document.querySelector(`#school_${player_id} .table_${color}`);
 
                             for (let i = 0; i < gamedatas.schools[player_id][color]; i++) {
                                 table.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
@@ -123,7 +132,7 @@ function (dojo, declare) {
                         case 'blue_teacher':
 
                             let tc = color.split('_')[0];
-                            let teachers_table = document.querySelector(`#game_player_board_${player_id} .teachers_table`);
+                            let teachers_table = document.querySelector(`#school_${player_id} .teachers_table`);
                             teachers_table.insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: tc}));
 
                             if (gamedatas.schools[player_id][color] == 1) {
@@ -145,7 +154,7 @@ function (dojo, declare) {
                             }
                             
                             for (let i = 0; i < gamedatas.schools[player_id]['towers']; i++) {
-                                document.querySelector(`#game_player_board_${player_id} .school_yard`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: tcol}));
+                                document.querySelector(`#school_${player_id} .school_yard`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: tcol}));
                             }
                     
                         case 'coins': {
@@ -159,6 +168,7 @@ function (dojo, declare) {
                 }
             }
 
+            // SET TEAM NAMES AND COLORS (if 4 player game)
             if (Object.keys(this.gamedatas.players).length == 4) {
 
                 let currBlack = gamedatas.players[this.getCurrentPlayerId()].color == '000000'
@@ -184,15 +194,15 @@ function (dojo, declare) {
             }
 
             // render point, origin to islands placement
-            $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point',{left: 0, top: 0}));
+            // $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point',{left: 0, top: 0}));
 
-            // create islands groups
+            // SETUP ISLANDS GROUPS
             gamedatas.islandGroups.forEach(g => {
                 $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island_group', {id: g}));
                 $('island_group_'+g).addEventListener('click', evt => {console.log(evt.target.parentElement.id);})
             });
 
-            // place islands in groups
+            // PLACE ISLANDS INSIDE GROUPS
             gamedatas.islands.forEach(i => {
                 $('island_group_'+i.group).insertAdjacentHTML('beforeend',this.format_block('jstpl_island', {pos: i.pos, type: i.type, left: i.x, top: -i.y}));
             });
@@ -208,7 +218,7 @@ function (dojo, declare) {
                         case 'pink':
                         case 'blue':
                             for (let i = 0; i < island[color]; i++) {
-                                document.querySelector(`#island_${island.island} .students_influence`).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
+                                document.querySelector(`#island_${island.island_pos} .students_influence`).insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
                             }
                             break;
 
@@ -216,16 +226,14 @@ function (dojo, declare) {
                         case 'grey_tower':
                         case 'black_tower':
                             if (island[color] == 1)
-                                document.querySelector(`#island_${island.island} .influence_cont`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: color.split('_')[0]}));
+                                document.querySelector(`#island_${island.island_pos} .influence_cont`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: color.split('_')[0]}));
                             break;
                     }
                 }
             });
 
-            // PLACE MONA
+            // PLACE MOther NAture (MONA)
             document.querySelector(`#island_${gamedatas.mother_nature} .influence_cont`).insertAdjacentHTML('afterbegin',this.format_block('jstpl_mother_nature'));
-
-            // SOME OF THIS PROBABLY SHOULD BE DONE WITH TEMPLATES
 
             // PLACE HEROES
             for (let i = 0; i < 3; i++) {
@@ -249,15 +257,16 @@ function (dojo, declare) {
                 }
             });
 
-            // setup UI controls
+            // SETUP UI CONTROLS
             this.setupControls();
  
-            // Setup game notifications to handle (see "setupNotifications" method below)
+            // SETUP NOTIFICATIONS
             this.setupNotifications();
 
             console.log( "Ending game setup" );
         },
 
+        // setup zoom and screen adapt controls for islands
         setupControls: function() {
 
             // handle zoom control
@@ -278,16 +287,14 @@ function (dojo, declare) {
             });
         },
 
+        // called everytime viewport changes size
+        // adapts islands zoom to new viewport size. if gets smaller, then zoom out islands to not make it overflow
         onScreenWidthChange: function() {
-            console.log('SCREEND WIDTH CHANGED');
 
             let ui_w = $('game_ui').clientWidth;
             
             let min_islands_w = this.scaleMap.filter(sw => sw.scale == getComputedStyle($('main_game_area')).getPropertyValue("--scale"))[0].width;
             $('main_game_area').style.minWidth = min_islands_w + 'px';
-
-            console.log('ui width',ui_w);
-            console.log('islands current min width to scale',min_islands_w);
 
             if (ui_w < min_islands_w) {
                 this.zoomIslands(-1);
@@ -298,8 +305,12 @@ function (dojo, declare) {
                 
         },
 
-        ///////////////////////////////////////////////////
-        //// Game & client states
+        //#endregion
+
+        // ------------------- //
+        // --- GAME STATES --- //
+        // ------------------- //
+        // #region
         
         // onEnteringState: this method is called each time we are entering into a new game state.
         //                  You can use this method to perform some user interface changes at this moment.
@@ -378,10 +389,14 @@ function (dojo, declare) {
 */
                 }
             }
-        },        
+        },
+        
+        // #endregion
 
-        ///////////////////////////////////////////////////
-        //// Utility methods
+        // ----------------------- //
+        // --- UTILITY METHODS --- //
+        // ----------------------- //
+        // #region
 
         zoomIslands: function(d, effective=true) {
 
@@ -423,96 +438,33 @@ function (dojo, declare) {
             return false
         },
 
+        // #endregion
 
-        ///////////////////////////////////////////////////
-        //// Player's action
-        
-        /*
-        
-            Here, you are defining methods to handle player's action (ex: results of mouse click on 
-            game objects).
-            
-            Most of the time, these methods:
-            _ check the action is possible at this game state.
-            _ make a call to the game server
-        
-        */
-        
-        /* Example:
-        
-        onMyMethodToCall1: function( evt )
-        {
-            console.log( 'onMyMethodToCall1' );
-            
-            // Preventing default browser reaction
-            dojo.stopEvent( evt );
+        // ---------------------- //
+        // --- PLAYER ACTIONS --- //
+        // ---------------------- //
+        // #region
 
-            // Check that this action is possible (see "possibleactions" in states.inc.php)
-            if( ! this.checkAction( 'myAction' ) )
-            {   return; }
 
-            this.ajaxcall( "/eriantyspas/eriantyspas/myAction.html", { 
-                                                                    lock: true, 
-                                                                    myArgument1: arg1, 
-                                                                    myArgument2: arg2,
-                                                                    ...
-                                                                 }, 
-                         this, function( result ) {
-                            
-                            // What to do after the server call if it succeeded
-                            // (most of the time: nothing)
-                            
-                         }, function( is_error) {
+        // #endregion
 
-                            // What to do after the server call in anyway (success or failure)
-                            // (most of the time: nothing)
+        // --------------------- //
+        // --- NOTIFICATIONS --- //
+        // --------------------- //
+        // #region
 
-                         } );        
-        },        
-        
-        */
-
-        
-        ///////////////////////////////////////////////////
-        //// Reaction to cometD notifications
-
-        /*
-            setupNotifications:
-            
-            In this method, you associate each of your game notifications with your local method to handle it.
-            
-            Note: game notification names correspond to "notifyAllPlayers" and "notifyPlayer" calls in
-                  your eriantyspas.game.php file.
-        
-        */
         setupNotifications: function() {
             console.log( 'notifications subscriptions setup' );
-            
-            // TODO: here, associate your game notifications with local methods
-            
-            // Example 1: standard notification handling
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-            
-            // Example 2: standard notification handling + tell the user interface to wait
-            //            during 3 seconds after calling the method in order to let the players
-            //            see what is happening in the game.
-            // dojo.subscribe( 'cardPlayed', this, "notif_cardPlayed" );
-            // this.notifqueue.setSynchronous( 'cardPlayed', 3000 );
-            // 
 
             dojo.subscribe('displayPoints', this, "notif_displayPoints");
             this.notifqueue.setSynchronous( 'joinIslandGroups', 0);
 
             dojo.subscribe('joinIslandGroups', this, "notif_joinIslandGroups");
             this.notifqueue.setSynchronous( 'joinIslandGroups', 2000);
-        },  
-        
-        // TODO: from this point and below, you can write your game notifications handling methods
-        
-        
+        },
+
+        // debugging notif
         notif_displayPoints: function(notif) {
-            console.log('notif_displayPoints');
-            console.log(notif);
 
             document.querySelectorAll('.point').forEach(p => {
                 p.remove();
@@ -556,5 +508,7 @@ function (dojo, declare) {
             /* let joinGroup = notif.args.groups.filter(g => g.id != notif.args.groupTo).pop()['id'];
             console.log(joinGroup); */
         },
+
+        // #endregion
    });             
 });

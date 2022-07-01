@@ -7,16 +7,12 @@
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
 -- -----
 
-ALTER TABLE `player` 
-ADD `player_team` TINYINT UNSIGNED;
-
 CREATE TABLE IF NOT EXISTS `island` (
     `pos` TINYINT UNSIGNED NOT NULL,
     `type` TINYINT UNSIGNED NOT NULL,
     `x` FLOAT(24) NOT NULL,
     `y` FLOAT(24) NOT NULL,
     `group` TINYINT UNSIGNED,
-    `angle` INT UNSIGNED,
     PRIMARY KEY (`pos`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -25,8 +21,8 @@ CREATE TABLE IF NOT EXISTS `island` (
 -- pos used to identify island pos in clockwise order. maybe change name to id?
 -- attach side depends on pos
 
-CREATE TABLE IF NOT EXISTS `influence` (
-    `island` TINYINT UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS `island_influence` (
+    `island_pos` TINYINT UNSIGNED NOT NULL,
     `green` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `red` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `yellow` TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -35,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `influence` (
     `white_tower` BIT NOT NULL DEFAULT 0,
     `black_tower` BIT NOT NULL DEFAULT 0,
     `grey_tower` BIT NOT NULL DEFAULT 0,
-    PRIMARY KEY (`island`)
+    PRIMARY KEY (`island_pos`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `school` (

@@ -294,7 +294,7 @@ html {
     background-color: var(--color);
 }
 
-.game_player_board {
+.school {
     --scale: 0.15;
 
     display: inline-block;
@@ -370,11 +370,11 @@ html {
     top: 10px;
 }
 
-.game_player_board .student {
+.school .student {
     --scale: 0.06;
 }
 
-.game_player_board .teacher {
+.school .teacher {
     --scale: 0.07;
 }
 

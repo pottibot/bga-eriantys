@@ -11,7 +11,7 @@
 -->
 
 <div id="game_ui">
-    <div id="main_game_area"> <!-- rename, misleading -->
+    <div id="main_game_area">
         <div id='controls_div'>            
             <div id='control_zoom' class='controls'>
                 <svg version="1.1" id="zoom_out" class="svg_icon zoom_icon"  xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
@@ -59,8 +59,6 @@
                             C224,302.328,209.672,288,192,288z"/>
                     </g>
                 </svg>
-                <!-- <input type="button" id='scale_islands_minus' value=' - '>
-                <input type="button" id='scale_islands_plus' value=' + '> -->
             </div>
         </div>
         <div id="islands_div">
@@ -95,7 +93,7 @@ let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' st
                     </div>"
 let jstpl_island_group = "<div id='island_group_${id}' class='island_group'></div>";
 
-let jstpl_game_player_board =  "<div id='game_player_board_${id}' class='game_player_board' style='border-color:#${color}'>\
+let jstpl_school =  "<div id='school_${id}' class='school' style='border-color:#${color}'>\
                                     <span class='school_name'>${name}</span>\
                                     <div class='school_entrance school_room'></div>\
                                     <div class='school_hall school_room'>\

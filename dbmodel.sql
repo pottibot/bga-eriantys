@@ -7,6 +7,12 @@
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
 -- -----
 
+ALTER TABLE `player`
+ADD `player_turn_position` TINYINT UNSIGNED NOT NULL,
+ADD `player_alternative_color` VARCHAR(6) NOT NULL,
+ADD `player_mona_steps` TINYINT UNSIGNED NOT NULL DEFAULT 0;
+
+
 CREATE TABLE IF NOT EXISTS `island` (
     `pos` TINYINT UNSIGNED NOT NULL,
     `type` TINYINT UNSIGNED NOT NULL,
@@ -69,4 +75,25 @@ CREATE TABLE IF NOT EXISTS `cloud` (
     `pink` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `blue` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `player_assistants` (
+    `player` INT(8) UNSIGNED NOT NULL,
+    `1` BIT DEFAULT 1,
+    `2` BIT DEFAULT 1,
+    `3` BIT DEFAULT 1,
+    `4` BIT DEFAULT 1,
+    `5` BIT DEFAULT 1,
+    `6` BIT DEFAULT 1,
+    `7` BIT DEFAULT 1,
+    `8` BIT DEFAULT 1,
+    `9` BIT DEFAULT 1,
+    `10` BIT DEFAULT 1,
+    PRIMARY KEY (`player`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `played_assistants` (
+    `player` INT(8) UNSIGNED NOT NULL,
+    `assistant` TINYINT UNSIGNED,
+    PRIMARY KEY (`player`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -75,12 +75,16 @@ function (dojo, declare) {
 
                 // setup counter
                 let pb = $('player_board_'+player_id);
-                pb.insertAdjacentHTML('beforeend',this.format_block('jstpl_player_board', {pId: player_id}));
+                pb.insertAdjacentHTML('beforeend',this.format_block('jstpl_player_board', {
+                    pId: player_id,
+                    pos: this.format_block('jstpl_turn_position_indicator', {turnPos: gamedatas.players[player_id].turnPos}),
+                    steps: this.format_block('jstpl_turn_steps_indicator', {steps: gamedatas.players[player_id].monaSteps}),
+                }));
 
-                let counter = new ebg.counter();
+                /* let counter = new ebg.counter();
                 counter.create($('turn_order_'+player_id));
                 counter.setValue(0);
-                this.counters.playerBoard[player_id]['turnOrder'] = counter;
+                this.counters.playerBoard[player_id]['turnOrder'] = counter; */
 
                 let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
 
@@ -89,7 +93,8 @@ function (dojo, declare) {
                 schoolCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_school', {
                     name: gamedatas.players[player_id].name,
                     id: player_id,
-                    color: gamedatas.players[player_id].color
+                    color: '#'+gamedatas.players[player_id].color,
+                    altcol: '#'+gamedatas.players[player_id].alt_col
                 }));
 
                 // PLACE STUDENTS AT SCHOOL ENTRANCE
@@ -168,29 +173,51 @@ function (dojo, declare) {
                 }
             }
 
+            let currPID = this.getCurrentPlayerId();
+
+            // PLACE ASSISTANT CARDS
+            $('myhand_lable').innerHTML= _('My Assistant cards');
+            $('played_lable').innerHTML= _('Assistants played');
+
+            $('assistant_cards_played').style.setProperty('--players',Object.keys(gamedatas.players).length);
+
+            for (const a in gamedatas.players_assistants[currPID]) {
+                if (a != 'player' && gamedatas.players_assistants[currPID][a] == 1) {
+                    $('assistant_cards_myhand').insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant', {n: a}));
+                }
+            }
+
+            for (let i = 0; i < Object.keys(gamedatas.players).length; i++) {
+
+                let p = Object.values(gamedatas.players).filter(p => p.turnPos == i+1)[0];
+                let col = p.color;
+                console.log(i+1,p.id,col);
+
+                $('assistant_cards_played').insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant_placeholder',{color: '#'+col, altcol: '#'+p.alt_col, id: p.id, name:p.name}));
+
+                let ph = $('assistant_cards_played').lastElementChild;
+
+                if (gamedatas.played_assistants[p.id]) {
+                    ph.insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant',{n: gamedatas.played_assistants[p.id]}));
+                }
+            }
+
             // SET TEAM NAMES AND COLORS (if 4 player game)
             if (Object.keys(this.gamedatas.players).length == 4) {
 
-                let currBlack = gamedatas.players[this.getCurrentPlayerId()].color == '000000'
-                console.log(currBlack);
+                let col = '#'+gamedatas.players[this.getCurrentPlayerId()].color;
+                let alt =  '#'+gamedatas.players[this.getCurrentPlayerId()].alt_col;
 
-                if (currBlack) {
-                    document.querySelector('#team_school_area .team_name').innerHTML = _('Black Team');
-                    $('team_school_area').style.setProperty("--color", 'black');
-                    $('team_school_area').style.setProperty("--alt-color", 'white');
+                let teamCol = (col == '#000000')? _('Black Team') : _('White Team');
+                let oppCol = (col == '#000000')? _('White Team') : _('Black Team');
 
-                    document.querySelector('#opponents_school_area .team_name').innerHTML = _('White Team');
-                    $('opponents_school_area').style.setProperty("--color", 'white');
-                    $('opponents_school_area').style.setProperty("--alt-color", 'black');
-                } else {
-                    document.querySelector('#team_school_area .team_name').innerHTML = _('White Team');
-                    $('team_school_area').style.setProperty("--color", 'white');
-                    $('team_school_area').style.setProperty("--alt-color", 'black');
+                $('team_school_area').style.setProperty("--color", col);
+                $('team_school_area').style.setProperty("--alt-color", alt);
+                document.querySelector('#team_school_area .team_name').innerHTML = teamCol;
 
-                    document.querySelector('#opponents_school_area .team_name').innerHTML = _('Black Team');
-                    $('opponents_school_area').style.setProperty("--color", 'black');
-                    $('opponents_school_area').style.setProperty("--alt-color", 'white');
-                }
+                $('opponents_school_area').style.setProperty("--color", alt);
+                $('opponents_school_area').style.setProperty("--alt-color", col);
+                document.querySelector('#opponents_school_area .team_name').innerHTML = oppCol;
             }
 
             // render point, origin to islands placement
@@ -285,6 +312,46 @@ function (dojo, declare) {
                     while (this.zoomIslands((full)? 1:-1)); // returns false and stops when zoom is no longer possible
                 });
             });
+
+            // handle drawer handle
+            let arrow = $('assistants_drawer_arrow');
+            console.log('arrow',arrow);
+            arrow.addEventListener('click', evt => {
+
+                console.log('click on drawer arrow');
+
+                let drawer = $('assistant_cards_drawer');
+
+                if (arrow.classList.contains('open_drawer')) {
+
+                    console.log('opening assistant drawer');
+                    
+                    drawer.style.height = 'fit-content';
+                    let h = drawer.offsetHeight;
+
+                    drawer.style.height = '0px';
+                    drawer.offsetHeight; // repaint
+
+                    drawer.style.height = h + 'px';
+
+                    arrow.classList.remove('open_drawer');
+                    arrow.classList.add('close_drawer');
+
+                } else {
+                    console.log('closing assistant drawer');
+
+                    let h = drawer.offsetHeight;
+                    drawer.style.height = h + 'px';
+                    drawer.offsetHeight; // repaint
+
+                    drawer.style.height = '0px';
+
+                    arrow.classList.remove('close_drawer');
+                    arrow.classList.add('open_drawer');
+                }
+                
+                //$('assistant_cards_div').style.height = '0px';
+            })
         },
 
         // called everytime viewport changes size
@@ -302,6 +369,12 @@ function (dojo, declare) {
                 min_islands_w = this.scaleMap.filter(sw => sw.scale == getComputedStyle($('main_game_area')).getPropertyValue("--scale"))[0].width;
                 $('main_game_area').style.minWidth = min_islands_w + 'px';
             }
+
+            
+            // adapt assistant drawer if open
+            if ($('assistant_cards_drawer').offsetHeight != 0) {
+                $('assistant_cards_drawer').style.height = 'fit-content';
+            }
                 
         },
 
@@ -315,80 +388,96 @@ function (dojo, declare) {
         // onEnteringState: this method is called each time we are entering into a new game state.
         //                  You can use this method to perform some user interface changes at this moment.
         //
-        onEnteringState: function( stateName, args )
-        {
-            console.log( 'Entering state: '+stateName );
-            
-            switch( stateName )
-            {
-            
-            /* Example:
-            
-            case 'myGameState':
-            
-                // Show some HTML block at this game state
-                dojo.style( 'my_html_block_id', 'display', 'block' );
-                
-                break;
-           */
-           
-           
-            case 'dummmy':
-                break;
+        onEnteringState: function( stateName,args) {
+            console.log('Entering state: '+stateName);
+            console.log('State arguments: ',args.args);
+
+            // way of calling state handlers dinamically without big f switch
+            // Call appropriate method
+            var methodName = "onEnteringState_" + stateName;
+            if (this[methodName] !== undefined) {             
+                console.log('Calling ' + methodName, args.args);
+                this[methodName](args.args);
             }
         },
 
-        // onLeavingState: this method is called each time we are leaving a game state.
-        //                 You can use this method to perform some user interface changes at this moment.
-        //
-        onLeavingState: function( stateName )
-        {
-            console.log( 'Leaving state: '+stateName );
+        onEnteringState_playAssistant: function (args) {
+
+            this.openAssistantDrawer();
             
-            switch( stateName )
-            {
+    
+            this.gamedatas.gamestate.clientData = {};
+
+            document.querySelectorAll('#assistant_cards_myhand .assistant').forEach( el => {
+
+                if (args.assistants.includes(el.dataset.n)) el.classList.add('blocked');
+                else el.classList.add('unselected');
+
+                el.onclick = evt => {
+                    console.log('clicked on assistant',el);
+
+                    if (!this.isCurrentPlayerActive()) {
+                        this.showMessage(_('It is not your turn'));
+                        return;
+                    }
+
+                    if (el.classList.contains('blocked')) {
+                        this.showMessage(_('You cannot play an Assistant that has already been played by another player'));
+                        return;
+                    }
+
+                    if (el.classList.contains('selected')) {
+                        console.log('unselecting assistant');
+                        el.classList.remove('selected');
+                        el.classList.add('unselected');
+                    } else {
+                        console.log('selecting assistant');
+
+                        document.querySelectorAll('#assistant_cards_myhand .assistant').forEach( el2 => {
+                            el2.classList.remove('selected');
+                            el2.classList.add('unselected');
+                        });
+
+                        el.classList.remove('unselected');
+                        el.classList.add('selected');
+
+                        this.gamedatas.gamestate.clientData.selected = el.dataset.n;
+                    }
+                }
+            })
+        },
+
+        onLeavingState: function(stateName) {
+            console.log('Leaving state: '+stateName);
             
-            /* Example:
-            
-            case 'myGameState':
-            
-                // Hide the HTML block we are displaying only during this game state
-                dojo.style( 'my_html_block_id', 'display', 'none' );
-                
-                break;
-           */
-           
-           
-            case 'dummmy':
-                break;
+            switch ( stateName ) {
             }               
         }, 
-
-        // onUpdateActionButtons: in this method you can manage "action buttons" that are displayed in the
-        //                        action status bar (ie: the HTML links in the status bar).
-        //        
-        onUpdateActionButtons: function( stateName, args )
-        {
-            console.log( 'onUpdateActionButtons: '+stateName );
+    
+        onUpdateActionButtons: function(stateName, args) {
+            console.log('onUpdateActionButtons: '+stateName);
+            console.log(args);
                       
-            if( this.isCurrentPlayerActive() )
-            {            
-                switch( stateName )
-                {
-/*               
-                 Example:
- 
-                 case 'myGameState':
-                    
-                    // Add 3 action buttons in the action status bar:
-                    
-                    this.addActionButton( 'button_1_id', _('Button 1 label'), 'onMyMethodToCall1' ); 
-                    this.addActionButton( 'button_2_id', _('Button 2 label'), 'onMyMethodToCall2' ); 
-                    this.addActionButton( 'button_3_id', _('Button 3 label'), 'onMyMethodToCall3' ); 
-                    break;
-*/
+            if( this.isCurrentPlayerActive()) {            
+                var methodName = "onUpdateActionButtons_" + stateName;
+                if (this[methodName] !== undefined) {             
+                    console.log('Calling ' + methodName, args);
+                    this[methodName](args);
                 }
             }
+        },
+
+        onUpdateActionButtons_playAssistant: function(args) {
+
+            this.addActionButton('confirmAssistant_button',_('Confirm'),evt => {
+                let selected = this.gamedatas.gamestate.clientData.selected;
+                if (selected) {
+                    console.log('confirmed', selected);
+                    this.ajaxcallwrapper('playAssistant',{n:selected});
+                } else {
+                    this.showMessage(_("You need to select an Assistant card to play"),'error')
+                }
+            })
         },
         
         // #endregion
@@ -397,6 +486,15 @@ function (dojo, declare) {
         // --- UTILITY METHODS --- //
         // ----------------------- //
         // #region
+
+        ajaxcallwrapper: function(action, args, handler) {
+            if (!args) args = [];
+                
+            args.lock = true;
+            if (this.checkAction(action)) {
+                this.ajaxcall("/" + this.game_name + "/" + this.game_name + "/" + action + ".html", args, this, (result) => { }, handler);
+            }
+        },    
 
         zoomIslands: function(d, effective=true) {
 
@@ -438,6 +536,115 @@ function (dojo, declare) {
             return false
         },
 
+        // WARNING: this will reset specific properties position, left, top
+        moveElement: function(el, target, duration=0, delay=0, append = false, onEnd=()=>{}) {
+
+            // get oversurface peices movement cont
+            let movingSurface = $('overall-content');
+
+            // get el parents for reattaching at anim end (if not append)
+            let elParent = el.parentElement;
+
+            // get all useful elements current pos
+            let elPos = el.getBoundingClientRect();
+            let targetPos = target.getBoundingClientRect();
+            let movingSurfacePos = movingSurface.getBoundingClientRect();
+
+            console.log('el',elPos.x,elPos.y);
+            console.log('target',targetPos.x,targetPos.y);
+            console.log('moving surface',movingSurfacePos.x,movingSurfacePos.y);
+
+            // append el clone to moving oversurface
+            let elClone = el.cloneNode()
+            movingSurface.append(elClone);
+
+            // create empty space where element was
+            el.style.visibility = 'hidden';
+
+            // position it on its current coordinates, but on oversurface
+            elClone.style.position = 'absolute';
+            elClone.style.left = (elPos.left - movingSurfacePos.left) + 'px';
+            elClone.style.top = (elPos.top - movingSurfacePos.top) + 'px';
+
+            elClone.offsetWidth; //repaint
+
+            // calculate offset between el and target
+            offset = {
+                x: targetPos.left - elPos.left,
+                y: targetPos.top - elPos.top
+            }
+
+            // now set transition
+            elClone.style.transition = `all ${duration}ms ${delay}ms ease-in-out`;
+            el.style.transition = `all 200ms ease-in-out`; // transition for disappearing empty space
+
+            // set left, top properties given current pos in oversurface + calculated offset
+            elClone.style.left = (elClone.offsetLeft + offset.x) + 'px';
+            elClone.style.top = (elClone.offsetTop + offset.y) + 'px';
+
+            // on animation end
+            setTimeout(() => {
+
+                // unset transition prop
+                elClone.style.transition = '';
+
+                // set size proprs to animate element occupied space disappearing
+                el.style.width = '0px';
+                el.style.height = '0px';
+
+                setTimeout(() => {
+                    el.remove();
+                }, 200);
+
+                if (append) {
+                    // append element on previous parent or on target
+                    target.append(elClone);
+
+                    // reset positioning props
+                    elClone.style.position = '';
+                    elClone.style.left = '';
+                    elClone.style.top = '';
+                } else {
+
+                    let elParentPos = elParent.getBoundingClientRect();
+                    let elClonePos = elClone.getBoundingClientRect();
+
+                    offset = {
+                        x: elClonePos.left - elParentPos.left,
+                        y: elClonePos.top - elParentPos.top 
+                    }
+
+                    elParent.append(elClone);
+
+                    elClone.style.left = offset.x + 'px';
+                    elClone.style.top = offset.y + 'px';                    
+                }
+                
+                // call on end handler, if given
+                onEnd();
+                console.log('TRANSITION END');
+            }, duration+delay);
+
+            return elClone;
+        },
+
+        openAssistantDrawer: function(onEnd = () => {}) {
+
+            if ($('assistants_drawer_arrow').classList.contains('open_drawer')) {
+
+                $('assistant_cards_drawer').ontransitionend = () => {
+                    console.log('DRAWER ANIM END');
+
+                    onEnd();
+
+                    $('assistant_cards_drawer').ontransitionend = '';
+                }
+
+                let event = new Event('click') 
+                $('assistants_drawer_arrow').dispatchEvent(event);
+            } else onEnd();
+        },
+
         // #endregion
 
         // ---------------------- //
@@ -459,6 +666,12 @@ function (dojo, declare) {
             dojo.subscribe('displayPoints', this, "notif_displayPoints");
             this.notifqueue.setSynchronous( 'joinIslandGroups', 0);
 
+            dojo.subscribe('playAssistant', this, "notif_playAssistant");
+            this.notifqueue.setSynchronous( 'playAssistant');
+
+            dojo.subscribe('resolvePlanning', this, "notif_resolvePlanning");
+            this.notifqueue.setSynchronous( 'resolvePlanning');
+
             dojo.subscribe('joinIslandGroups', this, "notif_joinIslandGroups");
             this.notifqueue.setSynchronous( 'joinIslandGroups', 2000);
         },
@@ -475,7 +688,100 @@ function (dojo, declare) {
             });
         },
 
+        notif_playAssistant: function(notif) {
+            console.log(notif.args);
+
+            this.openAssistantDrawer(() => {
+
+                this.notifqueue.setSynchronousDuration(700);
+
+                let target = $('placeholder_'+notif.args.player_id);
+                let el;
+    
+                if (this.isCurrentPlayerActive()) {
+    
+                    document.querySelectorAll('#assistant_cards_myhand .assistant').forEach(a => {
+                        a.classList.remove('blocked','selected','unselected');
+                    });
+    
+                    el = document.querySelector(`.assistant_${notif.args.n}`);
+                    this.moveElement(el,target,500,0,true);
+    
+                } else {
+    
+                    $('player_board_'+this.getActivePlayerId()).insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant',{n: notif.args.n}));
+                    el = $('player_board_'+this.getActivePlayerId()).lastElementChild;
+                    
+                    this.moveElement(el,target,500,0,true);
+                }
+            });
+        },
+
+        notif_resolvePlanning: function(notif) {
+            console.log(notif.args);
+
+            this.openAssistantDrawer(() => {
+
+                this.notifqueue.setSynchronousDuration(100 + Object.keys(notif.args.players).length * 2000);
+
+                let d = 100;
+                notif.args.players.forEach(player => {
+
+                    let a = document.querySelector(`#placeholder_${player.id}`);
+                    let cont = $('assistant_cards_played');
+
+                    // animate turn position indicator
+                    setTimeout(() => {
+
+                        cont.insertAdjacentHTML('beforeend',this.format_block('jstpl_turn_position_indicator',{turnPos: player.turn_pos}));
+                        let indicator = cont.lastChild;
+
+                        indicator = this.moveElement(indicator,a,0);
+
+                        indicator.style.left = (indicator.offsetLeft + 4) + 'px';
+                        indicator.style.top = (indicator.offsetTop + 4) + 'px';
+
+                        let target = document.querySelector(`#player_board_${player.id} .turn_position_cont`);
+                        indicator.onanimationend = () => {
+                            indicator.classList.remove('bounce_animation');
+                            let oldpos = document.querySelector(`#player_board_${player.id} .turn_position`);
+
+                            this.moveElement(indicator,target,500,0,true,()=>{oldpos.remove()});
+                        }
+
+                        indicator.classList.add('bounce_animation');
+                        
+                    }, d);
+
+                    setTimeout(() => {
+
+                        cont.insertAdjacentHTML('beforeend',this.format_block('jstpl_turn_steps_indicator',{steps: player.steps}));
+                        let indicator = cont.lastChild;
+
+                        indicator = this.moveElement(indicator,a,0);
+
+                        indicator.style.left = (indicator.offsetLeft + 73) + 'px';
+                        indicator.style.top = (indicator.offsetTop + 4) + 'px';
+
+                        let target = document.querySelector(`#player_board_${player.id} .mona_movement_cont`);
+                        indicator.onanimationend = () => {
+                            indicator.classList.remove('bounce_animation');
+                            let oldsteps = document.querySelector(`#player_board_${player.id} .mona_movement`);
+
+                            this.moveElement(indicator,target,500,0,true,()=>{oldsteps.remove()});
+                        }
+
+                        indicator.classList.add('bounce_animation');
+                        
+                    }, d+1000);
+
+                    d = d+2000;
+                });
+            });
+        },
+
         notif_joinIslandGroups: function(notif) {
+
             console.log(notif.args);
 
             let transitionCount = 0;

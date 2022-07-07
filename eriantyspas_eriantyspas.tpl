@@ -11,6 +11,24 @@
 -->
 
 <div id="game_ui">
+    <!-- <div id='pieces_movement_oversurface_cont'></div> -->
+    <div id='assistant_cards_drawer'>
+        <div id='assistant_cards_div'>
+            <div id='assistant_cards_myhand'>
+                <span id='myhand_lable'></span>
+            </div>
+            <div id='assistant_cards_played'>
+                <span id='played_lable'></span>
+            </div>
+        </div>
+    </div>
+    <div id='assistants_arrow_cont'>
+        <svg id='assistants_drawer_arrow' class='open_drawer' xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="25px" height="25px" viewBox="0 0 30.021 30.021" xml:space="preserve">
+            <g>
+                <path d="M28.611,13.385l-11.011,9.352c-0.745,0.633-1.667,0.949-2.589,0.949c-0.921,0-1.842-0.316-2.589-0.949L1.411,13.385   c-1.684-1.43-1.89-3.954-0.46-5.638c1.431-1.684,3.955-1.89,5.639-0.459l8.421,7.151l8.42-7.151   c1.686-1.43,4.209-1.224,5.639,0.459C30.5,9.431,30.294,11.955,28.611,13.385z"/>
+            </g>
+        </svg>
+    </div>
     <div id="main_game_area">
         <div id='controls_div'>            
             <div id='control_zoom' class='controls'>
@@ -87,27 +105,14 @@
 
 let jstpl_point = "<div class='point' style='left:${left}px; top:${top}px;'></div>";
 let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='left:${left}px; top:${top}px;'>\
-                        <div class='influence_cont' style='--offLeft: ${left}px; --offTop: ${top}px;'>\
+                        <div class='influence_cont'>\
                             <div class='students_influence'></div>\
                         </div>\
                     </div>"
 let jstpl_island_group = "<div id='island_group_${id}' class='island_group'></div>";
 
-let jstpl_school =  "<div id='school_${id}' class='school' style='border-color:#${color}'>\
-                                    <span class='school_name'>${name}</span>\
-                                    <div class='school_entrance school_room'></div>\
-                                    <div class='school_hall school_room'>\
-                                        <div class='students_tables'>\
-                                            <div class='table_green students_table'></div>\
-                                            <div class='table_red students_table'></div>\
-                                            <div class='table_yellow students_table'></div>\
-                                            <div class='table_pink students_table'></div>\
-                                            <div class='table_blue students_table'></div>\
-                                        </div>\
-                                        <div class='teachers_table'></div>\
-                                    </div>\
-                                    <div class='school_yard school_room'></div>\
-                                </div>";
+let jstpl_assistant = "<div class='assistant_${n} assistant card' data-n='${n}'></div>";
+let jstpl_assistant_placeholder = "<div id='placeholder_${id}' class='assistant_placeholder' style='--color: ${color}; --alt-color: ${altcol}'><span class='placeholder_lable'>${name}</span></div>";
 
 let jstpl_hero = "<div id='hero_${n}' class='hero card'></div>";
 let jstpl_cloud = "<div id='cloud_${id}' class='cloud_type_${type} students_cloud'></div>";
@@ -119,10 +124,31 @@ let jstpl_tower = "<div class='tower_${color} tower'></div>";
 let jstpl_mother_nature = "<div id='mother_nature'></div>";
 
 let jstpl_coin = "<div class='coin'></div>";
+let jstpl_turn_position_indicator = "<div class='turn_position_${turnPos} turn_position turn_indicator'></div>";
+let jstpl_turn_steps_indicator = "<div class='mona_movement_${steps} mona_movement turn_indicator'></div>";
+
+let jstpl_school =  "<div id='school_${id}' class='school' style='--color: ${color}; --alt-color: ${altcol}'>\
+                        <span class='school_name'>${name}</span>\
+                        <div class='school_entrance school_room'></div>\
+                        <div class='school_hall school_room'>\
+                            <div class='students_tables'>\
+                                <div class='table_green students_table'></div>\
+                                <div class='table_red students_table'></div>\
+                                <div class='table_yellow students_table'></div>\
+                                <div class='table_pink students_table'></div>\
+                                <div class='table_blue students_table'></div>\
+                            </div>\
+                            <div class='teachers_table'></div>\
+                        </div>\
+                        <div class='school_yard school_room'></div>\
+                    </div>";
 
 let jstpl_player_board =    "<div id='inner_player_board_${pId}' class='inner_player_board'>\
                                 <div class='player_coins'><div class='coin'></div><span id='coins_${pId}'></span></div>\
-                                <div class='player_turn_order'><div class='mona_icon'></div><span id='turn_order_${pId}'></span></div>\
+                                <div class='player_turn'>\
+                                    <div class='turn_position_cont'>${pos}</div>\
+                                    <div class='mona_movement_cont'>${steps}</div>\
+                                </div>\
                                 <div class='player_students'>\
                                     <div class='green_counter color_counter' style='--col:#25ac74'>\
                                         <svg class='teacher_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\

@@ -41,14 +41,28 @@ class eriantyspas extends Table {
         $fourPlayersTeams = [0,1,0,1];
  
         // INITIATE PLAYER TABLE
-        $sql = "INSERT INTO player (player_id, player_color, player_canal, player_name, player_avatar) VALUES ";
+        $sql = "INSERT INTO player (player_id, player_color, player_alternative_color, player_canal, player_name, player_avatar) VALUES ";
+        $sql2 = "INSERT INTO player_assistants (player) VALUES ";
+        $sql3 = "INSERT INTO played_assistants (player) VALUES ";
         $values = array();
+        $values2 = array();
         foreach($players as $player_id => $player) {
 
             $color = ((count($players) < 4)?array_shift($default_colors):array_shift($fourPlayersColors));
-            $values[] = "('".$player_id."','$color','".$player['player_canal']."','".addslashes( $player['player_name'] )."','".addslashes( $player['player_avatar'] )."')";
+            $altCol = ($color == 'ffffff')? '000000' : 'ffffff';
+            $values[] = "('".$player_id."','$color',"."'$altCol','".$player['player_canal']."','".addslashes( $player['player_name'] )."','".addslashes( $player['player_avatar'] )."')";
+            $values2[] = "($player_id)";
         }
         $sql .= implode($values,',');
+        self::DbQuery($sql);
+
+        $sql2 .= implode($values2,',');
+        self::DbQuery($sql2);
+        $sql3 .= implode($values2,',');
+        self::DbQuery($sql3);
+
+        $sql = "UPDATE player
+                SET player_turn_position = player_no";
         self::DbQuery($sql);
 
         //self::reattributeColorsBasedOnPreferences( $players, $gameinfos['player_colors'] );
@@ -145,12 +159,14 @@ class eriantyspas extends Table {
         $result = array();
     
         $current_player_id = self::getCurrentPlayerId();
-    
-        $sql = "SELECT player_id id, player_score score FROM player ";
-        $result['players'] = self::getCollectionFromDb($sql);
-  
-        $sql = "SELECT pos, x, y, `group`, `type` FROM island ORDER BY pos ASC";
-        $result['islands'] = self::getObjectListFromDb($sql);
+
+        $result['players'] = self::getCollectionFromDb("SELECT player_id id, player_score score, player_turn_position turnPos, player_mona_steps monaSteps, player_alternative_color alt_col FROM player ");
+
+        $result['players_assistants'] = self::getCollectionFromDb("SELECT * FROM player_assistants");
+
+        $result['played_assistants'] = self::getCollectionFromDb("SELECT player, assistant FROM played_assistants", true);
+
+        $result['islands'] = self::getObjectListFromDb("SELECT pos, x, y, `group`, `type` FROM island ORDER BY pos ASC");
 
         $result['islandGroups'] = self::getObjectListFromDb("SELECT DISTINCT `group` FROM island ORDER BY `group` ASC", true);
 
@@ -412,7 +428,29 @@ class eriantyspas extends Table {
 /* ---------------------- */
 #region 
 
+function playAssistant($n) {
 
+    if ($this->checkAction('playAssistant')) {
+      
+        $args = self::argPlayAssistant();
+        $id = self::getActivePlayerId();
+
+        if ($n < 1 || $n > 10) throw new BgaVisibleSystemException("Invalid Assistant number");
+        if (in_array($n,$args['assistants'])) throw new BgaVisibleSystemException("You cannot play an Assistant that has already been played by another player");
+
+        self::dbQuery("UPDATE played_assistants SET assistant = $n WHERE player = $id");
+        self::dbQuery("UPDATE player_assistants SET `$n` = 0 WHERE player = $id");
+
+        self::notifyAllPlayers('playAssistant', clienttranslate('${player_name} played the Assistant number ${n}'), array(
+            'player_id' => self::getActivePlayerId(),
+            'player_name' => self::getActivePlayerName(),
+            'n' => $n,
+            ) 
+        );
+
+        $this->gamestate->nextState('');
+    }
+}
 
 #endregion
 
@@ -421,7 +459,22 @@ class eriantyspas extends Table {
 /* ----------------------- */
 #region 
 
+function argPlayAssistant() {
 
+    $playedAssistants = self::getObjectListFromDb("SELECT assistant FROM played_assistants", true);
+
+    self::dump("// ASSISTANT", $playedAssistants);
+
+    $playedAssistants = array_values(array_filter($playedAssistants, function($a) { return !is_null($a); }));
+
+    self::dump("// ASSISTANT FILTERED", $playedAssistants);
+
+    return ['assistants' => $playedAssistants];
+}
+
+function argMoveStudents() {
+
+}
 
 #endregion
 
@@ -430,7 +483,42 @@ class eriantyspas extends Table {
 /* --------------------- */
 #region 
 
+function stPlanningNext() {
 
+    if (self::getUniqueValueFromDb("SELECT COUNT(assistant) FROM played_assistants WHERE assistant IS NOT NULL") < 4) {
+
+        // activate next player
+
+        $id = self::getActivePlayerId();
+        $turnPos = self::getUniqueValueFromDb("SELECT player_turn_position FROM player WHERE player_id = $id");
+        $np = self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_turn_position = $turnPos+1");
+
+        $this->gamestate->changeActivePlayer($np);
+        $this->gamestate->nextState('nextTurn');
+
+    } else {
+
+        // attribute player order and mona steps
+
+        $newOrder = self::getObjectListFromDb("SELECT player, assistant FROM played_assistants ORDER BY assistant ASC");
+        $firstPlayer = $newOrder[0]['player'];
+
+        foreach ($newOrder as $turnPos => $p) {
+            $steps = ceil($p['assistant']/2);
+            self::dbQuery("UPDATE player SET player_turn_position = $turnPos+1 , player_mona_steps = $steps WHERE player_id = ".$p['player']);
+        }
+
+        $newOrder = self::getObjectListFromDb("SELECT player_id id, player_turn_position turn_pos, player_mona_steps steps FROM player ORDER BY turn_pos ASC");
+
+        self::notifyAllPlayers('resolvePlanning',clienttranslate("The planning phase is finished. The turn order was reassigned based on the Assistants played"),[
+            'players' => $newOrder
+        ]);
+
+        $this->gamestate->changeActivePlayer($firstPlayer);
+        $this->gamestate->nextState('nextPhase');
+    }
+
+}
 
 #endregion
 

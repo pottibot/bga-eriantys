@@ -121,7 +121,7 @@ function (dojo, declare) {
                             counter.setValue(gamedatas.schools[player_id][color]);
                             this.counters.playerBoard[player_id]['coins'] = counter; 
 
-                            let table = document.querySelector(`#school_${player_id} .table_${color}`);
+                            let table = document.querySelector(`#school_${player_id} .${color}_row .students_table`);
 
                             for (let i = 0; i < gamedatas.schools[player_id][color]; i++) {
                                 table.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: color}));
@@ -137,15 +137,12 @@ function (dojo, declare) {
                         case 'blue_teacher':
 
                             let tc = color.split('_')[0];
-                            let teachers_table = document.querySelector(`#school_${player_id} .teachers_table`);
-                            teachers_table.insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: tc}));
+                            let teacher_seat = document.querySelector(`#school_${player_id} .${tc}_row .teacher_seat`);
 
                             if (gamedatas.schools[player_id][color] == 1) {
 
+                                teacher_seat.insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: tc}));
                                 document.querySelector(`#player_board_${player_id} .${tc}_counter .teacher_marker`).style.visibility = 'unset';
-                            } else {
-
-                                teachers_table.lastElementChild.style.visibility = 'hidden';
                             }
                           
                             break;
@@ -388,7 +385,7 @@ function (dojo, declare) {
         // onEnteringState: this method is called each time we are entering into a new game state.
         //                  You can use this method to perform some user interface changes at this moment.
         //
-        onEnteringState: function( stateName,args) {
+        onEnteringState: function(stateName,args) {
             console.log('Entering state: '+stateName);
             console.log('State arguments: ',args.args);
 
@@ -401,7 +398,7 @@ function (dojo, declare) {
             }
         },
 
-        onEnteringState_playAssistant: function (args) {
+        onEnteringState_playAssistant: function(args) {
 
             this.openAssistantDrawer();
             
@@ -445,6 +442,59 @@ function (dojo, declare) {
                     }
                 }
             })
+        },
+
+        onEnteringState_moveStudents: function(args) {
+            let entrance = document.querySelector(`#school_${this.getCurrentPlayerId()} .school_entrance`);
+
+            entrance.classList.add('active');
+
+            if (!this.isCurrentPlayerActive()) return;
+
+            this.gamedatas.gamestate.clientData = {};
+
+            let actionText = this.gamedatas.gamestate.descriptionmyturn;
+
+            entrance.childNodes.forEach(student => {
+
+                student.classList.add('selectable');
+
+                student.onclick = evt => {
+
+                    console.log('clicked on student');
+
+                    if (!student.classList.contains('selected')) {
+
+                        this.gamedatas.gamestate.descriptionmyturn = _('${you} must choose where to move your student');
+                        this.updatePageTitle();
+
+                        let previousSelected = document.querySelector(`.school_entrance .student.selected`);
+                        if (previousSelected) {
+
+                            previousSelected.classList.remove('selected');
+
+                            let prev_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(previousSelected)}_row .students_table`);
+                            prev_table.classList.remove('active');
+                            prev_table.onclick = null;
+                        }
+
+                        student.classList.add('selected');
+
+                        this.gamedatas.gamestate.clientData.student = this.getStudentElementColor(student);
+
+                        this.activateStudentsDestinations(student);
+
+                    } else {
+
+                        this.gamedatas.gamestate.descriptionmyturn = actionText;
+                        this.updatePageTitle();
+
+                        student.classList.remove('selected');
+
+                        this.deactivateStudentsDestinations(student);
+                    }                
+                }
+            });
         },
 
         onLeavingState: function(stateName) {
@@ -645,6 +695,61 @@ function (dojo, declare) {
             } else onEnd();
         },
 
+        getStudentElementColor: function(el) {
+
+            if (el.className.includes('green')) return 'green';
+            if (el.className.includes('red')) return 'red';
+            if (el.className.includes('yellow')) return 'yellow';
+            if (el.className.includes('pink')) return 'pink';
+            if (el.className.includes('blue')) return 'blue';
+        },
+
+        activateStudentsDestinations: function(selectedStudent) {
+
+            // activate islands
+            document.querySelectorAll('.island .students_influence').forEach(island => {
+                island.classList.add('active');
+
+                island.onclick = evt => {
+
+                    let currentSel = this.gamedatas.gamestate.clientData.student;
+                    
+                    if (currentSel) {
+                        this.ajaxcallwrapper('moveStudent',{student:currentSel, place:island.parentElement.parentElement.id.split('_')[1]});
+                    } else {
+                        this.showMessage(_("You need to select an Assistant card to play"),'error')
+                    }
+                }
+            })
+
+            // activate students table
+            let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(selectedStudent)}_row .students_table`);
+            students_table.classList.add('active');
+
+            students_table.onclick = evt => {
+
+                let currentSel = this.gamedatas.gamestate.clientData.student;
+                if (currentSel) {
+                    this.ajaxcallwrapper('moveStudent',{student:currentSel});
+                } else {
+                    this.showMessage(_("You need to select an Assistant card to play"),'error')
+                }
+            }
+        },
+
+        deactivateStudentsDestinations: function(selectedStudent) {
+            // deactivate islands
+            document.querySelectorAll('.island .students_influence').forEach(island => {
+                island.classList.remove('active');
+                island.onclick = null;
+            })
+
+            // deactivate students table
+            let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(selectedStudent)}_row .students_table`);
+            students_table.classList.remove('active');
+            students_table.onclick = null;
+        },
+
         // #endregion
 
         // ---------------------- //
@@ -664,16 +769,19 @@ function (dojo, declare) {
             console.log( 'notifications subscriptions setup' );
 
             dojo.subscribe('displayPoints', this, "notif_displayPoints");
-            this.notifqueue.setSynchronous( 'joinIslandGroups', 0);
+            this.notifqueue.setSynchronous('joinIslandGroups', 0);
 
             dojo.subscribe('playAssistant', this, "notif_playAssistant");
-            this.notifqueue.setSynchronous( 'playAssistant');
+            this.notifqueue.setSynchronous('playAssistant');
 
             dojo.subscribe('resolvePlanning', this, "notif_resolvePlanning");
-            this.notifqueue.setSynchronous( 'resolvePlanning');
+            this.notifqueue.setSynchronous('resolvePlanning');
+
+            dojo.subscribe('moveStudent', this, "notif_moveStudent");
+            this.notifqueue.setSynchronous('moveStudent',500);
 
             dojo.subscribe('joinIslandGroups', this, "notif_joinIslandGroups");
-            this.notifqueue.setSynchronous( 'joinIslandGroups', 2000);
+            this.notifqueue.setSynchronous('joinIslandGroups', 2000);
         },
 
         // debugging notif
@@ -778,6 +886,43 @@ function (dojo, declare) {
                     d = d+2000;
                 });
             });
+        },
+
+        notif_moveStudent: function(notif) {
+            console.log(notif.args);
+
+            // fetch student and clean interactables
+            let student;
+
+            if (this.isCurrentPlayerActive()) {
+                student = document.querySelector(`#school_${notif.args.player_id} .student.selected`);
+                
+                this.deactivateStudentsDestinations(student);
+
+                student.classList.remove('selected');
+                document.querySelectorAll(`#school_${notif.args.player_id} .school_entrance .student.selectable`).forEach(s => {
+                    s.classList.remove('selectable');
+                });
+                
+            } else {
+                student = document.querySelector(`#school_${notif.args.player_id} .school_entrance .student_${notif.args.student}`);
+            }
+
+            document.querySelector(`#school_${notif.args.player_id} .school_entrance`).classList.remove('active');
+
+            // fetch destination element
+            let destination;
+
+            if (notif.args.destination) {
+
+                destination = document.querySelector(`#island_${notif.args.destination} .students_influence`);
+            } else {
+
+                destination = document.querySelector(`#school_${notif.args.player_id} .${notif.args.student}_row .students_table`);
+            }
+
+            console.log(student,destination);
+            this.moveElement(student,destination,500,0,true);
         },
 
         notif_joinIslandGroups: function(notif) {

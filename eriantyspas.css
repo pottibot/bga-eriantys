@@ -377,8 +377,8 @@ html {
 }
 
 .students_influence {
-    width: 40%;
-    height: 50px;
+    width: 110px;
+    height: 100px;
 
     display: flex;
     flex-wrap: wrap;
@@ -386,6 +386,16 @@ html {
     justify-content: center;
     align-items: center;
     gap: 3px;
+
+    box-sizing: border-box;
+
+    border-radius: 100%;
+}
+
+.students_influence.active {
+    cursor: pointer;
+    border: solid white 1px;
+    box-shadow: inset 0px 0px 10px white;
 }
 
 .island .student {
@@ -440,6 +450,9 @@ html {
 
 .school_name {
     position: absolute;
+    top: 0px;
+    left: 0px;
+
     padding: 5px;
     border-radius: 0px 0px 5px 0px;
 
@@ -470,60 +483,124 @@ html {
 
     display: flex;
     justify-content: space-between;
+    align-items: center;
 
     position: relative;
 }
 
 .school_entrance {
-    width: 11.5%;
-    
+    gap: 10px;
+
+    width: 14%;
+
+    padding: 10px;
+
     display: flex;
     flex-wrap: wrap;
-
     align-content: center;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
-
     gap: 10px;
+
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+
+.school_entrance.active {
+    cursor: pointer;
+    /* border: solid red 1px; */
+    /* background-color: rgb(255 255 255 / 0.5); */
+    box-shadow: inset 0px 0px 10px white;
+    border: solid white 1px
+}
+
+.school_entrance .student.selectable {
+    transition: all 200ms ease-in;
+}
+
+.school_entrance .student.selectable:hover {
+    transform: scale(1.1);
+}
+
+.school_entrance .student.selected {
+    transform: translate(0px, -4px);
+    box-shadow: 0px 4px red;
+    border-radius: 0px 0px 9px 9px;
+}
+
+.school_entrance .student.selected:hover {
+    transform: translate(0px, -4px);
 }
 
 .school_hall {
     width: 65%;
+    height: 100%;
 
     display: flex;
     justify-content: space-around;
 }
 
-.students_tables {
-    width: 85%;
-    height: 83%;
+.tables {
+    width: 345px;
+    height: 100%;
 
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
-    position: relative;
+    justify-content: center;
 
-    top: 18px;
-    left: 29px;
+    gap: 13.5px;
+
+    position: relative;
+    top: 0px;
+    left: -3px;
+}
+
+.tables > div {
+    width: 100%;
+    height: 29px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .students_table {
-    display: flex;
+    height: 100%;
+    width: 292px;
 
-    column-gap: 6.1px;
+    display: flex;
+    align-items: center;
+    gap: 6.1px;
+
+    padding-left: 7px;
+
+    box-sizing: border-box;
+    border-radius: 5px;
 }
 
-.teachers_table {
-    width: 10%;
-    height: 88%;
+.students_table.active {
+    cursor: pointer;
 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    align-items: flex-start;
+    box-shadow: inset 0px 0px 10px white;
+    border: solid white 1px
 
+    /* background-color: rgb(255 255 255 / 0.5); */
+}
+
+.students_table .student {
     position: relative;
-    top: 10px;
+    top: -1px;
+}
+
+.teacher_seat {
+    width: 27px;
+    height: 100%;
+}
+
+.teacher_seat .teacher {
+    position: relative;
+    top: -2px;
+    left: 1px;
 }
 
 .school .student {

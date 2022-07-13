@@ -131,14 +131,13 @@ let jstpl_school =  "<div id='school_${id}' class='school' style='--color: ${col
                         <span class='school_name'>${name}</span>\
                         <div class='school_entrance school_room'></div>\
                         <div class='school_hall school_room'>\
-                            <div class='students_tables'>\
-                                <div class='table_green students_table'></div>\
-                                <div class='table_red students_table'></div>\
-                                <div class='table_yellow students_table'></div>\
-                                <div class='table_pink students_table'></div>\
-                                <div class='table_blue students_table'></div>\
+                            <div class='tables'>\
+                                <div class='green_row'><div class='students_table'></div><div class='teacher_seat'></div></div>\
+                                <div class='red_row'><div class='students_table'></div><div class='teacher_seat'></div></div>\
+                                <div class='yellow_row'><div class='students_table'></div><div class='teacher_seat'></div></div>\
+                                <div class='pink_row'><div class='students_table'></div><div class='teacher_seat'></div></div>\
+                                <div class='blue_row'><div class='students_table'></div><div class='teacher_seat'></div></div>\
                             </div>\
-                            <div class='teachers_table'></div>\
                         </div>\
                         <div class='school_yard school_room'></div>\
                     </div>";

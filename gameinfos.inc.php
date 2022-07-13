@@ -1,44 +1,34 @@
 <?php
 
-/*
-    From this file, you can edit the various meta-information of your game.
-
-    Once you modified the file, don't forget to click on "Reload game informations" from the Control Panel in order in can be taken into account.
-
-    See documentation about this file here:
-    http://en.doc.boardgamearena.com/Game_meta-information:_gameinfos.inc.php
-
-*/
-
 $gameinfos = array( 
 
 // Name of the game in English (will serve as the basis for translation) 
-'game_name' => "My Great Game",
+'game_name' => "Eriantys",
 
 // Game designer (or game designers, separated by commas)
-'designer' => 'John Doe',       
+'designer' => 'Leo Colovini',       
 
 // Game artist (or game artists, separated by commas)
-'artist' => 'Jane Doe',         
+'artist' => 'Alessandro Costa',         
 
 // Year of FIRST publication of this game. Can be negative.
-'year' => 2000,                 
+'year' => 2021,                 
 
 // Game publisher (use empty string if there is no publisher)
-'publisher' => 'My Publishing Company',                     
+'publisher' => 'Cranio Creations',                     
 
 // Url of game publisher website
-'publisher_website' => 'http://www.mypublishingcompany.com/',   
+'publisher_website' => 'https://craniointernational.com/',   
 
 // Board Game Geek ID of the publisher
-'publisher_bgg_id' => 1234,
+'publisher_bgg_id' => 10768,
 
 // Board game geek ID of the game
 'bgg_id' => 341286,
 
 
 // Players configuration that can be played (ex: 2 to 4 players)
-'players' => array( 2,3,4 ),    
+'players' => array(2,3,4),    
 
 // Suggest players to play with this number of players. Must be null if there is no such advice, or if there is only one possible player configuration.
 // NB: the automatic lobby will try first the lowest number of players if this is not specified. So you _have to_ specify this parameter if the lowest player number is not compatible with the default options.
@@ -88,16 +78,16 @@ $gameinfos = array(
 'language_dependency' => false,
 
 // Complexity of the game, from 0 (extremely simple) to 5 (extremely complex)
-'complexity' => 3,    
+'complexity' => 2,    
 
 // Luck of the game, from 0 (absolutely no luck in this game) to 5 (totally luck driven)
-'luck' => 3,    
+'luck' => 2,    
 
 // Strategy of the game, from 0 (no strategy can be setup) to 5 (totally based on strategy)
-'strategy' => 3,    
+'strategy' => 4,    
 
 // Diplomacy of the game, from 0 (no interaction in this game) to 5 (totally based on interaction and discussion between players)
-'diplomacy' => 3,    
+'diplomacy' => 0,    
 
 // Colors attributed to players
 'player_colors' => array( "ff0000", "008000", "0000ff", "ffa500", "773300" ),
@@ -132,9 +122,12 @@ $gameinfos = array(
 // Each paragraph must be wrapped with totranslate() for translation and should not contain html (plain text without formatting).
 // A good length for this text is between 100 and 150 words (about 6 to 9 lines on a standard display)
 'presentation' => array(
-//    totranslate("This wonderful game is about geometric shapes!"),
-//    totranslate("It was awarded best triangle game of the year in 2005 and nominated for the Spiel des Jahres."),
-//    ...
+    totranslate("In a world of floating islands, young magical creatures wish to enter into the great schools of magic."),
+    totranslate("Take the role of a school principal in a great challenge: what school will be the most influent?"),
+    totranslate("Use wisely your 10 assistants to move students into your dining room and onto the islands and to guide Mother Nature on the island where you have more control: she will reward you and let you build a magic tower there!"),
+    totranslate("Be careful though! The 5 professors define who controls a faction, but they always go where the most students are."),
+    totranslate("Each faction will change their minds frequently and you may lose all your support!"),
+    totranslate("A light strategy family game in a cute and funny world full of magical creatures, with 12 different characters that change the rules for lots of variants!"),
 ),
 
 // Games tags (categories)
@@ -145,7 +138,7 @@ $gameinfos = array(
 //  IMPORTANT: this list should be ORDERED, with the most important tag first.
 //  NOTE: tags are only read during the first deploy from the file gameinfos.inc.php; afterwards, BGA is responsible for setting tags for a game.
 
-'tags' => array( 2 ),
+'tags' => array(1, 2, 10, 26, 100, 216),
 
 
 //////// BGA SANDBOX ONLY PARAMETERS (DO NOT MODIFY)

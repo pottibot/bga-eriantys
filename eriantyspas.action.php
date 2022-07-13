@@ -32,4 +32,15 @@ class action_eriantyspas extends APP_GameAction {
 
         self::ajaxResponse();
     }
+
+    public function moveStudent() {
+
+        self::setAjaxMode();
+
+        $s = self::getArg("student", AT_alphanum, true);
+        $p = self::getArg("place", AT_int, false, null); // if no arg given, assumed placed in school
+        $this->game->moveStudent($s,$p);
+
+        self::ajaxResponse();
+    }
 }

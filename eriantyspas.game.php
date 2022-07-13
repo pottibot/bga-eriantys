@@ -452,6 +452,45 @@ function playAssistant($n) {
     }
 }
 
+function moveStudent($student, $place) {
+
+    if ($this->checkAction('moveStudent')) {
+
+        $id = self::getActivePlayerId();
+
+        $studentsReference = ['green', 'red', 'yellow', 'pink', 'blue'];
+        if (!in_array($student,$studentsReference)) throw new BgaVisibleSystemException("Invalid student color");
+        if (!is_null($place) && ($place < 0 || $place > 11)) throw new BgaVisibleSystemException("Invalid student destination");
+
+        // remove student from school entrance
+        self::dbQuery("UPDATE school_entrance SET $student = $student - 1 WHERE player = $id");
+
+        if (is_null($place)) {
+
+            self::dbQuery("UPDATE school SET $student = $student + 1 WHERE player = $id");
+
+            self::notifyAllPlayers('moveStudent', clienttranslate('${player_name} moved ${student} inside his/her school'), array(
+                'player_id' => self::getActivePlayerId(),
+                'player_name' => self::getActivePlayerName(),
+                'student' => $student,
+                ) 
+            );            
+        } else {
+            self::dbQuery("UPDATE island_influence SET $student = $student +1 WHERE island_pos = $place");
+
+            self::notifyAllPlayers('moveStudent', clienttranslate('${player_name} sent ${student} to an island'), array(
+                'player_id' => self::getActivePlayerId(),
+                'player_name' => self::getActivePlayerName(),
+                'student' => $student,
+                'destination' => $place,
+                ) 
+            );
+        }
+
+        $this->gamestate->nextState('');
+    }
+}
+
 #endregion
 
 /* ----------------------- */
@@ -470,10 +509,6 @@ function argPlayAssistant() {
     self::dump("// ASSISTANT FILTERED", $playedAssistants);
 
     return ['assistants' => $playedAssistants];
-}
-
-function argMoveStudents() {
-
 }
 
 #endregion
@@ -518,6 +553,20 @@ function stPlanningNext() {
         $this->gamestate->nextState('nextPhase');
     }
 
+}
+
+function stMoveAgain() {
+
+    $id = self::getActivePlayerId();
+    $total = self::getUniqueValueFromDb("SELECT (green + red + yellow + pink + blue) as total FROM school_entrance WHERE player = $id");
+
+    if ($total > ((self::getPlayersNumber()==3)?6:4)) {
+        $this->gamestate->nextState('again');
+    } else $this->gamestate->nextState('next');
+}
+
+function stResolveProfessors() {
+    $this->gamestate->nextState('');
 }
 
 #endregion

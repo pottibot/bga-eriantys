@@ -43,4 +43,24 @@ class action_eriantyspas extends APP_GameAction {
 
         self::ajaxResponse();
     }
+
+    public function moveMona() {
+
+        self::setAjaxMode();
+
+        $g = self::getArg("group", AT_int, true);
+        $this->game->moveMona($g);
+
+        self::ajaxResponse();
+    }
+
+    public function chooseCloudTile() {
+
+        self::setAjaxMode();
+
+        $c = self::getArg("cloud", AT_int, true);
+        $this->game->chooseCloudTile($c);
+
+        self::ajaxResponse();
+    }
 }

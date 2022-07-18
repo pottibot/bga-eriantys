@@ -308,18 +308,22 @@ html {
     height: 0px;
     position: relative;
     display: flex;
-    justify-content: center;
-    border-top: solid rgb( 0 0 0 / 0.5) 3px;
+    justify-content: flex-end;
+    border-top: solid rgb( 0 0 0 / 0.5) 1px;
     z-index: 1;
 }
 
 #assistants_drawer_arrow {
-    border: solid rgb( 0 0 0 / 0.5) 3px;
+    border: solid rgb( 0 0 0 / 0.5) 1px;
+    background-color: rgb(255 255 255 / 0.5);
+
     border-top: 0px;
-    padding: 2px;
-    padding-left: 5px;
-    padding-right: 5px;
+
+    padding: 5px;
     border-radius: 0px 0px 100% 100%;
+
+    position: relative;
+    left: -50px;
 }
 
 .close_drawer > g {
@@ -356,6 +360,13 @@ html {
 
     transition-property: left, top;
     transition: 1.5s ease-in;
+
+    filter: drop-shadow(0px 1px 0px rgb(21 112 158)) drop-shadow(0px 1px 0px rgb(21 112 158)) drop-shadow(0px 1px 0px rgb(21 112 158))
+}
+
+.island_group.active {
+    cursor: pointer;
+    filter: drop-shadow(2px 2px 0px orange) drop-shadow(-2px 2px 0px orange) drop-shadow(2px -2px 0px orange) drop-shadow(-2px -2px 0px orange);
 }
 
 .influence_cont {
@@ -389,6 +400,8 @@ html {
 
     box-sizing: border-box;
 
+    padding: 20px;
+
     border-radius: 100%;
 }
 
@@ -399,16 +412,13 @@ html {
 }
 
 .island .student {
-    --scale: 0.03
+    --scale: 0.045
 }
 
 .island .tower {
-    --scale: 0.07;
-
-    /* position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translate(-50%,-50%); */
+    --scale: 0.085;
+    position: absolute;
+    right: 15px;
 }
 
 .island_type_1 {
@@ -508,10 +518,8 @@ html {
 
 .school_entrance.active {
     cursor: pointer;
-    /* border: solid red 1px; */
-    /* background-color: rgb(255 255 255 / 0.5); */
     box-shadow: inset 0px 0px 10px white;
-    border: solid white 1px
+    border: solid white 1px;
 }
 
 .school_entrance .student.selectable {
@@ -592,12 +600,12 @@ html {
     top: -1px;
 }
 
-.teacher_seat {
+.professor_seat {
     width: 27px;
     height: 100%;
 }
 
-.teacher_seat .teacher {
+.professor_seat .professor {
     position: relative;
     top: -2px;
     left: 1px;
@@ -607,7 +615,7 @@ html {
     --scale: 0.06;
 }
 
-.school .teacher {
+.school .professor {
     --scale: 0.07;
 }
 
@@ -632,7 +640,7 @@ html {
 /* -------------------------------- */
 
 #mother_nature {
-    --scale: 0.08;
+    --scale: 0.1;
 
     display: inline-block;
 
@@ -822,7 +830,7 @@ html {
     margin: 15px;
 }
 
-#students_clouds_div {
+#cloud_tiles_div {
 
     display: flex;
     flex-wrap: wrap;
@@ -835,7 +843,7 @@ html {
     justify-content: center;
 }
 
-.students_cloud {
+.cloud_tile {
     --scale: 0.16;
 
     /* display: inline-block; */
@@ -858,9 +866,19 @@ html {
     justify-content: space-evenly;
     justify-items: center;
     align-content: center;
+
+    box-sizing: border-box;
+
+    filter: drop-shadow(0px 3px 0px rgb(21 112 158));
 }
 
-.students_cloud div:first-child {
+.cloud_tile.active {
+    cursor: pointer;
+    box-shadow: inset 0px 0px 10px white;
+    border: solid white 1px;
+}
+
+.cloud_tile div:first-child {
     grid-column: span 2;
 }
 
@@ -895,6 +913,20 @@ html {
     background-image: url('img/pieces.png');
     background-size: calc(var(--scale) * 4000px) calc(var(--scale) * 3714px);
     background-position: calc(var(--scale) * -3000px) 0px;
+}
+
+#students_bag:after {
+    content: "";
+    width: 150px;
+    height: 25px;
+    display: block;
+    background: rgba(0 0 0 / .7);
+    position: relative;
+    left: -5px;
+    top: 115px;
+    border-radius: 100%;
+    filter: blur(9px);
+    z-index: -1;
 }
 
 /* #endregion */
@@ -937,8 +969,8 @@ html {
     background-position-x: calc(var(--scale) * -1500px);
 }
 
-.teacher {
-    --scale: 0.1;
+.professor {
+    --scale: 0.07;
 
     width: calc(var(--scale) * 375px);
     height: calc(var(--scale) * 446px);
@@ -950,23 +982,23 @@ html {
     filter: drop-shadow(calc(var(--scale) * -15px) calc(var(--scale) * 15px) calc(var(--scale) * 15px) rgb(0,0,0,0.7));
 }
 
-.teacher_green {
+.professor_green {
     background-position-x: calc(var(--scale) * -1875px);
 }
 
-.teacher_red {
+.professor_red {
     background-position-x: calc(var(--scale) * -2250px);
 }
 
-.teacher_yellow {
+.professor_yellow {
     background-position-x: calc(var(--scale) * -2625px);
 }
 
-.teacher_pink {
+.professor_pink {
     background-position-x: calc(var(--scale) * -3000px);
 }
 
-.teacher_blue {
+.professor_blue {
     background-position-x: calc(var(--scale) * -3375px);
 }
 
@@ -1190,7 +1222,7 @@ html {
     --scale: 0.05;
 }
 
-.player_students > .teacher {
+.player_students > .professor {
     --scale: 0.05;
     display: none;
 }
@@ -1202,7 +1234,7 @@ html {
     align-items: center;
 }
 
-.teacher_marker {
+.professor_marker {
     width: 40px;
     height: 35px;
 
@@ -1220,6 +1252,12 @@ html {
 }
 
 .player-board .assistant {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.player-board .professor {
     position: absolute;
     top: 0px;
     left: 0px;

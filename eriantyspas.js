@@ -106,7 +106,7 @@ function (dojo, declare) {
                     }
                 }
 
-                // PLACE STUDENTS TEACHERS AND TOWERS IN SCHOOL
+                // PLACE STUDENTS PROFESSORS AND TOWERS IN SCHOOL
                 for (const color in gamedatas.schools[player_id]) {
 
                     switch (color) {
@@ -119,7 +119,7 @@ function (dojo, declare) {
                             let counter = new ebg.counter();
                             counter.create($(color+'_students_'+player_id));
                             counter.setValue(gamedatas.schools[player_id][color]);
-                            this.counters.playerBoard[player_id]['coins'] = counter; 
+                            this.counters.playerBoard[player_id][color] = counter; 
 
                             let table = document.querySelector(`#school_${player_id} .${color}_row .students_table`);
 
@@ -130,19 +130,19 @@ function (dojo, declare) {
                             break;
                         }
 
-                        case 'green_teacher':
-                        case 'red_teacher':
-                        case 'yellow_teacher':
-                        case 'pink_teacher':
-                        case 'blue_teacher':
+                        case 'green_professor':
+                        case 'red_professor':
+                        case 'yellow_professor':
+                        case 'pink_professor':
+                        case 'blue_professor':
 
                             let tc = color.split('_')[0];
-                            let teacher_seat = document.querySelector(`#school_${player_id} .${tc}_row .teacher_seat`);
+                            let professor_seat = document.querySelector(`#school_${player_id} .${tc}_row .professor_seat`);
 
                             if (gamedatas.schools[player_id][color] == 1) {
 
-                                teacher_seat.insertAdjacentHTML('beforeend',this.format_block('jstpl_teacher', {color: tc}));
-                                document.querySelector(`#player_board_${player_id} .${tc}_counter .teacher_marker`).style.visibility = 'unset';
+                                professor_seat.insertAdjacentHTML('beforeend',this.format_block('jstpl_professor', {color: tc}));
+                                document.querySelector(`#player_board_${player_id} .${tc}_counter .professor_marker`).style.visibility = 'unset';
                             }
                           
                             break;
@@ -221,7 +221,7 @@ function (dojo, declare) {
             // $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point',{left: 0, top: 0}));
 
             // SETUP ISLANDS GROUPS
-            gamedatas.islandGroups.forEach(g => {
+            gamedatas.islandsGroups.forEach(g => {
                 $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island_group', {id: g}));
                 $('island_group_'+g).addEventListener('click', evt => {console.log(evt.target.parentElement.id);})
             });
@@ -266,7 +266,7 @@ function (dojo, declare) {
 
             // PLACE STUDENTS CLOUDS
             for (let i = 0; i < 4; i++) {
-                $('students_clouds_div').insertAdjacentHTML('beforeend',this.format_block('jstpl_cloud', {id:i+1, type: 'multi'}));
+                $('cloud_tiles_div').insertAdjacentHTML('beforeend',this.format_block('jstpl_cloud', {id:i+1, type: 'multi'}));
             }
 
             // PLACE STUDENTS ON CLOUDS
@@ -425,6 +425,7 @@ function (dojo, declare) {
 
                     if (el.classList.contains('selected')) {
                         console.log('unselecting assistant');
+                        this.gamedatas.gamestate.clientData.selected = null;
                         el.classList.remove('selected');
                         el.classList.add('unselected');
                     } else {
@@ -493,6 +494,32 @@ function (dojo, declare) {
 
                         this.deactivateStudentsDestinations(student);
                     }                
+                }
+            });
+        },
+
+        onEnteringState_moveMona: function(args) {
+
+            args.destinations.forEach(g => {
+                let group = $('island_group_'+g);
+                group.classList.add('active');
+
+                group.onclick = evt => {
+
+                    this.ajaxcallwrapper('moveMona',{group: g});
+                }
+            });
+        },
+
+        onEnteringState_cloudTileDrafting: function(args) {
+
+            args.cloudTiles.forEach(c => {
+                let cloud = $('cloud_'+c);
+                cloud.classList.add('active');
+
+                cloud.onclick = evt => {
+
+                    this.ajaxcallwrapper('chooseCloudTile',{cloud: c});
                 }
             });
         },
@@ -769,7 +796,7 @@ function (dojo, declare) {
             console.log( 'notifications subscriptions setup' );
 
             dojo.subscribe('displayPoints', this, "notif_displayPoints");
-            this.notifqueue.setSynchronous('joinIslandGroups', 0);
+            this.notifqueue.setSynchronous('joinIslandsGroups', 0);
 
             dojo.subscribe('playAssistant', this, "notif_playAssistant");
             this.notifqueue.setSynchronous('playAssistant');
@@ -780,8 +807,11 @@ function (dojo, declare) {
             dojo.subscribe('moveStudent', this, "notif_moveStudent");
             this.notifqueue.setSynchronous('moveStudent',500);
 
-            dojo.subscribe('joinIslandGroups', this, "notif_joinIslandGroups");
-            this.notifqueue.setSynchronous('joinIslandGroups', 2000);
+            dojo.subscribe('gainProfessor', this, "notif_gainProfessor");
+            this.notifqueue.setSynchronous('gainProfessor',500);
+
+            dojo.subscribe('joinIslandsGroups', this, "notif_joinIslandsGroups");
+            this.notifqueue.setSynchronous('joinIslandsGroups', 2000);
         },
 
         // debugging notif
@@ -917,7 +947,8 @@ function (dojo, declare) {
 
                 destination = document.querySelector(`#island_${notif.args.destination} .students_influence`);
             } else {
-
+                // inc counter
+                this.counters.playerBoard[notif.args.player_id][notif.args.student].incValue(1);
                 destination = document.querySelector(`#school_${notif.args.player_id} .${notif.args.student}_row .students_table`);
             }
 
@@ -925,7 +956,33 @@ function (dojo, declare) {
             this.moveElement(student,destination,500,0,true);
         },
 
-        notif_joinIslandGroups: function(notif) {
+        notif_gainProfessor: function(notif) {
+
+            // fetch student and clean interactables
+            let professor;
+
+            if (notif.args.player_2) {
+                professor = document.querySelector(`#school_${notif.args.player_2} .${notif.args.color}_row .professor`);                
+                
+                document.querySelector(`#player_board_${notif.args.player_2} .${notif.args.color}_counter .professor_marker`).style.visibility = '';
+            
+            } else {
+                $('player_board_'+notif.args.player_id).insertAdjacentHTML('beforeend',this.format_block('jstpl_professor',{color: notif.args.color}));
+                professor = $('player_board_'+notif.args.player_id).lastElementChild;
+            }
+
+            document.querySelector(`#player_board_${notif.args.player_id} .${notif.args.color}_counter .professor_marker`).style.visibility = 'unset';
+
+            // fetch destination element
+            let destination;
+
+            destination = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .professor_seat`);
+
+            console.log(professor,destination);
+            this.moveElement(professor,destination,500,0,true);
+        },
+
+        notif_joinIslandsGroups: function(notif) {
 
             console.log(notif.args);
 

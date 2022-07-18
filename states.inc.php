@@ -22,7 +22,7 @@ $machinestates = array(
 // --- PLANNING PHASE --- //
 
     10 => array(
-    		"name" => "playAssistant",
+    		"name" => "playAssistant", // change all activplayer state names from verb to nouns (playAssistant -> assistantPhase, moveStudents -> studentsMovement)
     		"description" => clienttranslate('${actplayer} must play an Assistant card'),
     		"descriptionmyturn" => clienttranslate('${you} must play an Assistant card'),
     		"type" => "activeplayer",
@@ -32,9 +32,9 @@ $machinestates = array(
     ),
 
     11 => array(
-        "name" => "planningNext",
+        "name" => "nextPlayerPlanning",
         "type" => "game",
-        "action" => "stPlanningNext",
+        "action" => "stNextPlayerPlanning",
         "transitions" => array( "nextTurn" => 10, "nextPhase" => 20 )
     ),
 
@@ -52,14 +52,7 @@ $machinestates = array(
         "name" => "moveAgain",
         "type" => "game",
         "action" => "stMoveAgain",
-        "transitions" => array( "again" => 20, "next" => 22)
-    ),
-
-    22 => array(
-        "name" => "resolveProfessors",
-        "type" => "game",
-        "action" => "stResolveProfessors",
-        "transitions" => array( "" => 30)
+        "transitions" => array( "again" => 20, "next" => 30)
     ),
 
     30 => array(
@@ -67,11 +60,27 @@ $machinestates = array(
         "description" => clienttranslate('${actplayer} must move Mother Nature'),
         "descriptionmyturn" => clienttranslate('${you} must move Mother Nature'),
         "type" => "activeplayer",
+        "args" => "argMoveMona",
         "possibleactions" => array( "moveMona"),
-        "transitions" => array("" => 31)
+        "transitions" => array("" => 40)
     ),
 
+    40 => array(
+        "name" => "cloudTileDrafting",
+        "description" => clienttranslate('${actplayer} must choose a Cloud tile'),
+        "descriptionmyturn" => clienttranslate('${you} must choose a Cloud tile'),
+        "type" => "activeplayer",
+        "args" => "argCloudTileDrafting",
+        "possibleactions" => array( "chooseCloudTile"),
+        "transitions" => array("" => 41)
+    ),
 
+    41 => array(
+        "name" => "nextPlayerAction",
+        "type" => "game",
+        "action" => "stActionNext",
+        "transitions" => array( "nextPlayerAction" => 20, "gameEnd" => 99)
+    ),
 
 // --- --- --- //
     

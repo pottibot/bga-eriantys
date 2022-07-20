@@ -249,15 +249,22 @@ function (dojo, declare) {
                         case 'white_tower':
                         case 'grey_tower':
                         case 'black_tower':
-                            if (island[color] == 1)
-                                document.querySelector(`#island_${island.island_pos} .influence_cont`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: color.split('_')[0]}));
+                            if (island[color] == 1) {
+                                //document.querySelector(`#island_${island.island_pos} .influence_cont`).insertAdjacentHTML('beforeend',this.format_block('jstpl_tower', {color: color.split('_')[0]}));
+                                let tower = document.querySelector(`#island_${island.island_pos} .tower`);
+                                let towerCol = color.split('_')[0];
+                                tower.classList.remove('mock');
+                                tower.classList.add('tower_'+towerCol);
+                            }
+                                
                             break;
                     }
                 }
             });
 
             // PLACE MOther NAture (MONA)
-            document.querySelector(`#island_${gamedatas.mother_nature} .influence_cont`).insertAdjacentHTML('afterbegin',this.format_block('jstpl_mother_nature'));
+            //document.querySelector(`#island_${gamedatas.mother_nature} .influence_cont`).insertAdjacentHTML('afterbegin',this.format_block('jstpl_mother_nature'));
+            document.querySelector(`#island_${gamedatas.mother_nature} .mother_nature`).classList.remove('mock');
 
             // PLACE HEROES
             for (let i = 0; i < 3; i++) {
@@ -414,7 +421,7 @@ function (dojo, declare) {
                     console.log('clicked on assistant',el);
 
                     if (!this.isCurrentPlayerActive()) {
-                        this.showMessage(_('It is not your turn'));
+                        this.showMessage(_('It is not your turn'),'error');
                         return;
                     }
 
@@ -505,7 +512,10 @@ function (dojo, declare) {
                 group.classList.add('active');
 
                 group.onclick = evt => {
-
+                    if (!this.isCurrentPlayerActive()) {
+                        this.showMessage(_('It is not your turn'),'error');
+                        return;
+                    }
                     this.ajaxcallwrapper('moveMona',{group: g});
                 }
             });
@@ -518,7 +528,10 @@ function (dojo, declare) {
                 cloud.classList.add('active');
 
                 cloud.onclick = evt => {
-
+                    if (!this.isCurrentPlayerActive()) {
+                        this.showMessage(_('It is not your turn'),'error');
+                        return;
+                    }
                     this.ajaxcallwrapper('chooseCloudTile',{cloud: c});
                 }
             });
@@ -613,11 +626,78 @@ function (dojo, declare) {
             return false
         },
 
+        findCommonAncestors: function(el1, el2) {
+
+            let range = document.createRange();
+
+            range.setStart(el1,0);
+            range.setEnd(el2,0);
+
+            return range.commonAncestorContainer;
+        },
+
+        getContScale: function(el) {
+            let m = getComputedStyle(el).transform;
+
+            if (m == 'none') return null;
+
+            m = m.replace('matrix','');
+            m = m.replaceAll(' ','');
+            m = m.substring(1,m.length-2);
+            m = m.split(',');
+            scale = {x: m[0], y: m[3]}
+
+            return scale;
+        },
+
+        placeElement: function(el, target, movingSurface=null) {
+
+            if (!movingSurface) movingSurface = $('game_play_area');
+            let movingSurfacePos = movingSurface.getBoundingClientRect();
+            let targetPos = target.getBoundingClientRect();
+
+            let surfaceScale = this.getContScale(movingSurface);
+            let counterScale = 1;
+            if (surfaceScale) {
+                counterScale = 1/surfaceScale.x;
+            }
+
+            console.log('moving surface', movingSurface, movingSurfacePos);
+            console.log('target', target, targetPos);
+            
+            if (el.parentElement != movingSurface) movingSurface.append(el);
+
+            // position it on its current coordinates, but on oversurface
+            el.style.position = 'absolute';
+            el.style.left = counterScale*(targetPos.left - movingSurfacePos.left) + 'px';
+            el.style.top = counterScale*(targetPos.top - movingSurfacePos.top) + 'px';
+
+            el.offsetWidth;
+        },
+
+        moveElement2: function(el,target, movingSurface=null, duration=0, delay=0, onEnd=()=>{}) {
+
+            if (!movingSurface) movingSurface = $('game_play_area');
+
+            if (el.parentElement != movingSurface) this.placeElement(el,el,movingSurface);
+
+            el.style.transition = `all ${duration}ms ${delay}ms ease-in-out`;
+            el.offsetWidth;
+
+            setTimeout(() => {
+                el.style.transition = ''
+                onEnd();
+            }, duration);
+
+            this.placeElement(el,target,movingSurface);
+        },
+
+        // TOO COMPLEX, MAYBE DIFFERENCIATE WITH APPEND OR NOT TO DESTINATION CONT AND MOVE TO REFERENCE (NOT CONT)
         // WARNING: this will reset specific properties position, left, top
         moveElement: function(el, target, duration=0, delay=0, append = false, onEnd=()=>{}) {
 
             // get oversurface peices movement cont
-            let movingSurface = $('overall-content');
+            let movingSurface = $('game_play_area');
 
             // get el parents for reattaching at anim end (if not append)
             let elParent = el.parentElement;
@@ -704,6 +784,10 @@ function (dojo, declare) {
 
             return elClone;
         },
+
+        /* moveElementToContainer: function() {},
+        moveElementToContainer: function() {},
+        moveElementToTarget: function() {}, */
 
         openAssistantDrawer: function(onEnd = () => {}) {
 
@@ -809,6 +893,9 @@ function (dojo, declare) {
 
             dojo.subscribe('gainProfessor', this, "notif_gainProfessor");
             this.notifqueue.setSynchronous('gainProfessor',500);
+
+            dojo.subscribe('moveMona', this, "notif_moveMona");
+            this.notifqueue.setSynchronous('moveMona');
 
             dojo.subscribe('joinIslandsGroups', this, "notif_joinIslandsGroups");
             this.notifqueue.setSynchronous('joinIslandsGroups', 2000);
@@ -980,6 +1067,47 @@ function (dojo, declare) {
 
             console.log(professor,destination);
             this.moveElement(professor,destination,500,0,true);
+        },
+
+        notif_moveMona: function(notif) {
+
+            console.log(notif.args);
+
+            this.notifqueue.setSynchronousDuration(notif.args.stops.length * 550);
+
+            document.querySelectorAll('.island_group.active').forEach(g => g.classList.remove('active'));
+
+            let previousMona = document.querySelector(`.mother_nature:not(.mock)`);
+            let mona = previousMona.cloneNode();
+            let movingSurface = $('islands_cont');
+
+            previousMona.classList.add('mock');
+
+            // CAUGHT THE BUG!!
+            // positions are off because moving surface is scaled
+            // coordinates are fetch right 
+            // but then they result off because are scalled due transform (element positioned inside scaled element, with absolute coordinates)
+            // solution: either scale coordinates or change surface and scale mona
+            // ALSO: remove offset from scaling islands it complicates things.. recalibrate the rest
+
+            this.placeElement(mona,previousMona,movingSurface);
+
+            notif.args.stops.forEach((id,i) => {
+                setTimeout(() => {
+                    let island_mona = document.querySelector(`#island_${id} .mother_nature`);
+
+                    onend = ()=>{};
+                    if (i == notif.args.stops.length-1) {
+                        onend = () => {
+                            console.log('removing mona after animation end');
+                            island_mona.classList.remove('mock');
+                            mona.remove();
+                        }
+                    }
+
+                    this.moveElement2(mona,island_mona,movingSurface,500,0,onend);
+                }, i*550); 
+            });
         },
 
         notif_joinIslandsGroups: function(notif) {

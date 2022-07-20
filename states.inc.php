@@ -78,8 +78,8 @@ $machinestates = array(
     41 => array(
         "name" => "nextPlayerAction",
         "type" => "game",
-        "action" => "stActionNext",
-        "transitions" => array( "nextPlayerAction" => 20, "gameEnd" => 99)
+        "action" => "stNextPlayerAction",
+        "transitions" => array( "nextPlayerAction" => 20, "nextRound" => 10, "gameEnd" => 99)
     ),
 
 // --- --- --- //

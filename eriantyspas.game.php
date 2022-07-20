@@ -277,6 +277,7 @@ class eriantyspas extends Table {
     // refil students clouds by drawing new students
     function refillClouds() {
         $allClouds = self::getObjectListFromDb("SELECT id FROM cloud", true);
+        $retClouds = [];
 
         foreach ($allClouds as $cloud) {
             $students = array_fill(0,5,0);
@@ -292,7 +293,13 @@ class eriantyspas extends Table {
             $blue = $students[4];
 
             self::dbQuery("UPDATE cloud SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE id = $cloud");
+
+            $retClouds[$cloud] = $students;
         }
+
+        self::notifyAllPlayers('refillClouds',"",[
+            'clouds' => $retClouds
+        ]);
     }
 
     // joins two groups of islands and trigger UI animation
@@ -420,6 +427,12 @@ class eriantyspas extends Table {
         }
 
         return ['right'=>$rightExtr, 'left'=>$leftExtr];
+    }
+
+    function getGroupMid($gId) {
+        $islands = self::getGroupIslands($gId);
+
+        return $islands[floor(count($islands)/2)];
     }
 
     function getColorName($colorVal) {
@@ -737,9 +750,16 @@ function moveMona($group) {
         $arg = self::argMoveMona();
         if (!in_array($group,$arg['destinations'])) throw new BgaVisibleSystemException("Invalid Mother Nature destination");
 
+        $islandsStops = [];
+        foreach ($arg['destinations'] as $g) {
+            $islandsStops[] = self::getGroupMid($g);
+            if ($g == $group) break;
+        }
+
         self::notifyAllPlayers('moveMona', clienttranslate('${player_name} moves (Mother Nature)'), array(
             'player_id' => self::getActivePlayerId(),
             'player_name' => self::getActivePlayerName(),
+            'stops' => $islandsStops,
             'group' => $group,
             ) 
         ); 
@@ -792,8 +812,9 @@ function chooseCloudTile($cloud) {
 
         if (!in_array($cloud,$arg['cloudTiles'])) throw new BgaVisibleSystemException("Invalid Cloud tile");
 
-        ['green'=>$green, 'red'=>$red, 'yellow'=>$yellow, 'pink'=>$pink,'blue'=>$blue,] = self::getObjectFromDb("SELECT green, red, yellow, pink, blue");
+        ['green'=>$green, 'red'=>$red, 'yellow'=>$yellow, 'pink'=>$pink,'blue'=>$blue,] = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM cloud WHERE id = $cloud");
         self::dbQuery("UPDATE school_entrance SET green=green+$green, red=red+$red, yellow=yellow+$yellow, pink=pink+$pink, blue=pink+$blue WHERE player = $id");
+        self::dbQuery("UPDATE cloud SET green=0, red=0, yellow=0, pink=0, blue=0 WHERE id = $cloud");
 
         self::notifyAllPlayers('chooseCloudTile', clienttranslate('${player_name} chooses a Cloud tile'), array(
             'player_id' => self::getActivePlayerId(),
@@ -907,7 +928,27 @@ function stMoveAgain() {
 
 function stNextPlayerAction() {
 
-    //todo
+    $id = self::getActivePlayerId();
+    $players = self::getObjectListFromDb("SELECT player_id FROM player ORDER BY player_turn_position ASC", true);
+
+    $playerTurnPos = array_search($id, $players);
+
+    $nextPlayerTurnPos = ($playerTurnPos + 1) % count($players);
+    $nextPlayer = $players[$nextPlayerTurnPos];
+
+    $this->gamestate->changeActivePlayer($nextPlayer);
+
+    if ($nextPlayerTurnPos > 0) {
+
+        $this->gamestate->nextState('nextPlayerAction');
+    } else {
+
+        self::notifyAllPlayers('newRound',clienttranslate("A new game round begins"),[]);
+        self::refillClouds();
+        // check victory condition (student pouch empty / players with only 1 assistant card in their hands)        
+
+        $this->gamestate->nextState('nextRound');
+    }
 }
 
 #endregion

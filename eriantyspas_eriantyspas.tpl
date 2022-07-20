@@ -106,10 +106,13 @@
 let jstpl_point = "<div class='point' style='left:${left}px; top:${top}px;'></div>";
 let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='left:${left}px; top:${top}px;'>\
                         <div class='influence_cont'>\
+                            <div class='mother_nature mock'></div>\
                             <div class='students_influence'></div>\
                             <div class='students_influence_alt'></div>\
+                            <div class='tower mock'></div>\
                         </div>\
                     </div>"
+
 let jstpl_island_group = "<div id='island_group_${id}' class='island_group'></div>";
 
 let jstpl_assistant = "<div class='assistant_${n} assistant card' data-n='${n}'></div>";

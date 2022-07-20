@@ -279,7 +279,7 @@ html {
 /* ----------------------------- */
 
 /* ----------------------------- */
-/* #region ISLANDS CONTROLS AREA */
+/* #region CONTROLS AREA */
 /* ----------------------------- */
 
 .controls {
@@ -416,9 +416,10 @@ html {
 }
 
 .island .tower {
-    --scale: 0.085;
+    --scale: 0.09;
     position: absolute;
-    right: 15px;
+    right: 12px;
+    bottom: 35%;
 }
 
 .island_type_1 {
@@ -639,7 +640,7 @@ html {
 /* #region TOWERS AND MOTHER NATURE */
 /* -------------------------------- */
 
-#mother_nature {
+.mother_nature {
     --scale: 0.1;
 
     display: inline-block;
@@ -655,9 +656,15 @@ html {
     filter: drop-shadow(calc(var(--scale) * -10px) calc(var(--scale) * 20px) calc(var(--scale) * 20px) black);
 
     position: absolute;
-    top: -25%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: -50%;
+}
+
+.mother_nature.mock {
+    visibility: hidden;
+}
+
+.tower.mock {
+    visibility: hidden;
 }
 
 .tower {

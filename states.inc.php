@@ -40,10 +40,10 @@ $machinestates = array(
 
     20 => array(
         "name" => "moveStudents",
-        "description" => clienttranslate('${actplayer} must move one of his/her new students'),
-        "descriptionmyturn" => clienttranslate('${you} must move one of your new students'),
+        "description" => clienttranslate('${actplayer} must move one of his/her new students (${stud_count}/3)'),
+        "descriptionmyturn" => clienttranslate('${you} must move one of your new students (${stud_count}/3)'),
         "type" => "activeplayer",
-        /* "args" => "argMoveStudents", */
+        "args" => "argMoveStudents",
         "possibleactions" => array( "moveStudent"),
         "transitions" => array("" => 21)
     ),
@@ -62,7 +62,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argMoveMona",
         "possibleactions" => array( "moveMona"),
-        "transitions" => array("" => 40)
+        "transitions" => array("pickCloud" => 40, "gameEnd" => 99)
     ),
 
     40 => array(

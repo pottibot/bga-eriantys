@@ -39,6 +39,63 @@ $game_options = array(
 
     */
 
+    100 => array(
+        'name' => totranslate('Expert game (with Characters)'),    
+        'values' => array(
+                1 => array( 'name' => totranslate('Yes'), 'tmdisplay' => totranslate('Characters'), 'description' => totranslate('Adds Character cards to the game, which can be activated with coins and grant special one-time abilities'), 'beta' => true, 'nobeginner' => true ),
+                2 => array( 'name' => totranslate('No'))
+            ),
+        'default' => 2
+    ),
+
+
 );
 
+
+$game_preferences = array(
+    100 => array(
+            'name' => totranslate('Influence detector'),
+            'values' => array(
+                1 => array( 'name' => totranslate( 'On' )),
+                2 => array( 'name' => totranslate( 'Off' )),
+            ),
+            'default' => 1
+    ),
+
+    101 => array(
+        'name' => totranslate('Display opponents school'),
+        'values' => array(
+            1 => array( 'name' => totranslate( 'Side' )),
+            2 => array( 'name' => totranslate( 'Bottom' )),
+        ),
+        'default' => 1
+    ),
+
+    102 => array(
+        'name' => totranslate('Display Assistants'),
+        'values' => array(
+            1 => array( 'name' => totranslate( '"Drawer"' )),
+            2 => array( 'name' => totranslate( 'Fixed' )),
+        ),
+        'default' => 1
+    ),
+
+    103 => array(
+        'name' => totranslate('Pieces aspect'),
+        'values' => array(
+            1 => array( 'name' => totranslate( '3D' )),
+            2 => array( 'name' => totranslate( 'Flat' )),
+        ),
+        'default' => 1
+    ),
+
+    104 => array(
+        'name' => totranslate('Display island students'),
+        'values' => array(
+            1 => array( 'name' => totranslate( 'Default' )),
+            2 => array( 'name' => totranslate( 'Compact' )),
+        ),
+        'default' => 1
+    ),
+);
 

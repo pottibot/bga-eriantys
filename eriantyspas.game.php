@@ -24,7 +24,9 @@ class eriantyspas extends Table {
         parent::__construct();
         
         self::initGameStateLabels(array(
+            "characters" => 100,
             "mother_nature_pos" => 10,
+            "last_round" => 10
         ));        
 	}
 	
@@ -35,6 +37,10 @@ class eriantyspas extends Table {
     protected function setupNewGame($players, $options = array()) {
 
         //$gameinfos = self::getGameinfos();
+
+        $students_bag = str_repeat('G',26) . str_repeat('R',26) . str_repeat('Y',26) . str_repeat('P',26) . str_repeat('B',26);
+        $students_bag = str_shuffle($students_bag);
+        self::dbQuery("INSERT INTO students_bag (students) VALUES ('$students_bag')");
         
         $default_colors = ['000000', 'ffffff', '7b7b7b'];
         $fourPlayersColors = ['000000', 'ffffff', '000000', 'ffffff'];
@@ -71,7 +77,10 @@ class eriantyspas extends Table {
         // --- GAME INITIAL STATE INIT --- //
 
         // INIT GLOBALS
+        self::setGameStateInitialValue('characters', $this->gamestate->table_globals[100]);
         self::setGameStateInitialValue('mother_nature_pos', 0);
+        self::setGameStateInitialValue('last_round', 0);
+        
         
         // INIT STATISTICS
         //self::initStat( 'table', 'table_teststat1', 0 );    // Init a table statistics
@@ -105,7 +114,7 @@ class eriantyspas extends Table {
         $values = [];
         for ($i=0; $i < 12; $i++) {
             $students = array_fill(0,5,0);
-            if ($i != 0 && $i != 6) $students[bga_rand(0,4)] = 1; // draft initial students for given island;
+            if ($i != 0 && $i != 6) $students[self::drawStudents()] = 1; // draft initial students for given island;
             $students = implode(',',$students);
 
             $values[] = "($i,$students)";
@@ -128,8 +137,10 @@ class eriantyspas extends Table {
         foreach($players as $player_id => $player) {
             $students = array_fill(0,5,0);
 
-            for ($i=0; $i < ((count($players) == 3)?9:7); $i++) { 
-                $students[bga_rand(0,4)] += 1; // draft student
+            $drawn = self::drawStudents((count($players) == 3)?9:7);
+
+            foreach ($drawn as $s) {
+                $students[$s] += 1;
             }
 
             $students = implode(',',$students);
@@ -164,7 +175,7 @@ class eriantyspas extends Table {
 
         $result['players_assistants'] = self::getCollectionFromDb("SELECT * FROM player_assistants");
 
-        $result['played_assistants'] = self::getCollectionFromDb("SELECT player, assistant FROM played_assistants", true);
+        $result['played_assistants'] = self::getCollectionFromDb("SELECT player, assistant, old FROM played_assistants");
 
         $result['islands'] = self::getObjectListFromDb("SELECT pos, x, y, `group`, `type` FROM island ORDER BY pos ASC");
 
@@ -172,12 +183,15 @@ class eriantyspas extends Table {
 
         $result['islands_influence'] = self::getObjectListFromDb("SELECT * FROM island_influence");
 
+        $result['players_influence'] = self::getAllInfluenceData();
+
         $result['schools'] = self::getCollectionFromDb("SELECT * FROM school");
         $result['schools_entrance'] = self::getCollectionFromDb("SELECT * FROM school_entrance");
 
         $result['clouds'] = self::getObjectListFromDb("SELECT * FROM cloud");
 
         $result['mother_nature'] = self::getGameStateValue('mother_nature_pos');
+        $result['characters'] = self::getGameStateValue('characters') == 1;
 
         return $result;
     }
@@ -195,6 +209,38 @@ class eriantyspas extends Table {
 #region 
 
     // -- DEBUGGING METHODS --
+
+        function isLastRound() {
+            self::dump('// IS LAST ROUND',self::getGameStateValue('last_round'));
+        }
+
+        function test() {
+            /* $array = ['a','b','c'];
+            self::dump("// RESULT",implode('',$array)); */
+            $count = [
+                'G' => 0,
+                'R' => 0,
+                'Y' => 0,
+                'P' => 0,
+                'B' => 0,
+            ];
+
+            for ($i=0; $i < 130; $i++) { 
+                $s = self::drawStudents();
+
+                $count[$s] += 1;
+
+                if ($i == 9 || $i == 74 || $i == 129) {
+                    self::dump("// RESULTS AT $i",[
+                        'G' => $count['G'] / $i,
+                        'R' => $count['R'] / $i,
+                        'Y' => $count['Y'] / $i,
+                        'P' => $count['P'] / $i,
+                        'B' => $count['B'] / $i, 
+                    ]);
+                }
+            }
+        }
 
         // display an array of EriantysPoints on UI
         function displayPoints($points) {
@@ -274,7 +320,51 @@ class eriantyspas extends Table {
 
     // -- --- --
 
-    // refil students clouds by drawing new students
+    // returns n students from the bag in the form of an array where the student is represented by a number from 0 to 4 (0 -> green, 1 -> red, ... , 4 -> blue)
+    // so [0,3,2,3,4,4,1] is a draw of green, pink, yellow, pink, blue, blue, red
+    function drawStudents($n=1) {
+
+        $students_bag = self::getUniqueValueFromDb("SELECT students FROM students_bag");
+        $students_left = strlen($students_bag);
+
+        if ($students_left < $n) throw new BgaSystemException("Students bag doesn't have enough students ($n, available $students_left)");
+
+        $students_bag = str_split($students_bag);
+        shuffle($students_bag);
+
+        $studentsSet = ['G','R','Y','P','B'];
+
+        $ret = [];
+        for ($i=0; $i < $n; $i++) {
+
+            $s = array_shift($students_bag);
+
+            $s = array_search($s,$studentsSet);
+
+            /* switch ($s) {
+                case 'G': $s = 'green';
+                    break;
+                case 'R': $s = 'red';
+                    break;
+                case 'Y': $s = 'yellow';
+                    break;
+                case 'P': $s = 'pink';
+                    break;
+                case 'B': $s = 'blue';
+                    break;
+            } */
+            $ret[] = $s;            
+        }
+
+        $students_bag = implode('',$students_bag);
+
+        self::dbQuery("UPDATE students_bag SET students = '$students_bag'");
+
+        if (count($ret) == 1) $ret = $ret[0];
+        return $ret;
+    }
+
+    // refills students clouds by drawing new students and sends notification to display it visually
     function refillClouds() {
         $allClouds = self::getObjectListFromDb("SELECT id FROM cloud", true);
         $retClouds = [];
@@ -282,23 +372,35 @@ class eriantyspas extends Table {
         foreach ($allClouds as $cloud) {
             $students = array_fill(0,5,0);
 
-            for ($i=0; $i < ((count($allClouds)==3)?4:3); $i++) {
-                $students[bga_rand(0,4)] += 1;
+            try {
+                $drawn = self::drawStudents((count($allClouds) == 3)?4:3);
+            } catch (Exception $e) {
+                $drawn = [];
+
+                self::setGameStateValue('last_round',1);
+                self::notifyAllPlayers('lastRound',clienttranslate('Game end has been triggered: there are no more Students in the bag. <b>This is the last round</b>.'),[]);
             }
-
-            $green = $students[0];
-            $red = $students[1];
-            $yellow = $students[2];
-            $pink = $students[3];
-            $blue = $students[4];
-
-            self::dbQuery("UPDATE cloud SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE id = $cloud");
+            
+            if (!empty($drawn)) {
+                foreach ($drawn as $s) {
+                    $students[$s] += 1;
+                }
+    
+                $green = $students[0];
+                $red = $students[1];
+                $yellow = $students[2];
+                $pink = $students[3];
+                $blue = $students[4];
+    
+                self::dbQuery("UPDATE cloud SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE id = $cloud");    
+            }
 
             $retClouds[$cloud] = $students;
         }
 
         self::notifyAllPlayers('refillClouds',"",[
-            'clouds' => $retClouds
+            'clouds' => $retClouds,
+            'students_each' => (count($allClouds) == 3)?4:3
         ]);
     }
 
@@ -343,11 +445,11 @@ class eriantyspas extends Table {
         // --- calculate join translation ---
         $g1AttachAngle = self::getAttachAngle($g1AttachSide,$g1Extr['pos']);
         $g1AttachPoint = new EriantysPoint($g1Extr['x'],$g1Extr['y']);
-        $g1AttachPoint = $g1AttachPoint->translatePolar(50 * sin(M_PI/3), $g1AttachAngle);
+        $g1AttachPoint = $g1AttachPoint->translatePolar(75 * sin(M_PI/3), $g1AttachAngle);
 
         $g2AttachAngle = self::getAttachAngle($g2AttachSide,$g2Extr['pos']);
         $g2AttachPoint = new EriantysPoint($g2Extr['x'],$g2Extr['y']);
-        $g2AttachPoint = $g2AttachPoint->translatePolar(50 * sin(M_PI/3), $g2AttachAngle);
+        $g2AttachPoint = $g2AttachPoint->translatePolar(75 * sin(M_PI/3), $g2AttachAngle);
 
         $w = count($g1) / (count($g1) + count($g2));
         $attachPoint = EriantysPoint::lerp($g1AttachPoint,$g2AttachPoint,1-$w); // inverse of weight as most numerous group should be moving less
@@ -370,19 +472,25 @@ class eriantyspas extends Table {
             self::dbQuery("UPDATE island SET x=$x, y=$y WHERE pos=$pos");
         }
 
+        /* self::notifyAllPlayers('displayPoints','',[
+            'points' => [$g1AttachPoint->coordinates(), $g2AttachPoint->coordinates(), $attachPoint->coordinates()]
+        ]); */
+
+        $id = self::getActivePlayerId();
         self::notifyAllPlayers('joinIslandsGroups',clienttranslate('${player_name} unifies two groups of islands'),[
-            'player_id' => self::getActivePlayerId($id),
+            'player_id' => $id,
             'player_name' => self::getActivePlayerName($id),
             'groups' => [
                 'g1' => ['id' => $g1id, 'translation' => $g1translation->coordinates()],
                 'g2' => ['id' => $g2id, 'translation' => $g2translation->coordinates()]
             ],
             'groupTo' => $g2id,
-            'islandsCount' => count($g1) + count($g2)
+            'islandsCount' => count($g1) + count($g2),
+            'influence_data' => self::getAllInfluenceData()
         ]);
     }
 
-    // METHOD USED BY joinIslandsGroups
+    // > used by joinIslandsGroups
     // get angle from which every hex should joing depending from side (left/right) and island pos
     function getAttachAngle($side,$pos) {
 
@@ -404,7 +512,7 @@ class eriantyspas extends Table {
         }
     }
 
-    // METHOD USED BY joinIslandsGroups
+    // > used by joinIslandsGroups
     // get group side extremes by parsing array of positions and checking gaps on clock array
     function getGroupExtremes($gId) {
         $group = self::getObjectListFromDb("SELECT pos FROM island WHERE `group` = $gId ORDER BY pos ASC", true);
@@ -429,12 +537,14 @@ class eriantyspas extends Table {
         return ['right'=>$rightExtr, 'left'=>$leftExtr];
     }
 
+    // returns mid island in group, if islands count is even, mid is rounded to floor
     function getGroupMid($gId) {
         $islands = self::getGroupIslands($gId);
 
         return $islands[floor(count($islands)/2)];
     }
 
+    // [used for factions] return color name given value (ffffff -> white)
     function getColorName($colorVal) {
         switch ($colorVal) {
             case '000000': return 'black';
@@ -448,10 +558,22 @@ class eriantyspas extends Table {
         }
     }
 
+    // [used for students and professors]
+    function getStudentProfessorTranslation($color,$student=true) {
+        switch ($color) {
+            case 'green': return (($student)? clienttranslate('green Student') : clienttranslate('green Professor'));
+            case 'red': return (($student)? clienttranslate('red Student') : clienttranslate('red Professor'));
+            case 'yellow': return (($student)? clienttranslate('yellow Student') : clienttranslate('yellow Professor'));
+            case 'pink': return (($student)? clienttranslate('pink Student') : clienttranslate('pink Professor'));
+            case 'blue': return (($student)? clienttranslate('blue Student') : clienttranslate('blue Professor'));
+        }
+    }
+
     function getPlayerColorNameById($id) {
         return self::getColorName(self::getPlayerColorById($id));
     }
 
+    // used for translation a couple of times
     function getTeamFullName($teamCol) {
         switch ($teamCol) {
             case '000000': return clienttranslate("The Black Team");
@@ -465,10 +587,16 @@ class eriantyspas extends Table {
         }
     }
 
+    // return ids of the current groups of islands
     function getAllIslandsGroups() {
         return self::getObjectListFromDb("SELECT `group` FROM island GROUP BY `group` ORDER BY `group` ASC",true);
     }
 
+    function getAllFactions() {
+        return self::getObjectListFromDb("SELECT player_color FROM player GROUP BY player_color",true);
+    }
+
+    // return pos id of each islands in a given group
     function getGroupIslands($group) {
         return self::getObjectListFromDb("SELECT pos FROM island WHERE `group` = $group",true);
     }
@@ -488,7 +616,6 @@ class eriantyspas extends Table {
         // get islands in group
         $groupIslands = self::getGroupIslands($islandsGroup);
         foreach ($groupIslands as $island) {
-            self::dump("// ISLAND",$island);
 
             // get island influence
             $inf = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM island_influence WHERE island_pos = $island");
@@ -502,6 +629,7 @@ class eriantyspas extends Table {
         // if team/player controls islands group, add as much influence to the total as there are islands in the group (1 controlled island = 1 tower = +1 influence)
         if (self::controlsIslandGroup($islandsGroup,$teamCol)) $totinf += count($groupIslands);
 
+        self::dump("// INFLUENCE ON ISLAND GROUP $islandsGroup FOR TEAM $teamCol",$totinf);
         return $totinf;
     }
 
@@ -526,8 +654,10 @@ class eriantyspas extends Table {
     // resolve any islands group influence and notif place tower if owner changed
     function resolveIslandGroupInfluence($islandsGroup) {
 
+        self::trace("// RESOLVING ISLAND $islandsGroup INFLUENCE");
+
         // get teams/players colors (to handle both 2/3 and 4 players games)
-        $teams = self::getObjectListFromDb("SELECT player_color FROM player GROUP BY player_color",true);
+        $teams = self::getAllFactions();
 
         $teamsInf = [];
         $ownerTeam = null;
@@ -542,6 +672,9 @@ class eriantyspas extends Table {
             }
         }
 
+        self::dump("// island factions influence",$teamsInf);
+        self::dump("// owner faction",$ownerTeam);
+
         // get max influence, check if unique in array (team/player has most influence and not tied, thus controls islands group)
         // if not unique, no influence is greater then the others, islands group owner doesn't change. return
         $maxInf = max($teamsInf);
@@ -551,11 +684,18 @@ class eriantyspas extends Table {
             // get winning team color
             $winningTeam = array_search($maxInf,$teamsInf);
 
+            self::trace("// WINNING TEAM: $winningTeam");
+
             // change of power is effective only if previous owner is not the winning team
             if ($winningTeam != $ownerTeam) {
 
+                self::trace("// CHANGE OF POWER EFFECTIVE");
+
                 // change notif log depending from change of power type (if group had previous owner or not)               
                 $log = clienttranslate('${player_name} takes control of an island');
+
+                $placing_player = null;
+                $owner_player = null;
 
                 if (!is_null($ownerTeam)) {
                     $log = clienttranslate('${player_name} takes control of an island, taking it away from ${player_name2}');
@@ -563,23 +703,57 @@ class eriantyspas extends Table {
                     // if had owner, then remove all his towers from each island in the group
                     $colName = self::getColorName($ownerTeam);
                     foreach (self::getGroupIslands($islandsGroup) as $island) {
+                        if (self::getPlayersNumber() == 4) {
+                            $owner_player = self::getObjectListFromDb("SELECT s.player FROM school s JOIN player p ON s.player = p.player_id WHERE p.player_color = '$ownerTeam' AND towers < 4 ",true)[0];
+                        } else $owner_player = self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_color = '$ownerTeam'");
+
                         self::dbQuery("UPDATE island_influence SET ".$colName."_tower = 0 WHERE island_pos = $island");
+                        self::dbQuery("UPDATE school SET towers = towers+1 WHERE player = $owner_player");
+                        self::dbQuery("UPDATE player SET player_score = player_score-1 WHERE player_color = '$ownerTeam'");
+
+                        self::notifyAllPlayers('moveTower','', array(
+                            'island' => $island,
+                            'place' => false,
+                            'color' => self::getColorName($ownerTeam),
+                            'player' => $owner_player,
+                            'influence_data' => self::getAllInfluenceData()
+                            ) 
+                        );
                     }
                 }
 
                 // place winning team towers on conquered islands group
                 $colName = self::getColorName($winningTeam);
                 foreach (self::getGroupIslands($islandsGroup) as $island) {
+
+                    if (self::getPlayersNumber() == 4) {
+                        $id = self::getActivePlayerId();
+                        if (self::getUniqueValueFromDb("SELECT s.towers FROM school s JOIN player p ON s.player = p.player_id WHERE p.player_id = $id AND p.player_color = '$winningTeam'") > 0 ) $placing_player = $id;
+                        else $placing_player = self::getObjectListFromDb("SELECT s.player FROM school s JOIN player p ON s.player = p.player_id WHERE p.player_color = '$winningTeam' AND s.towers > 0 ",true)[0];
+                    } else $placing_player = self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_color = '$winningTeam'");
+
                     self::dbQuery("UPDATE island_influence SET ".$colName."_tower = 1 WHERE island_pos = $island");
+                    self::dbQuery("UPDATE school SET towers = towers-1 WHERE player = $placing_player");
+                    self::dbQuery("UPDATE player SET player_score = player_score+1 WHERE player_color = '$winningTeam'");
+
+                    self::notifyAllPlayers('moveTower','', array(
+                        'island' => $island,
+                        'place' => true,
+                        'color' => self::getColorName($winningTeam),
+                        'player' => $placing_player,
+                        'influence_data' => self::getAllInfluenceData()
+                        ) 
+                    );
                 }
 
                 // set owner entity name if present (for notif log)
+                // TODO: make it better using $placing_player and $owner_player
                 $player_name2 = null;
                 if (!is_null($ownerTeam)) {
                     if (self::getPlayersNumber() == 4) {
                         $player_name2 = self::getTeamFullName($ownerTeam);
                     } else {
-                        $player_name2 = self::getPlayerNameById(self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_color = $ownerTeam"));
+                        $player_name2 = self::getPlayerNameById(self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_color = '$ownerTeam'"));
                     }
                 }
 
@@ -589,46 +763,89 @@ class eriantyspas extends Table {
                     'player_name' => self::getActivePlayerName(),
                     'island' => $island,
                     'ownerTeam' => $ownerTeam,
-                    'player_name2' => $player_name2,
+                    'player_name2' => $player_name2
                     ) 
                 );
 
-                if (!is_null($ownerTeam)) return true; // return true if owner changed
+                //IF GROUP OWNER CHANGED, CHECK FOR MERGING ADJACENTS GROUPS AND VICTORY CONDITIONS
+                self::trace("//CHECK FOR MERGING GROUPS");
+
+                $allgroups = self::getAllIslandsGroups();
+
+                $thisgroup = array_search($islandsGroup,$allgroups);
+                $groupstot = count($allgroups);
+
+                $prevGroup = $allgroups[($thisgroup - 1 + $groupstot) % $groupstot];
+                $nextGroup = $allgroups[($thisgroup + 1 + $groupstot) % $groupstot];
+
+                self::trace("// PREV GROUP $prevGroup");
+                self::trace("// NEXT GROUP $nextGroup");
+
+                if (self::controlsIslandGroup($prevGroup,$winningTeam)) {
+                    self::trace("// MERGING WITH PREV");
+                    self::joinIslandsGroups($prevGroup,$islandsGroup);
+                }
+
+                if (self::controlsIslandGroup($nextGroup,$winningTeam)) {
+                    self::trace("// MERGING WITH NEXT");
+                    self::joinIslandsGroups($nextGroup,$islandsGroup);
+                }
+
+                self::checkGameEndCondition();
+            }
+        }
+    }
+
+    // returns influence for each faction on each islands. array indexed by island group with field $influence, indexed by faction color and field $mid containing island id on where to display data
+    function getAllInfluenceData() {
+
+        $ret = [];
+        foreach (self::getAllIslandsGroups() as $g) {
+            $ret[$g]['mid'] = self::getGroupMid($g);
+            foreach (self::getAllFactions() as $f) {
+                $ret[$g]['influence'][$f] = self::getInfluenceOnIslandGroup($g,$f);
+
             }
         }
 
-        return false;
+        return $ret;
     }
 
-    function checkVictoryCondition($i) {
+    // check immediate game end conditions
+    // player/teams totals 8 towers placed (/6 towers placed for 3-players games) -> ends immediatly, that player/team wins
+    // there are only 3 groups of islands -> ends immediatly, player/team with most towers placed win, in case of tie: most professors 
+    function checkGameEndCondition() {
 
-        //1. player/teams totals 8 towers placed (/6 towers placed for 3-players games) -> ends immediatly, that player/team wins
-        //2. there are only 3 groups of islands -> ends immediatly, player/team with most towers placed win, in case of tie: most professors 
-        //3. student pouch empy or last assistant played -> last round (drafting cloud tiles skipped), win condition same as above
+        $col = self::getPlayerColorById(self::getActivePlayerId());
+        $sql = "SELECT p.player_color col, SUM(towers) towers
+                FROM school s JOIN player p on s.player = p.player_id
+                GROUP BY p.player_color";
+        $factionsTotTowers = self::getObjectListFromDb($sql);
+        $winner = array_filter($factionsTotTowers, function($f) { return $f['towers'] == 0; });
+        if (!empty($winner)) {
+            $winnerFaction = $winner[0]['col'];
 
-        switch ($i) {
-            case 1:
-                $col = self::getPlayerColorById(self::getActivePlayerId());
-                $sql = "SELECT SUM(towers)
-                        FROM school s JOIN player p on s.player = p.player_id
-                        WHERE p.player_color = $col
-                        GROUP BY p.player_color";
-    
-                return self::getUniqueValueFromDb($sql) == 0;
+            if (self::getPlayersNumber() == 4) {
+                $winner = self::getTeamFullName($winnerFaction);
+                $log = clienttranslate('${player_name} place their last tower and win the game');
+            } else {
+                $winner = self::getUniqueValueFromDb("SELECT player_name FROM player WHERE player_color = $winnerFaction");
+                $log = clienttranslate('${player_name} places his/her last tower and wins the game');
+            }
 
-                break;
+            self::notifyAllPlayers('gameEnd',$log,[
+                'player_name' => $winner
+            ]);
+
+            $this->gamestate->nextState('gameEnd');
             
-            case 2:
+        } else if (count(self::getAllIslandsGroups()) <= 3) {
 
-                return count(self::getAllIslandsGroups()) <= 3;
-                break;
-
-            case 3:
-                // todo implement student pouch
-                break;
-            
-            default: return false; break;
+            self::notifyAllPlayers('gameEnd',clienttranslate('There are 3 (or less) groups of islands. The game ends'),[]);
+            $this->gamestate->nextState('gameEnd');
         }
+
+        
     }
 
 #endregion
@@ -648,57 +865,76 @@ function playAssistant($n) {
         if ($n < 1 || $n > 10) throw new BgaVisibleSystemException("Invalid Assistant number");
         if (in_array($n,$args['assistants'])) throw new BgaVisibleSystemException("You cannot play an Assistant that has already been played by another player");
 
-        self::dbQuery("UPDATE played_assistants SET assistant = $n WHERE player = $id");
+        self::dbQuery("UPDATE played_assistants SET assistant = $n, old = 0 WHERE player = $id");
         self::dbQuery("UPDATE player_assistants SET `$n` = 0 WHERE player = $id");
 
-        self::notifyAllPlayers('playAssistant', clienttranslate('${player_name} played the Assistant number ${n}'), array(
+        $mov = ceil($n / 2);
+
+        self::notifyAllPlayers('playAssistant', clienttranslate('${player_name} plays Assistant ${num} <span>(${steps})</span>'), array(
             'player_id' => self::getActivePlayerId(),
             'player_name' => self::getActivePlayerName(),
             'n' => $n,
-            ) 
-        );
+            'num' => [
+                'log' => '${assistant_'.$n.'}',
+                'args' => ["assistant_$n" => "#$n",'n'=>$n],
+            ],
+            'steps' => [
+                'log' => '${steps_'.$mov.'} ${movement}',
+                'args' => ["steps_$mov" => $mov, 'mov'=>$mov, 'movement' => clienttranslate("movement")],
+                'i18n' => ["movement"]
+            ],
+        ));
+
+        if (self::getUniqueValueFromDb("SELECT count(player) FROM player_assistants WHERE 1 + 2 + 3 + 4 + 4 + 5 + 6 + 7 + 8 + 9 + 10 = 0") > 0) {
+            self::setGameStateValue('last_round',1);
+            self::notifyAllPlayers('lastRound',clienttranslate('Game end has been triggered: the last Assistant has been played. <b>This is the last round</b>.'),[]);
+        }
 
         $this->gamestate->nextState('');
     }
 }
 
-function moveStudent($student, $place) {
+function moveStudent($color, $place) {
 
     if ($this->checkAction('moveStudent')) {
 
         $id = self::getActivePlayerId();
 
         $studentsReference = ['green', 'red', 'yellow', 'pink', 'blue'];
-        if (!in_array($student,$studentsReference)) throw new BgaVisibleSystemException("Invalid student color");
+        if (!in_array($color,$studentsReference)) throw new BgaVisibleSystemException("Invalid student color");
         if (!is_null($place) && ($place < 0 || $place > 11)) throw new BgaVisibleSystemException("Invalid student destination");
 
         // remove student from school entrance
-        self::dbQuery("UPDATE school_entrance SET $student = $student - 1 WHERE player = $id");
+        self::dbQuery("UPDATE school_entrance SET $color = $color - 1 WHERE player = $id");
 
         if (is_null($place)) {
 
-            self::dbQuery("UPDATE school SET $student = $student + 1 WHERE player = $id");
+            self::dbQuery("UPDATE school SET $color = $color + 1 WHERE player = $id");
 
             self::notifyAllPlayers('moveStudent', clienttranslate('${player_name} moves ${student} inside his/her school'), array(
                 'player_id' => self::getActivePlayerId(),
                 'player_name' => self::getActivePlayerName(),
-                'student' => $student,
-                ) 
+                'color' => $color,
+                'student' => [
+                    'log' => '${student_'.$color.'}',
+                    'args' => ["student_$color" => self::getStudentProfessorTranslation($color), 'color' => $color],
+                    'i18n' => ["student_$color"]
+                ])
             );    
 
             // CHECK PROFESSOR INFLUENCE IF NOT CONTROLLED (move to separate method)
-            if (!self::getUniqueValueFromDb("SELECT ".$student."_professor FROM school WHERE player = $id")) {
+            if (!self::getUniqueValueFromDb("SELECT ".$color."_professor FROM school WHERE player = $id")) {
 
-                $newAmount = self::getUniqueValueFromDb("SELECT $student FROM school WHERE player = $id");
+                $newAmount = self::getUniqueValueFromDb("SELECT $color FROM school WHERE player = $id");
 
                 $gainProfessor = true;
                 $stealProfessor = false;
                 $stealFrom = null;
     
-                foreach (self::getCollectionFromDb("SELECT player, $student, ".$student."_professor FROM school WHERE player != $id") as $p => $s) {
-                    if ($s[$student] > $newAmount) {
-                        $gainProfessor = false;
-                    } else if ($s[$student."_professor"]) {
+                foreach (self::getCollectionFromDb("SELECT player, $color, ".$color."_professor FROM school WHERE player != $id") as $p => $s) {
+                    if ($newAmount <= $s[$color]) {
+                        $gainProfessor = false; break;
+                    } else if ($s[$color."_professor"]) {
                         $stealProfessor = true;
                         $stealFrom = $p;
                     }
@@ -706,36 +942,45 @@ function moveStudent($student, $place) {
     
                 if ($gainProfessor) {
 
-                    self::dbQuery("UPDATE school SET ".$student."_professor = 1 WHERE player = $id");
+                    self::dbQuery("UPDATE school SET ".$color."_professor = 1 WHERE player = $id");
 
                     if ($stealProfessor) {
-                        self::dbQuery("UPDATE school SET ".$student."_professor = 0 WHERE player = $stealFrom");
+                        self::dbQuery("UPDATE school SET ".$color."_professor = 0 WHERE player = $stealFrom");
 
-                        $log = clienttranslate('${player_name} takes control of ${color} professor, taking it away from ${player_name2}');
+                        $log = clienttranslate('${player_name} takes control of ${professor}, taking it away from ${player_name2}');
                     } else {
-                        $log = clienttranslate('${player_name} takes control of ${color} professor');
+                        $log = clienttranslate('${player_name} takes control of ${professor}');
                     }
     
                     self::notifyAllPlayers('gainProfessor', $log, array(
                         'player_id' => self::getActivePlayerId(),
                         'player_name' => self::getActivePlayerName(),
-                        'color' => $student,
+                        'color' => $color,
                         'player_2' => $stealFrom,
                         'player_name2' => (is_null($stealFrom))? null : self::getPlayerNameById($stealFrom),
-                        ) 
+                        'influence_data' => self::getAllInfluenceData(),
+                        'professor' => [
+                            'log' => '${professor_'.$color.'}',
+                            'args' => ["professor_$color" => self::getStudentProfessorTranslation($color,false), 'color' => $color],
+                            'i18n' => ["professor_$color"]
+                        ]) 
                     );
                 }
             }
 
         } else {
-            self::dbQuery("UPDATE island_influence SET $student = $student +1 WHERE island_pos = $place");
+            self::dbQuery("UPDATE island_influence SET $color = $color +1 WHERE island_pos = $place");
 
             self::notifyAllPlayers('moveStudent', clienttranslate('${player_name} sent ${student} to an island'), array(
                 'player_id' => self::getActivePlayerId(),
                 'player_name' => self::getActivePlayerName(),
-                'student' => $student,
                 'destination' => $place,
-                ) 
+                'color' => $color,
+                'student' => [
+                    'log' => '${student_'.$color.'}',
+                    'args' => ["student_$color" => self::getStudentProfessorTranslation($color), 'color' => $color],
+                    'i18n' => ["student_$color"]
+                ])
             );
         }
 
@@ -756,9 +1001,10 @@ function moveMona($group) {
             if ($g == $group) break;
         }
 
-        self::notifyAllPlayers('moveMona', clienttranslate('${player_name} moves (Mother Nature)'), array(
+        self::notifyAllPlayers('moveMona', clienttranslate('${player_name} moves ${mother_nature}'), array(
             'player_id' => self::getActivePlayerId(),
             'player_name' => self::getActivePlayerName(),
+            'mother_nature' => clienttranslate('Mother Nature'),
             'stops' => $islandsStops,
             'group' => $group,
             ) 
@@ -769,38 +1015,11 @@ function moveMona($group) {
         $playerCol = self::getPlayerColorById($id);
 
         // CHECK INFLUENCE 
-        if (!self::controlsIslandGroup($group,$playerCol)) {
-            $ownerChanged = self::resolveIslandGroupInfluence($group);
+        $ownerChanged = self::resolveIslandGroupInfluence($group);
 
-            //IF GROUP OWNER CHANGED, CHECK FOR MERGING ADJACENTS GROUPS AND VICTORY CONDITIONS
-            if ($ownerChanged) {
+        
 
-                // todo: check victory condition (player/team placed all 8 towers. 6 for 3-players games)
-
-                $allgroups = self::getAllIslandsGroups();
-
-                $thisgroup = array_search($group,$allgroups);
-                $groupstot = count($allgroups);
-
-                $prevGroup = $allgroups[($thisgroup - 1 + $groupstot) % $groupstot];
-                $nextGroup = $allgroups[($thisgroup + 1 + $groupstot) % $groupstot];
-
-                if (self::controlsIslandGroup($prevGroup,$playerCol)) {
-                    self::joinIslandsGroups($prevGroup,$thisgroup);
-                }
-
-                // check victory condition (only 3 groups of islands remaining)
-
-                if (self::controlsIslandGroup($nextGroup,$playerCol)) {
-                    self::joinIslandsGroups($nextGroup,$thisgroup);
-                }
-
-                // check victory condition (only 3 groups of islands remaining)
-            }
-
-        }
-
-        $this->gamestate->nextState('');
+        $this->gamestate->nextState('pickCloud');
     }
 }
 
@@ -812,16 +1031,43 @@ function chooseCloudTile($cloud) {
 
         if (!in_array($cloud,$arg['cloudTiles'])) throw new BgaVisibleSystemException("Invalid Cloud tile");
 
-        ['green'=>$green, 'red'=>$red, 'yellow'=>$yellow, 'pink'=>$pink,'blue'=>$blue,] = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM cloud WHERE id = $cloud");
-        self::dbQuery("UPDATE school_entrance SET green=green+$green, red=red+$red, yellow=yellow+$yellow, pink=pink+$pink, blue=pink+$blue WHERE player = $id");
+        $cloudarr = ['green'=>$green, 'red'=>$red, 'yellow'=>$yellow, 'pink'=>$pink,'blue'=>$blue,] = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM cloud WHERE id = $cloud");
+        self::dbQuery("UPDATE school_entrance SET green=green+$green, red=red+$red, yellow=yellow+$yellow, pink=pink+$pink, blue=blue+$blue WHERE player = $id");
         self::dbQuery("UPDATE cloud SET green=0, red=0, yellow=0, pink=0, blue=0 WHERE id = $cloud");
 
-        self::notifyAllPlayers('chooseCloudTile', clienttranslate('${player_name} chooses a Cloud tile'), array(
+        $cloudLog = [];
+        $cloudLogargs = [];
+        $j = 0;
+        foreach ($cloudarr as $col => $n) {
+            for ($i=0; $i < $n; $i++) { 
+                $cloudLog[] = "student_$j";
+                $cloudLogargs["student_$j"] = [
+                    'log' => '${student_'.$col.'}',
+                    'args' => ["student_$col" => self::getStudentProfessorTranslation($col), 'color' => $col],
+                    'i18n' => ["student_$col"]
+                ];
+                $j++;
+            }
+        }
+
+        $cloudLoglog = '${'.implode('} ${',$cloudLog).'}';
+        $cloudLog[] = 'cloud_tile_text';
+
+        self::notifyAllPlayers('chooseCloudTile', clienttranslate('${player_name} chooses ${cloud_tile} <span class="cloud_group">(${students})</span>'), array(
             'player_id' => self::getActivePlayerId(),
             'player_name' => self::getActivePlayerName(),
             'cloud' => $cloud,
-            ) 
-        );
+            'cloud_tile' => clienttranslate('Cloud tile'),
+            'i18n' => ['cloud_tile'],
+            'students' => [
+                'log' => $cloudLoglog,
+                'args' => $cloudLogargs,
+                'i18n' => $cloudLog
+            ],
+            /* 'cloudlog' => $cloudLoglog,
+            'cloudargs' => $cloudLogargs,
+            'cloudi18n' => ['cloud_tile_text'] */
+        ));
 
         $this->gamestate->nextState('');
     }
@@ -836,15 +1082,30 @@ function chooseCloudTile($cloud) {
 
 function argPlayAssistant() {
 
-    $playedAssistants = self::getObjectListFromDb("SELECT assistant FROM played_assistants", true);
+    $id = self::getActivePlayerId();
+    $playedAssistants = self::getObjectListFromDb("SELECT assistant FROM played_assistants WHERE player != $id AND old = 0",true);
+
+    /* $playedAssistants = self::getObjectListFromDb("SELECT assistant FROM played_assistants", true);
 
     self::dump("// ASSISTANT", $playedAssistants);
 
     $playedAssistants = array_values(array_filter($playedAssistants, function($a) { return !is_null($a); }));
 
-    self::dump("// ASSISTANT FILTERED", $playedAssistants);
+    self::dump("// ASSISTANT FILTERED", $playedAssistants); */
 
     return ['assistants' => $playedAssistants];
+}
+
+function argMoveStudents() {
+
+    $id = self::getActivePlayerId();
+
+    $entrance_students_base = (self::getPlayersNumber() == 3)? 9 : 7;
+    $entrance_stuents_curr = self::getUniqueValueFromDb("SELECT green + red + yellow + pink + blue FROM school_entrance WHERE player = $id");
+
+    $move_student_count = ($entrance_students_base - $entrance_stuents_curr) + 1;
+
+    return ['stud_count' => $move_student_count];
 }
 
 function argMoveMona() {
@@ -859,7 +1120,7 @@ function argMoveMona() {
     $destinations = [];
 
     for ($i=0; $i < $steps; $i++) { 
-        $destinations[] = $groups[$monaKey+$i+1];
+        $destinations[] = $groups[($monaKey+$i+1)%count($groups)];
     }
 
     return ['destinations' => $destinations];
@@ -880,14 +1141,19 @@ function argCloudTileDrafting() {
 #region 
 
 function stNextPlayerPlanning() {
+    self::trace('// NEXT PLAYER PLANNING');
 
-    if (self::getUniqueValueFromDb("SELECT COUNT(assistant) FROM played_assistants WHERE assistant IS NOT NULL") < 4) {
+    $id = self::getActivePlayerId();
+    $turnPos = self::getUniqueValueFromDb("SELECT player_turn_position FROM player WHERE player_id = $id");
+    $nextTurnPos = $turnPos+1;
+    self::trace("// TURN POS: $turnPos");
+    self::trace("// NEXT TURN POS: $nextTurnPos");
+    if ($nextTurnPos <= self::getPlayersNumber()) {
 
         // activate next player
+        $np = self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_turn_position = $nextTurnPos");
 
-        $id = self::getActivePlayerId();
-        $turnPos = self::getUniqueValueFromDb("SELECT player_turn_position FROM player WHERE player_id = $id");
-        $np = self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_turn_position = $turnPos+1");
+        self::trace("// ACTIVATE NEXT PLAYER: $np");
 
         $this->gamestate->changeActivePlayer($np);
         $this->gamestate->nextState('nextTurn');
@@ -909,6 +1175,8 @@ function stNextPlayerPlanning() {
         self::notifyAllPlayers('resolvePlanning',clienttranslate("The planning phase ends. The turn order is reassigned based on the Assistants played"),[
             'players' => $newOrder
         ]);
+
+        self::dbQuery("UPDATE played_assistants SET old = 1");
 
         $this->gamestate->changeActivePlayer($firstPlayer);
         $this->gamestate->nextState('nextPhase');
@@ -943,11 +1211,14 @@ function stNextPlayerAction() {
         $this->gamestate->nextState('nextPlayerAction');
     } else {
 
-        self::notifyAllPlayers('newRound',clienttranslate("A new game round begins"),[]);
-        self::refillClouds();
-        // check victory condition (student pouch empty / players with only 1 assistant card in their hands)        
-
-        $this->gamestate->nextState('nextRound');
+        if (self::getGameStateValue('last_round') == 1) $this->gamestate->nextState('gameEnd');
+        else {
+            self::notifyAllPlayers('newRound',clienttranslate("A new game round begins"),[]);
+            self::refillClouds();
+            // check victory condition (student pouch empty / players with only 1 assistant card in their hands)        
+    
+            $this->gamestate->nextState('nextRound');
+        }
     }
 }
 

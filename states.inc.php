@@ -40,8 +40,8 @@ $machinestates = array(
 
     20 => array(
         "name" => "moveStudents",
-        "description" => clienttranslate('${actplayer} must move one of his/her new students (${stud_count}/3)'),
-        "descriptionmyturn" => clienttranslate('${you} must move one of your new students (${stud_count}/3)'),
+        "description" => clienttranslate('${actplayer} must move one of his/her new students (${stud_count}/${stud_max})'),
+        "descriptionmyturn" => clienttranslate('${you} must move one of your new students (${stud_count}/${stud_max})'),
         "type" => "activeplayer",
         "args" => "argMoveStudents",
         "possibleactions" => array( "moveStudent"),

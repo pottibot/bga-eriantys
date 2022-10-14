@@ -796,6 +796,56 @@ class eriantyspas extends Table {
         }
     }
 
+    function resolveProfessorInfluence($color,$id) {
+
+        if (!self::getUniqueValueFromDb("SELECT ".$color."_professor FROM school WHERE player = $id")) {
+
+            $newAmount = self::getUniqueValueFromDb("SELECT $color FROM school WHERE player = $id");
+
+            $gainProfessor = true;
+            $stealProfessor = false;
+            $stealFrom = null;
+
+            foreach (self::getCollectionFromDb("SELECT player, $color, ".$color."_professor FROM school WHERE player != $id") as $p => $s) {
+                if ($newAmount <= $s[$color]) {
+                    $gainProfessor = false; break;
+                } else if ($s[$color."_professor"]) {
+                    $stealProfessor = true;
+                    $stealFrom = $p;
+                }
+            }
+
+            if ($gainProfessor) {
+
+                self::dbQuery("UPDATE school SET ".$color."_professor = 1 WHERE player = $id");
+                self::dbQuery("UPDATE player SET player_score_aux = player_score_aux + 1 WHERE player_id = $id");
+
+                if ($stealProfessor) {
+                    self::dbQuery("UPDATE school SET ".$color."_professor = 0 WHERE player = $stealFrom");
+                    self::dbQuery("UPDATE player SET player_score_aux = player_score_aux - 1 WHERE player_id = $stealFrom");
+
+                    $log = clienttranslate('${player_name} takes control of ${professor}, taking it away from ${player_name2}');
+                } else {
+                    $log = clienttranslate('${player_name} takes control of ${professor}');
+                }
+
+                self::notifyAllPlayers('gainProfessor', $log, array(
+                    'player_id' => self::getActivePlayerId(),
+                    'player_name' => self::getActivePlayerName(),
+                    'color' => $color,
+                    'player_2' => $stealFrom,
+                    'player_name2' => (is_null($stealFrom))? null : self::getPlayerNameById($stealFrom),
+                    'influence_data' => self::getAllInfluenceData(),
+                    'professor' => [
+                        'log' => '${professor_'.$color.'}',
+                        'args' => ["professor_$color" => self::getStudentProfessorTranslation($color,false), 'color' => $color],
+                        'i18n' => ["professor_$color"]
+                    ]) 
+                );
+            }
+        }
+    }
+
     // returns influence for each faction on each islands. array indexed by island group with field $influence, indexed by faction color and field $mid containing island id on where to display data
     function getAllInfluenceData() {
 
@@ -920,53 +970,9 @@ function moveStudent($color, $place) {
                     'args' => ["student_$color" => self::getStudentProfessorTranslation($color), 'color' => $color],
                     'i18n' => ["student_$color"]
                 ])
-            );    
+            );
 
-            // CHECK PROFESSOR INFLUENCE IF NOT CONTROLLED (move to separate method)
-            if (!self::getUniqueValueFromDb("SELECT ".$color."_professor FROM school WHERE player = $id")) {
-
-                $newAmount = self::getUniqueValueFromDb("SELECT $color FROM school WHERE player = $id");
-
-                $gainProfessor = true;
-                $stealProfessor = false;
-                $stealFrom = null;
-    
-                foreach (self::getCollectionFromDb("SELECT player, $color, ".$color."_professor FROM school WHERE player != $id") as $p => $s) {
-                    if ($newAmount <= $s[$color]) {
-                        $gainProfessor = false; break;
-                    } else if ($s[$color."_professor"]) {
-                        $stealProfessor = true;
-                        $stealFrom = $p;
-                    }
-                }
-    
-                if ($gainProfessor) {
-
-                    self::dbQuery("UPDATE school SET ".$color."_professor = 1 WHERE player = $id");
-
-                    if ($stealProfessor) {
-                        self::dbQuery("UPDATE school SET ".$color."_professor = 0 WHERE player = $stealFrom");
-
-                        $log = clienttranslate('${player_name} takes control of ${professor}, taking it away from ${player_name2}');
-                    } else {
-                        $log = clienttranslate('${player_name} takes control of ${professor}');
-                    }
-    
-                    self::notifyAllPlayers('gainProfessor', $log, array(
-                        'player_id' => self::getActivePlayerId(),
-                        'player_name' => self::getActivePlayerName(),
-                        'color' => $color,
-                        'player_2' => $stealFrom,
-                        'player_name2' => (is_null($stealFrom))? null : self::getPlayerNameById($stealFrom),
-                        'influence_data' => self::getAllInfluenceData(),
-                        'professor' => [
-                            'log' => '${professor_'.$color.'}',
-                            'args' => ["professor_$color" => self::getStudentProfessorTranslation($color,false), 'color' => $color],
-                            'i18n' => ["professor_$color"]
-                        ]) 
-                    );
-                }
-            }
+            self::resolveProfessorInfluence($color,$id);
 
         } else {
             self::dbQuery("UPDATE island_influence SET $color = $color +1 WHERE island_pos = $place");
@@ -975,6 +981,7 @@ function moveStudent($color, $place) {
                 'player_id' => self::getActivePlayerId(),
                 'player_name' => self::getActivePlayerName(),
                 'destination' => $place,
+                'influence_data' => self::getAllInfluenceData(),
                 'color' => $color,
                 'student' => [
                     'log' => '${student_'.$color.'}',
@@ -1100,12 +1107,13 @@ function argMoveStudents() {
 
     $id = self::getActivePlayerId();
 
+    $student_actions = (self::getPlayersNumber() == 3)? 4 : 3;
     $entrance_students_base = (self::getPlayersNumber() == 3)? 9 : 7;
     $entrance_stuents_curr = self::getUniqueValueFromDb("SELECT green + red + yellow + pink + blue FROM school_entrance WHERE player = $id");
 
     $move_student_count = ($entrance_students_base - $entrance_stuents_curr) + 1;
 
-    return ['stud_count' => $move_student_count];
+    return ['stud_count' => $move_student_count,'stud_max' => $student_actions];
 }
 
 function argMoveMona() {
@@ -1128,7 +1136,7 @@ function argMoveMona() {
 
 function argCloudTileDrafting() {
 
-    $cloudTiles = self::getObjectListFromDb("SELECT id FROM cloud WHERE (green + red + yellow + pink + blue) = 3",true);
+    $cloudTiles = self::getObjectListFromDb("SELECT id FROM cloud WHERE (green + red + yellow + pink + blue) > 0",true);
 
     return ['cloudTiles' => $cloudTiles];
 }
@@ -1189,7 +1197,7 @@ function stMoveAgain() {
     $id = self::getActivePlayerId();
     $total = self::getUniqueValueFromDb("SELECT (green + red + yellow + pink + blue) as total FROM school_entrance WHERE player = $id");
 
-    if ($total > ((self::getPlayersNumber()==3)?6:4)) {
+    if ($total > ((self::getPlayersNumber()==3)?5:4)) {
         $this->gamestate->nextState('again');
     } else $this->gamestate->nextState('next');
 }

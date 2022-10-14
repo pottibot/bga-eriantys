@@ -150,7 +150,7 @@ let jstpl_coin = "<div class='coin'></div>";
 let jstpl_turn_position_indicator = "<div class='turn_position_${turnPos} turn_position turn_indicator'></div>";
 let jstpl_turn_steps_indicator = "<div class='mona_movement_${steps} mona_movement turn_indicator'></div>";
 
-let jstpl_school =  "<div id='school_${id}' class='school' style='--color: ${color}; --alt-color: ${altcol}'>\
+let jstpl_school =  "<div id='school_${id}' class='school' style='--color: ${color}; --alt-color: ${altcol}; --rows: ${rows};'>\
                         <span class='school_name'>${name}</span>\
                         <div class='school_entrance school_room'></div>\
                         <div class='school_hall school_room'>\

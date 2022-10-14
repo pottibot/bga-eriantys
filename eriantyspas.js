@@ -100,12 +100,14 @@ function (dojo, declare) {
                 let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
 
                 let schoolCont = document.querySelector(((isTeam)?'#team_school_area':'#opponents_school_area')+' .schools_cont');
-                         
+                let rows = {'2': 4, '3': 6, '4': 8};         
+
                 schoolCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_school', {
                     name: gamedatas.players[player_id].name,
                     id: player_id,
                     color: '#'+gamedatas.players[player_id].color,
-                    altcol: '#'+gamedatas.players[player_id].alt_col
+                    altcol: '#'+gamedatas.players[player_id].alt_col,
+                    rows: rows[Object.keys(gamedatas.players).length]
                 }));
 
                 // PLACE STUDENTS AT SCHOOL ENTRANCE
@@ -347,6 +349,7 @@ function (dojo, declare) {
             let settings_arrow = $('settings-arrow');
             let settings_options = $('settings-options');
             settings_arrow.addEventListener('click', evt => {
+
                 settings_panel.style.height = 'auto';
                 if (settings_arrow.classList.contains('open')) {
                     settings_arrow.classList.remove('open');
@@ -385,6 +388,9 @@ function (dojo, declare) {
                     arrow.classList.add('close_drawer');
 
                 } else {
+
+                    if (document.documentElement.classList.contains('drawer-fixed')) return;
+
                     console.log('closing assistant drawer');
 
                     let h = drawer.offsetHeight;
@@ -889,7 +895,7 @@ function (dojo, declare) {
             el.offsetWidth;
         },
 
-        moveElement2: function(el,target, movingSurface=null, duration=0, delay=0, onEnd=()=>{}) {
+        moveElement: function(el,target, movingSurface=null, duration=0, delay=0, onEnd=()=>{}) {
 
             if (!movingSurface) movingSurface = $('game_play_area');
 
@@ -898,10 +904,21 @@ function (dojo, declare) {
             el.style.transition = `all ${duration}ms ${delay}ms ease-in-out`;
             el.offsetWidth;
 
-            setTimeout(() => {
-                el.style.transition = ''
-                onEnd();
-            }, duration);
+            /* setTimeout(() => {
+                
+            }, duration); */
+
+            let transitionProps = 2;
+            let transitionsCount = 0;
+            el.ontransitionend = () => {
+
+                transitionsCount++;
+
+                if (transitionsCount == transitionProps) {
+                    el.style.transition = ''
+                    onEnd();
+                }
+            }
 
             this.placeElement(el,target,movingSurface);
         },
@@ -925,19 +942,27 @@ function (dojo, declare) {
             placeholder.style.height = '0px';
             target.append(placeholder);
             placeholder.style.transition = `all 200ms ${delay}ms ease-in-out`;
+
+            let transitionProps = 2;
+            let transitionsCount = 0;
             placeholder.ontransitionend = () => {
-                this.moveElement2(elClone,placeholder,movingSurface,duration,delay,()=>{
-                    el.remove();
-                    placeholder.remove();
-                    target.append(elClone);
-    
-                    elClone.style.position = '';
-                    elClone.style.left = '';
-                    elClone.style.top = '';
-                    elClone.style.transition = '';
-    
-                    onEnd();
-                });
+
+                transitionsCount++;
+
+                if (transitionsCount == transitionProps) {
+                    this.moveElement(elClone,placeholder,movingSurface,duration,delay,()=>{
+                        el.remove();
+                        placeholder.remove();
+                        target.append(elClone);
+        
+                        elClone.style.position = '';
+                        elClone.style.left = '';
+                        elClone.style.top = '';
+                        elClone.style.transition = '';
+        
+                        onEnd();
+                    });
+                }
             }
 
             placeholder.offsetWidth;
@@ -948,102 +973,9 @@ function (dojo, declare) {
             // el.style.height = '0px';
         },
 
-        // TOO COMPLEX, MAYBE DIFFERENCIATE WITH APPEND OR NOT TO DESTINATION CONT AND MOVE TO REFERENCE (NOT CONT)
-        // WARNING: this will reset specific properties position, left, top
-        moveElement: function(el, target, duration=0, delay=0, append = false, onEnd=()=>{}) {
-
-            // get oversurface peices movement cont
-            let movingSurface = $('game_play_area');
-
-            // get el parents for reattaching at anim end (if not append)
-            let elParent = el.parentElement;
-
-            // get all useful elements current pos
-            let elPos = el.getBoundingClientRect();
-            let targetPos = target.getBoundingClientRect();
-            let movingSurfacePos = movingSurface.getBoundingClientRect();
-
-            //console.log('el',elPos.x,elPos.y);
-            //console.log('target',targetPos.x,targetPos.y);
-            //console.log('moving surface',movingSurfacePos.x,movingSurfacePos.y);
-
-            // append el clone to moving oversurface
-            let elClone = el.cloneNode()
-            movingSurface.append(elClone);
-
-            // create empty space where element was
-            el.style.visibility = 'hidden';
-
-            // position it on its current coordinates, but on oversurface
-            elClone.style.position = 'absolute';
-            elClone.style.left = (elPos.left - movingSurfacePos.left) + 'px';
-            elClone.style.top = (elPos.top - movingSurfacePos.top) + 'px';
-
-            elClone.offsetWidth; //repaint
-
-            // calculate offset between el and target
-            offset = {
-                x: targetPos.left - elPos.left,
-                y: targetPos.top - elPos.top
-            }
-
-            // now set transition
-            elClone.style.transition = `all ${duration}ms ${delay}ms ease-in-out`;
-            el.style.transition = `all 200ms ease-in-out`; // transition for disappearing empty space
-
-            // set left, top properties given current pos in oversurface + calculated offset
-            elClone.style.left = (elClone.offsetLeft + offset.x) + 'px';
-            elClone.style.top = (elClone.offsetTop + offset.y) + 'px';
-
-            // on animation end
-            setTimeout(() => {
-
-                // unset transition prop
-                elClone.style.transition = '';
-
-                // set size proprs to animate element occupied space disappearing
-                el.style.width = '0px';
-                el.style.height = '0px';
-
-                setTimeout(() => {
-                    el.remove();
-                }, 200);
-
-                if (append) {
-                    // append element on previous parent or on target
-                    target.append(elClone);
-
-                    // reset positioning props
-                    elClone.style.position = '';
-                    elClone.style.left = '';
-                    elClone.style.top = '';
-                } else {
-
-                    let elParentPos = elParent.getBoundingClientRect();
-                    let elClonePos = elClone.getBoundingClientRect();
-
-                    offset = {
-                        x: elClonePos.left - elParentPos.left,
-                        y: elClonePos.top - elParentPos.top 
-                    }
-
-                    elParent.append(elClone);
-
-                    elClone.style.left = offset.x + 'px';
-                    elClone.style.top = offset.y + 'px';                    
-                }
-                
-                // call on end handler, if given
-                onEnd();
-                console.log('TRANSITION END');
-            }, duration+delay);
-
-            return elClone;
-        },
-
         openAssistantDrawer: function(onEnd = () => {}) {
 
-            if ($('assistants_drawer_arrow').classList.contains('open_drawer') && !document.documentElement.classList.contains('drawer-fixed')) {
+            if ($('assistants_drawer_arrow').classList.contains('open_drawer')) {
 
                 $('assistant_cards_drawer').ontransitionend = () => {
                     $('assistant_cards_drawer').style.height = 'fit-content';
@@ -1070,7 +1002,7 @@ function (dojo, declare) {
         activateStudentsDestinations: function(selectedStudent) {
 
             // activate islands
-            document.querySelectorAll('.island .students_influence').forEach(island => {
+            document.querySelectorAll('.island .influence_cont').forEach(island => {
                 island.classList.add('active');
 
                 island.onclick = evt => {
@@ -1078,7 +1010,7 @@ function (dojo, declare) {
                     let currentSel = this.gamedatas.gamestate.clientData.student;
                     
                     if (currentSel) {
-                        this.ajaxcallwrapper('moveStudent',{student:currentSel, place:island.parentElement.parentElement.id.split('_')[1]});
+                        this.ajaxcallwrapper('moveStudent',{student:currentSel, place:island.parentElement.id.split('_')[1]});
                     } else {
                         this.showMessage(_("You need to select an Assistant card to play"),'error')
                     }
@@ -1102,7 +1034,7 @@ function (dojo, declare) {
 
         deactivateStudentsDestinations: function(selectedStudent) {
             // deactivate islands
-            document.querySelectorAll('.island .students_influence').forEach(island => {
+            document.querySelectorAll('.island .influence_cont').forEach(island => {
                 island.classList.remove('active');
                 island.onclick = null;
             })
@@ -1119,8 +1051,8 @@ function (dojo, declare) {
 
             document.querySelectorAll('.factions_influence').forEach( e => { e.innerHTML = ''; });
 
-            influenceData.forEach(g => {
-                console.log(g);
+            for (const gid in influenceData) {
+                g = influenceData[gid];
 
                 let influence_cont = document.querySelector(`#island_${g.mid} .factions_influence`);
 
@@ -1137,7 +1069,7 @@ function (dojo, declare) {
                 }
 
                 influence_cont.innerHTML = '<div>'+inner.join(' - ')+'</div>';
-            });
+            }
         },
 
         // #endregion
@@ -1259,7 +1191,7 @@ function (dojo, declare) {
                             indicator.classList.remove('bounce_animation');
                             let oldpos = document.querySelector(`#player_board_${player.id} .turn_position`);
 
-                            this.moveElement2(indicator,target,$('overall-content'),500,0,()=>{
+                            this.moveElement(indicator,target,$('overall-content'),500,0,()=>{
                                 oldpos.className = indicator.className;
                                 indicator.remove();
                             });
@@ -1282,7 +1214,7 @@ function (dojo, declare) {
                             indicator.classList.remove('bounce_animation');
                             let oldsteps = document.querySelector(`#player_board_${player.id} .mona_movement`);
 
-                            this.moveElement2(indicator,target,$('overall-content'),500,0,()=>{
+                            this.moveElement(indicator,target,$('overall-content'),500,0,()=>{
                                 oldsteps.className = indicator.className;
                                 indicator.remove();
                             });
@@ -1333,21 +1265,31 @@ function (dojo, declare) {
 
             // fetch destination element
             let destination;
+            let onEnd = ()=>{};
 
             if (notif.args.destination) {
 
-                let infCounter = this.counters.islandsInfluence[notif.args.destination][notif.args.color]
-                infCounter.incValue(1);
-                infCounter.span.parentElement.style.display = '';
                 destination = document.querySelector(`#island_${notif.args.destination} .students_influence`);
+
+                this.updateFactionsIslandsInfluence(notif.args.influence_data);
+
+                onEnd = () => {
+                    let infCounter = this.counters.islandsInfluence[notif.args.destination][notif.args.color]
+                    infCounter.incValue(1);
+                    infCounter.span.parentElement.style.display = '';
+                };
+                
             } else {
-                // inc counter
-                this.counters.playerBoard[notif.args.player_id][notif.args.color].incValue(1);
+
                 destination = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .students_table`);
+
+                onEnd = () => {
+                    this.counters.playerBoard[notif.args.player_id][notif.args.color].incValue(1);
+                };
             }
 
             console.log(student,destination);
-            this.moveElementAndAppend(student,destination,null,500,0);
+            this.moveElementAndAppend(student,destination,null,500,0,onEnd);
         },
 
         notif_gainProfessor: function(notif) {
@@ -1369,7 +1311,7 @@ function (dojo, declare) {
             // fetch destination element
             let destination = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .professor_seat`);
 
-            this.moveElement(professor,destination,500,0,true);
+            this.moveElementAndAppend(professor,destination,null,500,0);
 
             // show professor marker on side player board
             document.querySelector(`#player_board_${notif.args.player_id} .${notif.args.color}_counter .professor_marker`).style.visibility = 'unset';
@@ -1411,7 +1353,7 @@ function (dojo, declare) {
                             document.querySelector('.mother_nature:not(.mock)').closest('.island').style.zIndex = 5;
                         }
                     }
-                    this.moveElement2(mona,island_mona,movingSurface,500,0,onend); // trigger
+                    this.moveElement(mona,island_mona,movingSurface,500,0,onend); // trigger
                 }, i*550); // delay considers some time to make program catch up
             });
         },
@@ -1425,7 +1367,7 @@ function (dojo, declare) {
                 let tower = document.querySelector(`#school_${notif.args.player} .tower:last-child`); // fetch tower (move anime el)
 
                 // trigger anim
-                this.moveElement2(tower,mock,null,500,0,()=>{
+                this.moveElement(tower,mock,null,500,0,()=>{
                     // at animation end, change mock to be real tower
                     mock.classList.remove('mock');
                     mock.classList.add('tower_' + notif.args.color);
@@ -1554,7 +1496,7 @@ function (dojo, declare) {
                                 bag.classList.remove('draw_animation');
 
                                 console.log(j,id);
-                                if (j == notif.args.students_each && id == document.querySelectorAll('.cloud_tile').length-1) this.notifqueue.setSynchronousDuration(600);
+                                if (j == notif.args.students_each && id == Object.keys(notif.args.clouds).length-1) this.notifqueue.setSynchronousDuration(600);
 
                             }, k*(200)); // delay is student anim + making space anim (moveElementAppend) + bag anim
 

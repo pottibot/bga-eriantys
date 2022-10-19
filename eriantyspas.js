@@ -27,38 +27,6 @@ function (dojo, declare) {
             console.log('eriantyspas constructor');
 
             this.counters = {};
-
-            // needed for regulating UI containers size when "zooming" islands
-            this.scaleMap = [
-                {
-                    scale: 0.8,
-                    width: 560
-                },
-                {
-                    scale: 1,
-                    width: 700
-                },
-                {
-                    scale: 1.2,
-                    width: 840
-                },
-                {
-                    scale: 1.4,
-                    width: 980
-                },
-                {
-                    scale: 1.6,
-                    width: 1120
-                },
-                {
-                    scale: 1.8,
-                    width: 1260
-                },
-                {
-                    scale: 2,
-                    width: 1400
-                }
-            ]
         },
         
         setup: function(gamedatas) {
@@ -84,6 +52,11 @@ function (dojo, declare) {
                     steps: this.format_block('jstpl_turn_steps_indicator', {steps: gamedatas.players[player_id].monaSteps}),
                 }));
 
+                this.addTooltip(`player_towers_count_${player_id}`,_("These are the player's/faction's towers. When all towers have been placed the player/faction wins the game"),'');
+                this.addTooltip(`player_coins_cont_${player_id}`,_("These are the player's coins. They can be used to purchase one of the available Characters' special abilities for one turn"),'');
+                this.addTooltip(`turn_position_cont_${player_id}`,_("This is the player's turn order. During the planning phase, playing an Assistant with a lower value, will allow you to go first."),'');
+                this.addTooltip(`mona_movement_cont_${player_id}`,_("This is how far this player can move Mother Nature. The player/faction with most Influence on the Island where Mother Nature stops, will control it and place one of their Towers."),'');
+
                 let towersCount = 0;
                 for (const p in gamedatas.schools) {
                     if (gamedatas.players[p].color == player.color) {
@@ -100,7 +73,7 @@ function (dojo, declare) {
                 let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
 
                 let schoolCont = document.querySelector(((isTeam)?'#team_school_area':'#opponents_school_area')+' .schools_cont');
-                let rows = {'2': 4, '3': 6, '4': 8};         
+                let rows = {'2': 4, '3': 3, '4': 2};         
 
                 schoolCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_school', {
                     name: gamedatas.players[player_id].name,
@@ -149,13 +122,19 @@ function (dojo, declare) {
                         case 'pink_professor':
                         case 'blue_professor':
 
-                            let tc = color.split('_')[0];
-                            let professor_seat = document.querySelector(`#school_${player_id} .${tc}_row .professor_seat`);
+                            let pc = color.split('_')[0];
+                            let professor_seat = document.querySelector(`#school_${player_id} .${pc}_row .professor_seat`);
 
                             if (gamedatas.schools[player_id][color] == 1) {
 
-                                professor_seat.insertAdjacentHTML('beforeend',this.format_block('jstpl_professor', {color: tc}));
-                                document.querySelector(`#player_board_${player_id} .${tc}_counter .professor_marker`).style.visibility = 'unset';
+                                professor_seat.insertAdjacentHTML('beforeend',this.format_block('jstpl_professor', {color: pc}));
+                                document.querySelector(`#player_board_${player_id} .${pc}_counter .professor_marker`).style.visibility = 'unset';
+
+                                let translated = dojo.string.substitute(_("This player controls the ${color} Professor. ${color} Tokens will count towards their Influence on the Islands"), {
+                                    color: this.getColorTranslation(pc)
+                                } );
+            
+                                this.addTooltip(`${pc}_counter_${player_id}`,translated,'');
                             }
                           
                             break;
@@ -239,11 +218,15 @@ function (dojo, declare) {
                 //$('island_group_'+g).addEventListener('click', evt => {console.log(evt.target.parentElement.id);})
             });
 
-            // set tower counter
+            // set islands groups counter
             let counter = new ebg.counter();
             counter.create($('groups_counter'));
             counter.setValue(gamedatas.islandsGroups.length);
             this.counters.islands_groups = counter;
+
+            this.addTooltip('islands_groups',_('Adjacent Islands merge when they fall under control of the same player/faction. When Islands group are 3 or less, the game will end immediatly.'),'');
+
+            this.updateStudentsBagCounter(gamedatas.students_left);
 
             // PLACE ISLANDS INSIDE GROUPS
             gamedatas.islands.forEach(i => {
@@ -302,15 +285,16 @@ function (dojo, declare) {
             document.querySelector('.mother_nature:not(.mock)').closest('.island').style.zIndex = 5;
 
             // PLACE characters
-            if (gamedatas.character) {
+            if (gamedatas.characters) {
                 /* for (let i = 0; i < 3; i++) {
                 $('characters').insertAdjacentHTML('beforeend',this.format_block('jstpl_character', {n: i+1}));
                 } */
             } else {
+
                 $('characters').style.display = 'none';
                 $('cloud_tiles_div').classList.add('no-characters');
 
-                document.querySelectorAll('.player_coins').forEach(el => { el.style.visibility = 'hidden'});
+                document.querySelectorAll('.player_coins_cont').forEach(el => { el.style.visibility = 'hidden'});
             }
 
             // PLACE CLOUDS
@@ -483,7 +467,6 @@ function (dojo, declare) {
             if ($('main_game_area').offsetWidth < $('game_ui').offsetWidth) {
                 players_school.style.maxHeight = h+'px';
             } else {
-                console.log('islands w == ui w');
                 players_school.style.maxHeight = '';
                 players_school.style.overflowY = '';
             }
@@ -586,7 +569,11 @@ function (dojo, declare) {
                 case '100':
                     if (prefValue == 1) {
                         document.documentElement.classList.add('detect-influence');
-                    } else document.documentElement.classList.remove('detect-influence');
+                        this.addTooltipToClass('island',_('This is the total Influence each player/faction has over this Island group'),'',1000);
+                    } else {
+                        document.documentElement.classList.remove('detect-influence');
+                        document.querySelectorAll('.island').forEach(i => { this.removeTooltip(i.id); });
+                    }
                     
                     break;
 
@@ -657,7 +644,6 @@ function (dojo, declare) {
 
             document.querySelectorAll('#assistant_cards_myhand .assistant').forEach( el => {
 
-                // FIX
                 if (args.assistants.includes(el.dataset.n)) el.classList.add('blocked');
                 else el.classList.add('unselected');
 
@@ -727,7 +713,7 @@ function (dojo, declare) {
 
                             let prev_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(previousSelected)}_row .students_table`);
                             prev_table.classList.remove('active');
-                            prev_table.onclick = null;
+                            prev_table.onclick = '';
                         }
 
                         student.classList.add('selected');
@@ -785,6 +771,24 @@ function (dojo, declare) {
             console.log('Leaving state: '+stateName);
             
             switch ( stateName ) {
+                case 'playAssistant': 
+                    document.querySelectorAll(`#assistant_cards_myhand .assistant`).forEach(assistant => {
+                        assistant.onclick = '';
+                        assistant.classList.remove('blocked','selected','unselected');
+                    });
+                    break;
+
+                case 'moveStudents': document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = ''; });
+                    break;
+
+                case 'moveMona': document.querySelectorAll(`.island_group`).forEach(group => { group.onclick = ''; });
+                    break;
+                
+                case 'cloudTileDrafting': document.querySelectorAll(`.cloud_tile`).forEach(cloud => { cloud.onclick = ''; });
+                    break;
+
+
+
             }               
         }, 
     
@@ -830,11 +834,25 @@ function (dojo, declare) {
             }
         },
 
+        updateStudentsBagCounter: function(studLeft) {
+            this.addTooltip('students_bag',_('Students left:') + ' ' + studLeft + '. '+ _('When the last Student has been drawn from the bag, the game end will trigger, granting one last turn to play'),'');
+        },
+
         getColorName: function(colval) {
             switch (colval) {
                 case '000000': return 'black';
                 case 'ffffff': return 'white';
                 case '7b7b7b': return 'grey';
+            }
+        },
+
+        getColorTranslation: function(col) {
+            switch (col) {
+                case 'green': return _('Green');
+                case 'red': return _('Red');
+                case 'yellow': return _('Yellow');
+                case 'pink': return _('Pink');
+                case 'blue': return _('Blue');
             }
         },
 
@@ -904,21 +922,10 @@ function (dojo, declare) {
             el.style.transition = `all ${duration}ms ${delay}ms ease-in-out`;
             el.offsetWidth;
 
-            /* setTimeout(() => {
-                
-            }, duration); */
-
-            let transitionProps = 2;
-            let transitionsCount = 0;
-            el.ontransitionend = () => {
-
-                transitionsCount++;
-
-                if (transitionsCount == transitionProps) {
-                    el.style.transition = ''
-                    onEnd();
-                }
-            }
+            setTimeout(() => {
+                el.style.transition = '';
+                onEnd();
+            }, duration+delay);
 
             this.placeElement(el,target,movingSurface);
         },
@@ -943,34 +950,25 @@ function (dojo, declare) {
             target.append(placeholder);
             placeholder.style.transition = `all 200ms ${delay}ms ease-in-out`;
 
-            let transitionProps = 2;
-            let transitionsCount = 0;
-            placeholder.ontransitionend = () => {
-
-                transitionsCount++;
-
-                if (transitionsCount == transitionProps) {
-                    this.moveElement(elClone,placeholder,movingSurface,duration,delay,()=>{
-                        el.remove();
-                        placeholder.remove();
-                        target.append(elClone);
-        
-                        elClone.style.position = '';
-                        elClone.style.left = '';
-                        elClone.style.top = '';
-                        elClone.style.transition = '';
-        
-                        onEnd();
-                    });
-                }
-            }
-
             placeholder.offsetWidth;
 
             placeholder.style.width = '';
             placeholder.style.height = '';
-            // el.style.width = '0px';
-            // el.style.height = '0px';
+
+            setTimeout(() => {
+                this.moveElement(elClone,placeholder,movingSurface,duration,delay,()=>{
+                    el.remove();
+                    placeholder.remove();
+                    target.append(elClone);
+    
+                    elClone.style.position = '';
+                    elClone.style.left = '';
+                    elClone.style.top = '';
+                    elClone.style.transition = '';
+    
+                    onEnd();
+                });
+            }, 200);
         },
 
         openAssistantDrawer: function(onEnd = () => {}) {
@@ -1046,8 +1044,6 @@ function (dojo, declare) {
         },
 
         updateFactionsIslandsInfluence: function(influenceData) {
-
-            console.log('updateFactionsIslandsInfluence',influenceData);
 
             document.querySelectorAll('.factions_influence').forEach( e => { e.innerHTML = ''; });
 
@@ -1144,12 +1140,7 @@ function (dojo, declare) {
                 let el;
     
                 // depending on active or not, move card to discard pile from different starting location (myhand or side player board)
-                if (this.isCurrentPlayerActive()) {
-    
-                    document.querySelectorAll('#assistant_cards_myhand .assistant').forEach(a => {
-                        a.classList.remove('blocked','selected','unselected');
-                    });
-    
+                if (this.isCurrentPlayerActive()) {    
                     el = document.querySelector(`.assistant_${notif.args.n}`);
                 } else {
     
@@ -1302,6 +1293,7 @@ function (dojo, declare) {
                 professor = document.querySelector(`#school_${notif.args.player_2} .${notif.args.color}_row .professor`);                
                 
                 document.querySelector(`#player_board_${notif.args.player_2} .${notif.args.color}_counter .professor_marker`).style.visibility = '';
+                this.removeTooltip(`${notif.args.color}_counter_${notif.args.player_2}`);
             
             } else { // if not
                 $('player_board_'+notif.args.player_id).insertAdjacentHTML('beforeend',this.format_block('jstpl_professor',{color: notif.args.color}));
@@ -1315,6 +1307,12 @@ function (dojo, declare) {
 
             // show professor marker on side player board
             document.querySelector(`#player_board_${notif.args.player_id} .${notif.args.color}_counter .professor_marker`).style.visibility = 'unset';
+
+            let translated = dojo.string.substitute(_("This player controls the ${color} Professor. ${color} Tokens will count towards their Influence on the Islands"), {
+                color: this.getColorTranslation(notif.args.color)
+            } );
+
+            this.addTooltip(`${notif.args.color}_counter_${notif.args.player_id}`,translated,'');
 
             this.updateFactionsIslandsInfluence(notif.args.influence_data);
         },
@@ -1480,6 +1478,8 @@ function (dojo, declare) {
 
                 Object.values(notif.args.clouds).forEach((cloud,id) => { // for each cloud to fill
                     let j = 0;
+
+                    if (cloud.reduce((a, b) => a + b, 0) == 0) this.notifqueue.setSynchronousDuration(100);
                     
                     cloud.forEach((sn,sc) => { // for each student type
 
@@ -1507,12 +1507,11 @@ function (dojo, declare) {
 
                 bag.onanimationend = '';
                 bag.classList.remove('draw_animation');
+
+                this.updateStudentsBagCounter(notif.args.students_left);
             };
 
             bag.classList.add('draw_animation');
-
-            console.log(notif.args);
-
         },
 
         // #endregion

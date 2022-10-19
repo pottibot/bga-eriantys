@@ -101,4 +101,10 @@ CREATE TABLE IF NOT EXISTS `played_assistants` (
 
 CREATE TABLE IF NOT EXISTS `students_bag` (
     `students` VARCHAR(130)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `character` (
+    `id` TINYINT UNSIGNED NOT NULL,
+    `data` VARCHAR(255),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

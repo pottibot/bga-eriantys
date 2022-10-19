@@ -157,6 +157,7 @@ html {
     gap: 10px;
 
     min-width: 730px;
+    min-height: 160px;
 
     position: relative;
 
@@ -758,7 +759,7 @@ html {
 
     display: flex;
     align-items: center;
-    gap: 6.1px;
+    gap: 4.5px;
 
     padding-left: 7px;
 
@@ -1489,7 +1490,7 @@ html {
     content: unset;
 }
 
-.player_coins {
+.player_coins_cont {
     display: flex;
     align-items: center;
 
@@ -1497,7 +1498,7 @@ html {
     left: 10px;
 }
 
-.player_coins > span {
+.player_coins_cont > span {
     position: relative;
     left: -10px;
 }

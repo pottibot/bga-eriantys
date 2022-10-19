@@ -166,42 +166,42 @@ let jstpl_school =  "<div id='school_${id}' class='school' style='--color: ${col
                     </div>";
 
 let jstpl_player_board =    "<div id='inner_player_board_${pId}' class='inner_player_board'>\
-                            <div class='player_towers_count'><div class='tower tower_${col}'></div><span><span id='towers_${pId}'></span>/${towerMax}</span></div>\
-                                <div class='player_coins'><div class='coin'></div><span id='coins_${pId}'></span></div>\
+                            <div id='player_towers_count_${pId}' class='player_towers_count'><div class='tower tower_${col}'></div><span><span id='towers_${pId}'></span>/${towerMax}</span></div>\
+                                <div id='player_coins_cont_${pId}' class='player_coins_cont'><div class='coin'></div><span id='coins_${pId}'></span></div>\
                                 <div class='player_turn'>\
-                                    <div class='turn_position_cont'>${pos}</div>\
-                                    <div class='mona_movement_cont'>${steps}</div>\
+                                    <div id='turn_position_cont_${pId}' class='turn_position_cont'>${pos}</div>\
+                                    <div id='mona_movement_cont_${pId}' class='mona_movement_cont'>${steps}</div>\
                                 </div>\
                                 <div class='player_students'>\
-                                    <div class='green_counter color_counter' style='--col:#25ac74'>\
+                                    <div id='green_counter_${pId}' class='green_counter color_counter' style='--col:#25ac74'>\
                                         <svg class='professor_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
                                             <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
                                         </svg>\
                                         <div class='student_green student'></div>\
                                         <span id='green_students_${pId}'></span>\
                                     </div>\
-                                    <div class='red_counter color_counter' style='--col:#e20913'>\
+                                    <div id='red_counter_${pId}' class='red_counter color_counter' style='--col:#e20913'>\
                                         <svg  class='professor_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
                                             <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
                                         </svg>\
                                         <div class='student_red student'></div>\
                                         <span id='red_students_${pId}'></span>\
                                     </div>\
-                                    <div class='yellow_counter color_counter'  style='--col:#f9b01d'>\
+                                    <div id='yellow_counter_${pId}' class='yellow_counter color_counter'  style='--col:#f9b01d'>\
                                         <svg  class='professor_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
                                             <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
                                         </svg>\
                                         <div class='student_yellow student'></div>\
                                         <span id='yellow_students_${pId}'></span>\
                                     </div>\
-                                    <div class='pink_counter color_counter' style='--col:#f8c8df'>\
+                                    <div id='pink_counter_${pId}' class='pink_counter color_counter' style='--col:#f8c8df'>\
                                         <svg  class='professor_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
                                             <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
                                         </svg>\
                                         <div class='student_pink student'></div>\
                                         <span id='pink_students_${pId}'></span>\
                                     </div>\
-                                    <div class='blue_counter color_counter' style='--col:#3abff0'>\
+                                    <div id='blue_counter_${pId}' class='blue_counter color_counter' style='--col:#3abff0'>\
                                         <svg  class='professor_marker' xmlns='http://www.w3.org/2000/svg' version='1.1' xmlns:xlink='http://www.w3.org/1999/xlink' x='0px' y='0px' viewBox='0 0 30 30'>\
                                             <polygon class='hex_shape' points='30,15 22.5,28 7.5,28 0,15 7.5,2 22.5,2'></polygon>\
                                         </svg>\

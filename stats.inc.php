@@ -10,81 +10,170 @@
  * -----
  */
 
-/*
-    In this file, you are describing game statistics, that will be displayed at the end of the
-    game.
-    
-    !! After modifying this file, you must use "Reload  statistics configuration" in BGA Studio backoffice
-    ("Control Panel" / "Manage Game" / "Your Game")
-    
-    There are 2 types of statistics:
-    _ table statistics, that are not associated to a specific player (ie: 1 value for each game).
-    _ player statistics, that are associated to each players (ie: 1 value for each player in the game).
-
-    Statistics types can be "int" for integer, "float" for floating point values, and "bool" for boolean
-    
-    Once you defined your statistics there, you can start using "initStat", "setStat" and "incStat" method
-    in your game logic, using statistics names defined below.
-    
-    !! It is not a good idea to modify this file when a game is running !!
-
-    If your game is already public on BGA, please read the following before any change:
-    http://en.doc.boardgamearena.com/Post-release_phase#Changes_that_breaks_the_games_in_progress
-    
-    Notes:
-    * Statistic index is the reference used in setStat/incStat/initStat PHP method
-    * Statistic index must contains alphanumerical characters and no space. Example: 'turn_played'
-    * Statistics IDs must be >=10
-    * Two table statistics can't share the same ID, two player statistics can't share the same ID
-    * A table statistic can have the same ID than a player statistics
-    * Statistics ID is the reference used by BGA website. If you change the ID, you lost all historical statistic data. Do NOT re-use an ID of a deleted statistic
-    * Statistic name is the English description of the statistic as shown to players
-    
-*/
-
 $stats_type = array(
 
     // Statistics global to table
     "table" => array(
+        
+        "towers_placed" => array(
+            "id"=> 11,
+            "name" => totranslate("Towers placed"),
+            "type" => "int"
+        ),
+        
+        "islands_groups" => array(
+            "id"=> 12,
+            "name" => totranslate("Groups of islands formed"),
+            "type" => "int"
+        ),
+        
+        "assistants_played" => array(
+            "id"=> 13,
+            "name" => totranslate("Assistants played"),
+            "type" => "int"
+        ),
+        
+        "students_drawn" => array(
+            "id"=> 14,
+            "name" => totranslate("Students drawn"),
+            "type" => "int"
+        ),
+        
+        "mona_travel" => array(
+            "id"=> 15,
+            "name" => totranslate("Islands travelled by Mother Nature"),
+            "type" => "int"
+        ),
+        
+        "contested_group" => array(
+            "id"=> 16,
+            "name" => totranslate("Most contested islands group (highest total influence by all players/teams)"),
+            "type" => "int"
+        ),
+        
+        "contended_professor" => array(
+            "id"=> 17,
+            "name" => totranslate("Most contended professor"),
+            "type" => "int"
+        ),
 
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
-
-/*
-        Examples:
-
-
-        "table_teststat1" => array(   "id"=> 10,
-                                "name" => totranslate("table test stat 1"), 
-                                "type" => "int" ),
-                                
-        "table_teststat2" => array(   "id"=> 11,
-                                "name" => totranslate("table test stat 2"), 
-                                "type" => "float" )
-*/  
+        "powerful_student" => array(
+            "id"=> 18,
+            "name" => totranslate("Most powerful student (biggest population on the totality of the islands)"),
+            "type" => "int"
+        ),
     ),
     
     // Statistics existing for each player
     "player" => array(
-
-        "turns_number" => array("id"=> 10,
-                    "name" => totranslate("Number of turns"),
-                    "type" => "int" ),
-    
-/*
-        Examples:    
         
+        "final_towers" => array(
+            "id"=> 10,
+            "name" => totranslate("Final towers placed"),
+            "type" => "int"
+        ),
         
-        "player_teststat1" => array(   "id"=> 10,
-                                "name" => totranslate("player test stat 1"), 
-                                "type" => "int" ),
-                                
-        "player_teststat2" => array(   "id"=> 11,
-                                "name" => totranslate("player test stat 2"), 
-                                "type" => "float" )
+        "islands_conquered" => array(
+            "id"=> 11,
+            "name" => totranslate("Total conquered islands"),
+            "type" => "int"
+        ),
+        
+        "islands_lost" => array(
+            "id"=> 12,
+            "name" => totranslate("Islands lost"),
+            "type" => "int"
+        ),
+        
+        "islands_stolen" => array(
+            "id"=> 13,
+            "name" => totranslate("Islands stolen"),
+            "type" => "int"
+        ),
+        
+        "islands_groups" => array(
+            "id"=> 21,
+            "name" => totranslate("Islands groups controlled"),
+            "type" => "int"
+        ),
 
-*/    
-    )
+        "final_professors" => array(
+            "id"=> 23,
+            "name" => totranslate("Final professors"),
+            "type" => "int"
+        ),
+        
+        "professors_influenced" => array(
+            "id"=> 14,
+            "name" => totranslate("Total influenced professors"),
+            "type" => "int"
+        ),
+        
+        "professors_lost" => array(
+            "id"=> 15,
+            "name" => totranslate("Professors lost"),
+            "type" => "int"
+        ),
+        
+        "professors_stolen" => array(
+            "id"=> 16,
+            "name" => totranslate("Professors stolen"),
+            "type" => "int"
+        ),
+        
+        "islands_students" => array(
+            "id"=> 17,
+            "name" => totranslate("Students sent to the islands"),
+            "type" => "int"
+        ),
+        
+        "hall_students" => array(
+            "id"=> 18,
+            "name" => totranslate("Students in the Dining Hall"),
+            "type" => "int"
+        ),
+        
+        "favourite_student" => array(
+            "id"=> 22,
+            "name" => totranslate("Favourite student"),
+            "type" => "int"
+        ),
+        
+        "highest_island_influence" => array(
+            "id"=> 19,
+            "name" => totranslate("Highest islands group influence achieved"),
+            "type" => "int"
+        ),
+        
+        "characters_used" => array(
+            "id"=> 20,
+            "name" => totranslate("Characters ability activated"),
+            "type" => "int"
+        ),
+    ),
+
+    "value_labels" => array(
+		17 => array( 
+			0 => totranslate("Frog (green)"),
+			1 => totranslate("Dragon (red)"), 
+			2 => totranslate("Gnome (yellow)"), 
+			3 => totranslate("Unicorn (blue)"), 
+			4 => totranslate("Fairy (cyan)")
+		),
+        18 => array( 
+			0 => totranslate("Frog (green)"),
+			1 => totranslate("Dragon (red)"), 
+			2 => totranslate("Gnome (yellow)"), 
+			3 => totranslate("Unicorn (blue)"), 
+			4 => totranslate("Fairy (cyan)")
+		),
+        22 => array( 
+			0 => totranslate("Frog (green)"),
+			1 => totranslate("Dragon (red)"), 
+			2 => totranslate("Gnome (yellow)"), 
+			3 => totranslate("Unicorn (blue)"), 
+			4 => totranslate("Fairy (cyan)")
+		),
+	)
 
 );

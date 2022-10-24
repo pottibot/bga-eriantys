@@ -70,7 +70,7 @@ function (dojo, declare) {
                 counter.setValue(towersCount);
                 this.counters.playerBoard[player_id]['towers'] = counter;
 
-                let isTeam = player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color;
+                let isTeam = !this.isSpectator && (player_id == this.getCurrentPlayerId() || gamedatas.players[player_id].color == gamedatas.players[this.getCurrentPlayerId()].color);
 
                 let schoolCont = document.querySelector(((isTeam)?'#team_school_area':'#opponents_school_area')+' .schools_cont');
                 let rows = {'2': 4, '3': 3, '4': 2};         
@@ -191,6 +191,10 @@ function (dojo, declare) {
                     ph.insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant',{n: gamedatas.played_assistants[p.id].assistant}));
                     if (gamedatas.played_assistants[p.id].old == 1) ph.lastElementChild.classList.add('old');
                 }
+            }
+
+            if (this.isSpectator) {
+                $('assistant_cards_myhand').style.display = 'none';
             }
 
             // SET TEAM NAMES AND COLORS (if 4 player game)
@@ -461,7 +465,10 @@ function (dojo, declare) {
             let players_school = $('players_school');
             let h = $('main_game_area').offsetHeight;
 
-            if (players_school.scrollHeight > h) players_school.style.overflowY = 'scroll';
+            if (players_school.scrollHeight > h) {
+                players_school.style.alignContent = 'flex-start';
+                players_school.style.overflowY = 'scroll';
+            }
             else players_school.style.overflowY = '';
 
             if ($('main_game_area').offsetWidth < $('game_ui').offsetWidth) {
@@ -919,6 +926,11 @@ function (dojo, declare) {
 
             if (el.parentElement != movingSurface) this.placeElement(el,el,movingSurface);
 
+            if (this.instantaneousMode) {
+                duration = 0;
+                delay = 0;
+            }
+
             el.style.transition = `all ${duration}ms ${delay}ms ease-in-out`;
             el.offsetWidth;
 
@@ -937,8 +949,16 @@ function (dojo, declare) {
             let elClone = el.cloneNode();
             movingSurface.append(elClone);
 
+            let prepare = 200;
+
+            if (this.instantaneousMode) {
+                duration = 0;
+                delay = 0;
+                prepare = 0;
+            }
+
             el.style.visibility = 'hidden';
-            el.style.transition = `all 200ms ease-in-out`;
+            el.style.transition = `all ${prepare}ms ease-in-out`;
             el.offsetWidth;
 
             this.placeElement(elClone,el,movingSurface);
@@ -948,7 +968,7 @@ function (dojo, declare) {
             placeholder.style.width = '0px';
             placeholder.style.height = '0px';
             target.append(placeholder);
-            placeholder.style.transition = `all 200ms ${delay}ms ease-in-out`;
+            placeholder.style.transition = `all ${prepare}ms ${delay}ms ease-in-out`;
 
             placeholder.offsetWidth;
 
@@ -968,7 +988,7 @@ function (dojo, declare) {
     
                     onEnd();
                 });
-            }, 200);
+            }, prepare);
         },
 
         openAssistantDrawer: function(onEnd = () => {}) {
@@ -1010,22 +1030,25 @@ function (dojo, declare) {
                     if (currentSel) {
                         this.ajaxcallwrapper('moveStudent',{student:currentSel, place:island.parentElement.id.split('_')[1]});
                     } else {
-                        this.showMessage(_("You need to select an Assistant card to play"),'error')
+                        this.showMessage(_("You need to first select a student to send to this island"),'error');
                     }
                 }
             })
 
             // activate students table
-            let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(selectedStudent)}_row .students_table`);
-            students_table.classList.add('active');
+            if (this.gamedatas.gamestate.args.free_tables.includes(this.getStudentElementColor(selectedStudent))) {
 
-            students_table.onclick = evt => {
+                let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(selectedStudent)}_row .students_table`);
+                students_table.classList.add('active');
 
-                let currentSel = this.gamedatas.gamestate.clientData.student;
-                if (currentSel) {
-                    this.ajaxcallwrapper('moveStudent',{student:currentSel});
-                } else {
-                    this.showMessage(_("You need to select an Assistant card to play"),'error')
+                students_table.onclick = evt => {
+
+                    let currentSel = this.gamedatas.gamestate.clientData.student;
+                    if (currentSel) {
+                        this.ajaxcallwrapper('moveStudent',{student:currentSel});
+                    } else {
+                        this.showMessage(_("You need to select an Assistant card to play"),'error')
+                    }
                 }
             }
         },
@@ -1140,8 +1163,9 @@ function (dojo, declare) {
                 let el;
     
                 // depending on active or not, move card to discard pile from different starting location (myhand or side player board)
-                if (this.isCurrentPlayerActive()) {    
+                if (this.isCurrentPlayerActive()) {
                     el = document.querySelector(`.assistant_${notif.args.n}`);
+                    el.classList.remove('selected');
                 } else {
     
                     $('player_board_'+this.getActivePlayerId()).insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant',{n: notif.args.n}));
@@ -1188,9 +1212,10 @@ function (dojo, declare) {
                             });
                         }
 
+                        if (this.instantaneousMode) indicator.style.animationDuration = '0ms';
                         indicator.classList.add('bounce_animation'); // trigger animation (bounce)
                         
-                    }, d);
+                    }, (this.instantaneousMode)?0:d);
 
                     // same as above for different icon
                     setTimeout(() => {
@@ -1211,9 +1236,10 @@ function (dojo, declare) {
                             });
                         }
 
+                        if (this.instantaneousMode) indicator.style.animationDuration = '0ms';
                         indicator.classList.add('bounce_animation');
                         
-                    }, d+1000);
+                    }, (this.instantaneousMode)? 0:(d+1000));
 
                     d = d+2000+100;
                 });
@@ -1226,7 +1252,7 @@ function (dojo, declare) {
                     let event = new Event('click') 
                     $('assistants_drawer_arrow').dispatchEvent(event);
                     
-                }, d);
+                }, (this.instantaneousMode)?0:d);
 
                 this.notifqueue.setSynchronousDuration(d);
             });
@@ -1265,7 +1291,13 @@ function (dojo, declare) {
                 this.updateFactionsIslandsInfluence(notif.args.influence_data);
 
                 onEnd = () => {
-                    let infCounter = this.counters.islandsInfluence[notif.args.destination][notif.args.color]
+                    let infCounter = this.counters.islandsInfluence[notif.args.destination][notif.args.color];
+
+                    console.log(`UPDATING ISLAND ${notif.args.destination} COMPACT STUDENT DISPLAY`);
+                    console.log(`ADDING ${notif.args.color}`);
+                    console.log('COUNTER',infCounter);
+                    console.log('COUNTER SPAN',infCounter.span);
+                    
                     infCounter.incValue(1);
                     infCounter.span.parentElement.style.display = '';
                 };
@@ -1352,7 +1384,7 @@ function (dojo, declare) {
                         }
                     }
                     this.moveElement(mona,island_mona,movingSurface,500,0,onend); // trigger
-                }, i*550); // delay considers some time to make program catch up
+                }, (this.instantaneousMode)?0:(i*550)); // delay considers some time to make program catch up
             });
         },
 
@@ -1408,24 +1440,20 @@ function (dojo, declare) {
                     // set new coordinates (transition will trigger)
                     island.style.left = (+island.style.left.split('px').shift() + g.translation.x) + 'px';
                     island.style.top = (+island.style.top.split('px').shift() - g.translation.y) + 'px';
-
-                    // after animation ends for all islands, create new island group
-                    // TODO change this method to settimeout which should be more reliable
-                    island.ontransitionend = () => {
-                        transitionCount++;
-
-                        if (transitionCount == notif.args.islandsCount*2) {
-
-                            let g1 = $('island_group_'+notif.args.groups.g1.id);
-                            let g2 = $('island_group_'+notif.args.groups.g2.id);
-
-                            g2.innerHTML += g1.innerHTML;
-
-                            g1.remove();
-                        }
-                    }
-                })
+                });
             };
+
+            // after animation ends for all islands, create new island group
+            setTimeout(() => {
+                let g1 = $('island_group_'+notif.args.groups.g1.id);
+                let g2 = $('island_group_'+notif.args.groups.g2.id);
+
+                // g2.innerHTML += g1.innerHTML;
+
+                g2.append(...g1.childNodes)
+                g1.remove();
+
+            }, (this.instantaneousMode)?0:1500);
 
             this.updateFactionsIslandsInfluence(notif.args.influence_data);
 
@@ -1460,7 +1488,7 @@ function (dojo, declare) {
 
                 setTimeout(() => {
                     this.moveElementAndAppend(s,school_entrance,null,300);
-                }, i*(300+200+100)); // delay is move anim duration + making space duration (200ms)
+                }, (this.instantaneousMode)?0:(i*(300+200+100))); // delay is move anim duration + making space duration (200ms)
             }
         },
 
@@ -1473,13 +1501,19 @@ function (dojo, declare) {
             let k = 0;
 
             let bag = $('students_bag'); // fetch bag
+            if (this.instantaneousMode) bag.style.animationDuration = '0ms';
+            bag.classList.add('draw_animation');
 
-            bag.onanimationend = () => {
+            let totRefilledStudents = 0;
 
-                Object.values(notif.args.clouds).forEach((cloud,id) => { // for each cloud to fill
-                    let j = 0;
+            Object.values(notif.args.clouds).forEach(cloud => {
+                totRefilledStudents += cloud.reduce((a, b) => a + b, 0);
+            });
 
-                    if (cloud.reduce((a, b) => a + b, 0) == 0) this.notifqueue.setSynchronousDuration(100);
+            console.log('totRefilledStudents',totRefilledStudents);
+
+            setTimeout(() => {
+                Object.values(notif.args.clouds).forEach((cloud,id) => { // for each cloud to fill                    
                     
                     cloud.forEach((sn,sc) => { // for each student type
 
@@ -1487,31 +1521,29 @@ function (dojo, declare) {
 
                             // trigger draw student anim
                             setTimeout(() => {
-                                j++;
-                                
+
                                 // insert student and trigger move animation to cloud
                                 bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[sc]}));
                                 let student = bag.lastElementChild;
-                                this.moveElementAndAppend(student,$('cloud_'+(id+1)),null,500,0);
-                                bag.classList.remove('draw_animation');
+                                this.moveElementAndAppend(student,$('cloud_'+(id+1)),null,500,0,() => {
+                                    
+                                });
 
-                                console.log(j,id);
-                                if (j == notif.args.students_each && id == Object.keys(notif.args.clouds).length-1) this.notifqueue.setSynchronousDuration(600);
-
-                            }, k*(200)); // delay is student anim + making space anim (moveElementAppend) + bag anim
+                            }, (this.instantaneousMode)?0:(k*(200))); // delay is student anim + making space anim (moveElementAppend) + bag anim
 
                             k++;
                         }
                     });
                 });
 
-                bag.onanimationend = '';
+                if (k == totRefilledStudents) {
+                    this.notifqueue.setSynchronousDuration(k*(200)+500);
+                }
+
                 bag.classList.remove('draw_animation');
 
                 this.updateStudentsBagCounter(notif.args.students_left);
-            };
-
-            bag.classList.add('draw_animation');
+            }, (this.instantaneousMode)?0:500);
         },
 
         // #endregion

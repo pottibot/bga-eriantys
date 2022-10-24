@@ -7,11 +7,17 @@
 -- See http://en.boardgamearena.com/#!doc/Studio for more information.
 -- -----
 
+-- this whole db could have been structured better :/
+
 ALTER TABLE `player`
 ADD `player_turn_position` TINYINT UNSIGNED NOT NULL,
 ADD `player_alternative_color` VARCHAR(6) NOT NULL,
-ADD `player_mona_steps` TINYINT UNSIGNED NOT NULL DEFAULT 0;
-
+ADD `player_mona_steps` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ADD `player_tot_green` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ADD `player_tot_red` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ADD `player_tot_yellow` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ADD `player_tot_pink` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ADD `player_tot_blue` TINYINT UNSIGNED NOT NULL DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS `island` (
     `pos` TINYINT UNSIGNED NOT NULL,
@@ -24,8 +30,7 @@ CREATE TABLE IF NOT EXISTS `island` (
 
 -- note:
 -- type used to identify island graphic art
--- pos used to identify island pos in clockwise order. maybe change name to id?
--- attach side depends on pos
+-- pos used to identify island pos in clockwise order.
 
 CREATE TABLE IF NOT EXISTS `island_influence` (
     `island_pos` TINYINT UNSIGNED NOT NULL,
@@ -101,6 +106,12 @@ CREATE TABLE IF NOT EXISTS `played_assistants` (
 
 CREATE TABLE IF NOT EXISTS `students_bag` (
     `students` VARCHAR(130)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `professor_steals` (
+    `color` VARCHAR(6) NOT NULL,
+    `steals` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (`color`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `character` (

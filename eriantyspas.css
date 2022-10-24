@@ -11,8 +11,8 @@
 
 html {
     background: url('img/background.jpg') #fff8f0;
-    background-size: contain;
-    background-repeat: round;
+    background-size: auto 100%;
+    background-position-x: 50%;
 }
 
 /* ---------------------------------- */
@@ -98,7 +98,7 @@ html {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-around;
-    align-content: flex-start;
+    align-content: center;
 }
 
 .opponents-bottom #players_school {

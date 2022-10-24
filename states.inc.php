@@ -28,14 +28,15 @@ $machinestates = array(
     		"type" => "activeplayer",
             "args" => "argPlayAssistant",
     		"possibleactions" => array( "playAssistant"),
-    		"transitions" => array("" => 11)
+    		"transitions" => array("next" => 11, "zombiePass" => 99)
     ),
 
     11 => array(
         "name" => "nextPlayerPlanning",
         "type" => "game",
         "action" => "stNextPlayerPlanning",
-        "transitions" => array( "nextTurn" => 10, "nextPhase" => 20 )
+        "updateGameProgression" => true,
+        "transitions" => array("nextTurn" => 10, "nextPhase" => 20)
     ),
 
     20 => array(
@@ -45,7 +46,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argMoveStudents",
         "possibleactions" => array( "moveStudent"),
-        "transitions" => array("" => 21)
+        "transitions" => array("next" => 21, "zombiePass" => 99)
     ),
 
     21 => array(
@@ -62,7 +63,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argMoveMona",
         "possibleactions" => array( "moveMona"),
-        "transitions" => array("pickCloud" => 40, "gameEnd" => 99)
+        "transitions" => array("pickCloud" => 40, "endTurn" => 41, "gameEnd" => 99, "zombiePass" => 99)
     ),
 
     40 => array(
@@ -72,13 +73,14 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argCloudTileDrafting",
         "possibleactions" => array( "chooseCloudTile"),
-        "transitions" => array("" => 41)
+        "transitions" => array("endTurn" => 41, "zombiePass" => 99)
     ),
 
     41 => array(
         "name" => "nextPlayerAction",
         "type" => "game",
         "action" => "stNextPlayerAction",
+        "updateGameProgression" => true,
         "transitions" => array( "nextPlayerAction" => 20, "nextRound" => 10, "gameEnd" => 99)
     ),
 

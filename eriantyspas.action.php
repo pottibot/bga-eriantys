@@ -63,4 +63,14 @@ class action_eriantyspas extends APP_GameAction {
 
         self::ajaxResponse();
     }
+
+    public function useCharacter() {
+
+        self::setAjaxMode();
+
+        $id = self::getArg("id", AT_int, true);
+        $this->game->useCharacter($id);
+
+        self::ajaxResponse();
+    }
 }

@@ -288,11 +288,64 @@ function (dojo, declare) {
             document.querySelector(`#island_${gamedatas.mother_nature} .mother_nature`).classList.remove('mock');
             document.querySelector('.mother_nature:not(.mock)').closest('.island').style.zIndex = 5;
 
-            // PLACE characters
+            // PLACE CHARACTERS
             if (gamedatas.characters) {
-                /* for (let i = 0; i < 3; i++) {
-                $('characters').insertAdjacentHTML('beforeend',this.format_block('jstpl_character', {n: i+1}));
-                } */
+                console.log('CHARACTERS',gamedatas.characters);
+                for (const chId in gamedatas.characters) {
+                    console.log('CHARACTER',chId);
+                    let character = gamedatas.characters[chId];
+                    $('characters').insertAdjacentHTML('beforeend',this.format_block('jstpl_character', {n: chId}));
+                    let charEl = $('characters').lastElementChild;
+
+                    charEl.insertAdjacentHTML('beforeend','<div class="character_coin"></div>');
+                    let charCost = charEl.lastElementChild;
+
+                    charCost.insertAdjacentHTML('beforeend',this.format_block('jstpl_coin'));
+                    charCost.lastElementChild.insertAdjacentHTML('beforeend','<div class="cost_text">+1</div>');
+                    if (character.cost_mod > 0) charCost.style.visibility = 'unset';
+
+                    if (character.active == 1) charEl.classList.add("activated");
+
+                    if (character.data) {
+                        let data = JSON.parse(character.data);
+                        console.log(data);
+
+                        charEl.insertAdjacentHTML('beforeend','<div class="character_tokens"></div>');
+                        let charTokens = charEl.lastChild;
+
+                        for (const tokenType in data) {
+                            switch (tokenType) {
+                                case 'students':
+                                    charTokens.classList.add('type-students');
+
+                                    let studentsSet = ['green','red','yellow','pink','blue'];
+
+                                    data['students'].forEach(s => {
+                                        charTokens.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[s]}));
+                                    });
+                                    
+                                    break;
+
+                                case 'noEntry':
+                                    charTokens.classList.add('type-no-entry');
+
+                                    for (let i = 0; i < data['noEntry']; i++) {
+                                        charTokens.insertAdjacentHTML('beforeend','<div class="no-entry_token"></div>');
+                                    }
+                                    break;
+                            }
+                        }
+                        
+                    }
+
+                    this.addTooltipHtml(charEl.id,this.format_block('jstpl_cardTooltip', {
+                        img: charEl.outerHTML,
+                        effectLable: _('EFFECT')+': ',
+                        effect: _(character.tooltip),
+                        costLable: _('COST')+': ',
+                        cost: character.cost
+                    }));
+                }
             } else {
 
                 $('characters').style.display = 'none';
@@ -489,6 +542,10 @@ function (dojo, declare) {
 
                         if (key == 'mother_nature') {
                             args[key] = this.format_block('jstpl_mother_nature');
+                        }
+
+                        if (key == 'coins') {
+                            args[key] = this.format_block('jstpl_coin');
                         }
 
                         if (key == 'cloud_tile') {
@@ -740,13 +797,23 @@ function (dojo, declare) {
                     }                
                 }
             });
+
+            // characters
+            this.activateCharacters();
         },
 
         onEnteringState_moveMona: function(args) {
 
-            args.destinations.forEach(g => {
+            args.destinations.forEach((g,i) => {
                 let group = $('island_group_'+g);
                 group.classList.add('active');
+
+                console.log('INC MOVEMENT ACTIVE',args.incMovement);
+                if (args.incMovement) {
+                    if (i == args.destinations.length-1 || i == args.destinations.length-2) {
+                        group.style.setProperty('--act-color','#ff6400');
+                    }
+                }
 
                 group.onclick = evt => {
                     if (!this.isCurrentPlayerActive()) {
@@ -756,6 +823,9 @@ function (dojo, declare) {
                     this.ajaxcallwrapper('moveMona',{group: g});
                 }
             });
+
+            // characters
+            this.activateCharacters();
         },
 
         onEnteringState_cloudTileDrafting: function(args) {
@@ -772,6 +842,9 @@ function (dojo, declare) {
                     this.ajaxcallwrapper('chooseCloudTile',{cloud: c});
                 }
             });
+
+            // characters
+            this.activateCharacters();
         },
 
         onLeavingState: function(stateName) {
@@ -788,10 +861,16 @@ function (dojo, declare) {
                 case 'moveStudents': document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = ''; });
                     break;
 
-                case 'moveMona': document.querySelectorAll(`.island_group`).forEach(group => { group.onclick = ''; });
+                case 'moveMona': 
+                    document.querySelectorAll(`.island_group`).forEach(group => { group.onclick = ''; group.style = ''});
                     break;
                 
-                case 'cloudTileDrafting': document.querySelectorAll(`.cloud_tile`).forEach(cloud => { cloud.onclick = ''; });
+                case 'cloudTileDrafting':
+                    document.querySelectorAll(`.cloud_tile`).forEach(cloud => { cloud.onclick = ''; });
+
+                    if (this.gamedatas.characters) {
+                        document.querySelectorAll('.character').forEach(char => { char.onclick = ''; char.classList.remove('active','activated','used')});
+                    }
                     break;
 
 
@@ -1083,11 +1162,72 @@ function (dojo, declare) {
                     inner.push(this.format_block('jstpl_island_faction_influence',{
                         col: f,
                         invcol: this.getInverseColor(f),
-                        num: g.influence[f]
+                        num: g.influence[f],
+                        modtri: g.mod[f]
                     }));
                 }
 
                 influence_cont.innerHTML = '<div>'+inner.join(' - ')+'</div>';
+            }
+        },
+
+        activateCharacters: function() {
+            if (this.gamedatas.characters) {
+
+                this.gamedatas.gamestate.args.avail_characters.forEach(c => {
+
+                    let char = $('character_'+c);
+
+                    char.classList.add('active');
+
+                    char.onclick = () => {
+                        if (this.checkAction('useCharacter')) {
+
+                            let charData = this.gamedatas.characters[c];
+                            if (this.counters.playerBoard[this.getActivePlayerId()]['coins'].getValue() < (1*charData.cost + 1*charData.cost_mod)) {
+                                this.showMessage(_("You don't have enough coins to activate this Character ability"),'error');
+                                return;
+                            }
+
+                            this.ajaxcallwrapper('useCharacter',{id: c});
+                        }
+                    }
+                });
+
+                let character_prev = this.format_block('jstpl_characterActionBarPreview',{
+                    text: _("or activate one of the Characters' abilities"),
+                    characters: $('characters').outerHTML,
+                });
+
+                if (this.isCurrentPlayerActive() && this.gamedatas.gamestate.args.avail_characters.length > 0) {
+                    //this.gamedatas.gamestate.descriptionmyturn += '<br><span style="display:inline-block;">'+character_prev+'</span>';
+                    this.gamedatas.gamestate.descriptionmyturn += '<br>' + _("or activate one of the <a>Characters</a> abilities");
+                    this.updatePageTitle();
+
+                    document.querySelector('#pagemaintitletext a').onclick = () => {
+
+                        let y = $('characters').getBoundingClientRect().y - 300 - document.documentElement.getBoundingClientRect().y;
+                        console.log(y);
+
+                        window.scroll({
+                            top: y,
+                            left: 0,
+                            behavior: 'smooth'
+                        });
+
+                        window.onscroll = () => {
+                            if (Math.round($('characters').getBoundingClientRect().y) == 300) {
+                                $('characters').style.boxShadow = '0px 0px 20px #ff8700';
+
+                                setTimeout(() => {
+                                    $('characters').style.boxShadow = '';
+
+                                    window.onscroll = '';
+                                }, 1500);
+                            }
+                        };
+                    }
+                }
             }
         },
 
@@ -1119,7 +1259,13 @@ function (dojo, declare) {
             this.notifqueue.setSynchronous('resolvePlanning');
 
             dojo.subscribe('moveStudent', this, "notif_moveStudent");
-            this.notifqueue.setSynchronous('moveStudent',500);
+            this.notifqueue.setSynchronous('moveStudent',700);
+
+            dojo.subscribe('gainCoin', this, "notif_gainCoin");
+            this.notifqueue.setSynchronous('gainCoin',500);
+
+            dojo.subscribe('useCharacter', this, "notif_useCharacter");
+            this.notifqueue.setSynchronous('useCharacter',500);
 
             dojo.subscribe('gainProfessor', this, "notif_gainProfessor");
             this.notifqueue.setSynchronous('gainProfessor',500);
@@ -1132,6 +1278,9 @@ function (dojo, declare) {
 
             dojo.subscribe('joinIslandsGroups', this, "notif_joinIslandsGroups");
             this.notifqueue.setSynchronous('joinIslandsGroups', 2000);
+
+            dojo.subscribe('updateInfluence', this, "notif_updateInfluence");
+            this.notifqueue.setSynchronous('updateInfluence', 100);
 
             dojo.subscribe('chooseCloudTile', this, "notif_chooseCloudTile");
             this.notifqueue.setSynchronous('chooseCloudTile');
@@ -1288,8 +1437,6 @@ function (dojo, declare) {
 
                 destination = document.querySelector(`#island_${notif.args.destination} .students_influence`);
 
-                this.updateFactionsIslandsInfluence(notif.args.influence_data);
-
                 onEnd = () => {
                     let infCounter = this.counters.islandsInfluence[notif.args.destination][notif.args.color];
 
@@ -1313,6 +1460,58 @@ function (dojo, declare) {
 
             console.log(student,destination);
             this.moveElementAndAppend(student,destination,null,500,0,onEnd);
+        },
+
+        notif_gainCoin: function(notif) {
+
+            setTimeout(() => {
+
+                // fetch coin student pos
+                let lastStudent = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .student:last-child`);
+                console.log(lastStudent);
+                lastStudent.insertAdjacentHTML('beforeend',this.format_block('jstpl_coin'));
+                let movingCoin = lastStudent.lastElementChild;
+                console.log(movingCoin);
+
+                // fetch destination
+                let coinCont = document.querySelector(`#player_coins_cont_${notif.args.player_id}`);
+                console.log(coinCont);
+            
+                this.moveElement(movingCoin,coinCont,null,500,0,() => {
+                    movingCoin.remove();
+
+                    this.counters.playerBoard[notif.args.player_id]['coins'].incValue(1);
+                })
+            }, 100);
+        },
+
+        notif_useCharacter: function(notif) {
+
+            let character = $(`character_${notif.args.char_id}`);
+            character.classList.remove('active');
+            character.onclick = '';
+            character.classList.add('activated');
+
+            // fetch coin
+            let coinCont = document.querySelector(`#player_coins_cont_${notif.args.player_id}`);
+            coinCont.insertAdjacentHTML('beforeend',this.format_block('jstpl_coin'));
+
+            let movingCoin = coinCont.lastElementChild;
+
+            let charCoin = document.querySelector(`#character_${notif.args.char_id} .character_coin`);
+
+            setTimeout(() => {
+
+                this.moveElement(movingCoin,charCoin,null,500,0,() => {
+                    charCoin.style.visibility = 'unset';
+
+                    movingCoin.remove();
+
+                    this.counters.playerBoard[notif.args.player_id]['coins'].incValue(-notif.args.n);
+
+                    this.gamedatas.characters[notif.args.char_id].cost_mod = 1;
+                });
+            },300);
         },
 
         notif_gainProfessor: function(notif) {
@@ -1345,8 +1544,6 @@ function (dojo, declare) {
             } );
 
             this.addTooltip(`${notif.args.color}_counter_${notif.args.player_id}`,translated,'');
-
-            this.updateFactionsIslandsInfluence(notif.args.influence_data);
         },
 
         notif_moveMona: function(notif) {
@@ -1421,8 +1618,6 @@ function (dojo, declare) {
                 this.scoreCtrl[notif.args.player].incValue(-1);
                 this.counters.playerBoard[notif.args.player]['towers'].incValue(1);
             }
-
-            this.updateFactionsIslandsInfluence(notif.args.influence_data);
         },
 
         notif_joinIslandsGroups: function(notif) {
@@ -1455,12 +1650,14 @@ function (dojo, declare) {
 
             }, (this.instantaneousMode)?0:1500);
 
-            this.updateFactionsIslandsInfluence(notif.args.influence_data);
-
             this.counters.islands_groups.incValue(-1);
 
             /* let joinGroup = notif.args.groups.filter(g => g.id != notif.args.groupTo).pop()['id'];
             console.log(joinGroup); */
+        },
+
+        notif_updateInfluence: function(notif) {
+            this.updateFactionsIslandsInfluence(notif.args.influence_data);
         },
 
         notif_chooseCloudTile: function(notif) {
@@ -1525,9 +1722,7 @@ function (dojo, declare) {
                                 // insert student and trigger move animation to cloud
                                 bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[sc]}));
                                 let student = bag.lastElementChild;
-                                this.moveElementAndAppend(student,$('cloud_'+(id+1)),null,500,0,() => {
-                                    
-                                });
+                                this.moveElementAndAppend(student,$('cloud_'+(id+1)),null,500);
 
                             }, (this.instantaneousMode)?0:(k*(200))); // delay is student anim + making space anim (moveElementAppend) + bag anim
 

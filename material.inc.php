@@ -10,64 +10,76 @@
  */
 
 
-/* $this->characters = [
-    // (MOVE STUDENT) take student and place on island
+$this->characters = [
+    // (MOVE STUDENT) take student and place on island [setup: draw 4 stud on this card]
     1 => [
-        'tooltip' => clienttranslate("Take 1 Student from this card and place it on an Island of your choice"),
+        'cost' => 1,
+        'tooltip' => clienttranslate("Take 1 Student from this card and place it on an Island of your choice. Then, draw a new Student from the Bag and place it on this card."),
     ],
 
     // (MOVE MONA) resolve an island of choice
     2 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 3,
+        'tooltip' => clienttranslate("Choose an Island and resolve the Island as if Mother Nature had ended her movement there. Mother Nature will still move and the Island where she ends her movement will also be resolved."),
     ],
 
-    // (MOVE MONA) increase mona movement by 2
+    // [PASSIVE] (MOVE MONA) increase mona movement by 2
     3 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 1,
+        'tooltip' => clienttranslate("You may move Mother Nature up to 2 additional Islands than is indicated by the Assistant card you’ve played."),
     ],
 
-    // (INFLUENCE CALC) place no entry token on island, blocks resolving island influence one time
+    // (INFLUENCE CALC) place no entry token on island, blocks resolving island influence one time [setup: place 4 noentry tokens on this card]
     4 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 2,
+        'tooltip' => clienttranslate("Place a No Entry tile on an Island of your choice. The first time Mother Nature ends her movement there, put the No Entry tile back onto this card DO NOT calculate influence on that Island, or place any Towers."),
     ],
 
-    // (INFLUENCE CALC) when resolving islands influence, tower don't add up to the total inf
+    // [PASSIVE] (INFLUENCE CALC) when resolving islands influence, tower don't add up to the total inf
     5 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 3,
+        'tooltip' => clienttranslate("When resolving a Conquering on an Island, Towers do not count towards influence."),
     ],
 
-    // (DRAFT NEW STUDENTS) replace up to 3 students from school entrance with students on this card
+    // (DRAFT NEW STUDENTS) replace up to 3 students from school entrance with students on this card [setup: draw 6 stud on this card]
     6 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 1,
+        'tooltip' => clienttranslate("You may take up to 3 Students from this card and replace them with the same number of Students from your Entrance."),
     ],
 
-    // (INFLUENCE CALC) +2 influence this turn
+    // [PASSIVE] (INFLUENCE CALC) +2 influence this turn
     7 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 2,
+        'tooltip' => clienttranslate("During the influence calculation this turn, you count as having 2 more influence."),
     ],
 
     // (INFLUENCE CALC) student of chosen color don't add up to total influence this turn
     8 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 3,
+        'tooltip' => clienttranslate("Choose a color of Student: during the influence calculation this turn, that color adds no influence."),
     ],
 
-    // (MOVE STUDENT) replace up to 2 students from dining room to school entrance
+    // (MOVE STUDENT) replace up to 2 students from dining room to school entrance 
     9 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 1,
+        'tooltip' => clienttranslate("You may exchange up to 2 Students between your Entrance and your Dining Room."),
     ],
 
-    // (MOVE STUDENT) move one student from this card to the dining room
+    // (MOVE STUDENT) move one student from this card to the dining room [setup: draw 4 stud on this card]
     10 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 2,
+        'tooltip' => clienttranslate("Take 1 Student from this card and place it in your Dining Room. Then, draw a new Student from the Bag and place it on this card."),
     ],
 
     // (MOVE STUDENT) ALL players return 3 students of the chosen color from the dining room to the students bag
     11 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 3,
+        'tooltip' => clienttranslate("Choose a type of Student: every player (including yourself) must return 3 Students of that type from their Dining Room to the bag. If any player has fewer than 3 Students of that type, return as many Students as they have."),
     ],
 
-    // (MOVE STUDENT) this turn you take control of professors even if you tie the number of students of that color with another player
+    // [PASSIVE] (MOVE STUDENT) this turn you take control of professors even if you tie the number of students of that color with another player
     12 => [
-        'tooltip' => clienttranslate(""),
+        'cost' => 2,
+        'tooltip' => clienttranslate("During this turn, you take control of any number of Professors even if you have the same number of Students as the player who currently controls them."),
     ],
-]; */
+];

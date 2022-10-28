@@ -132,12 +132,24 @@ let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' st
                     </div>"
 
 let jstpl_island_group = "<div id='island_group_${id}' class='island_group'></div>";
-let jstpl_island_faction_influence = "<span class='faction_influence_indicator' style='--col: #${col}; --invcol: #${invcol}'>${num}</span>";
+let jstpl_island_faction_influence = "<span class='faction_influence_indicator' style='--col: #${col}; --invcol: #${invcol}'>${num}<div class='inf_mod_triangle ${modtri}'></div></span>";
 
 let jstpl_assistant = "<div class='assistant_${n} assistant card' data-n='${n}'></div>";
 let jstpl_assistant_placeholder = "<div id='placeholder_${id}' class='assistant_placeholder' style='--color: ${color}; --alt-color: ${altcol}'><span class='placeholder_lable'>${name}</span></div>";
 
 let jstpl_character = "<div id='character_${n}' class='character card'></div>";
+let jstpl_cardTooltip = "<div class='card_tooltip'>\
+                            <div class='tooltip_img'>${img}</div>\
+                            <div class='tooltip_text'>\
+                                <div class='character_effect'><span class='tooltip_lable'>${effectLable}</span>${effect}</div>\
+                                <div class='character_cost'><span class='tooltip_lable'>${costLable}</span>${cost}</div>\
+                            </div>\
+                        </div>"
+let jstpl_characterActionBarPreview =  "<div class='characters_preview'>\
+                                            <div class='preview_text'>${text}</div>\
+                                            <div class='preview_cont'>${characters}</div>\
+                                        </div>";
+
 let jstpl_cloud = "<div id='cloud_${id}' class='cloud_type_${type} cloud_tile'></div>";
 
 let jstpl_student = "<div class='student_${color} student'></div>";

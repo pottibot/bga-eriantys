@@ -117,5 +117,16 @@ CREATE TABLE IF NOT EXISTS `professor_steals` (
 CREATE TABLE IF NOT EXISTS `character` (
     `id` TINYINT UNSIGNED NOT NULL,
     `data` VARCHAR(255),
+    `tooltip` VARCHAR(255),
+    `cost` TINYINT UNSIGNED NOT NULL,
+    `cost_mod` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `active` BIT NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- modifiers:
+--  > ignoreTowers
+--  > incMonaMovement
+--  > incInfluence
+--  > winTieProfessors
+

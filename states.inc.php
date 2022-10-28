@@ -45,8 +45,8 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must move one of your new students (${stud_count}/${stud_max})'),
         "type" => "activeplayer",
         "args" => "argMoveStudents",
-        "possibleactions" => array( "moveStudent"),
-        "transitions" => array("next" => 21, "zombiePass" => 99)
+        "possibleactions" => array("moveStudent","useCharacter"),
+        "transitions" => array("next" => 21, "useCharacter" => 50, "zombiePass" => 99, "endAbility" => 60, "char_1" => 51, "char_2" => 52, "char_4" => 53, "char_6" => 54, "char_8" => 55, "char_9" => 56, "char_10" => 57, "char_11" => 58)
     ),
 
     21 => array(
@@ -62,8 +62,8 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must move Mother Nature'),
         "type" => "activeplayer",
         "args" => "argMoveMona",
-        "possibleactions" => array( "moveMona"),
-        "transitions" => array("pickCloud" => 40, "endTurn" => 41, "gameEnd" => 99, "zombiePass" => 99)
+        "possibleactions" => array("moveMona","useCharacter"),
+        "transitions" => array("pickCloud" => 40, "useCharacter" => 50, "endTurn" => 41, "gameEnd" => 99, "zombiePass" => 99, "endAbility" => 60, "char_1" => 51, "char_2" => 52, "char_4" => 53, "char_6" => 54, "char_8" => 55, "char_9" => 56, "char_10" => 57, "char_11" => 58)
     ),
 
     40 => array(
@@ -72,8 +72,8 @@ $machinestates = array(
         "descriptionmyturn" => clienttranslate('${you} must choose a Cloud tile'),
         "type" => "activeplayer",
         "args" => "argCloudTileDrafting",
-        "possibleactions" => array( "chooseCloudTile"),
-        "transitions" => array("endTurn" => 41, "zombiePass" => 99)
+        "possibleactions" => array("chooseCloudTile","useCharacter"),
+        "transitions" => array("endTurn" => 41, "useCharacter" => 50, "zombiePass" => 99, "endAbility" => 60, "char_1" => 51, "char_2" => 52, "char_4" => 53, "char_6" => 54, "char_8" => 55, "char_9" => 56, "char_10" => 57, "char_11" => 58)
     ),
 
     41 => array(
@@ -82,6 +82,104 @@ $machinestates = array(
         "action" => "stNextPlayerAction",
         "updateGameProgression" => true,
         "transitions" => array( "nextPlayerAction" => 20, "nextRound" => 10, "gameEnd" => 99)
+    ),
+
+    50 => array(
+        "name" => "useCharacterAbility",
+        "type" => "game",
+        "action" => "stUseCharacterAbility",
+        "transitions" => array("char_1" => 51, "char_2" => 52, "char_4" => 53, "char_6" => 54, "char_8" => 55, "char_9" => 56, "char_10" => 57, "char_11" => 58)
+    ),
+
+    // CHAR 1: take student and place on island (then draw a new one)
+    51 => array(
+        "name" => "character1_ability",
+        "description" => clienttranslate('${actplayer} must must move a Student from the Character card to an Island'),
+        "descriptionmyturn" => clienttranslate('${you} must must move a Student from the Character card to an Island'),
+        "type" => "activeplayer",
+        "possibleactions" => array("moveStudent"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 2: resolve an island of choice
+    52 => array(
+        "name" => "character2_ability",
+        "description" => clienttranslate('${actplayer} must choose an Island to resolve'),
+        "descriptionmyturn" => clienttranslate('${you} must choose an Island to resolve'),
+        "type" => "activeplayer",
+        "possibleactions" => array("resolveIsland"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 4: place a noEntry token on an island
+    53 => array(
+        "name" => "character4_ability",
+        "description" => clienttranslate('${actplayer} must place a No Entry token on an Island'),
+        "descriptionmyturn" => clienttranslate('${you} must place a No Entry token on an Island'),
+        "type" => "activeplayer",
+        "possibleactions" => array("placeNoEntry"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 6: replace up to 3 students from school entrance with students from this card
+    54 => array(
+        "name" => "character6_ability",
+        "description" => clienttranslate('${actplayer} may replace up to 3 Students from your School entrance with Students on the Character card'),
+        "descriptionmyturn" => clienttranslate('${you} may replace up to 3 Students from your School entrance with Students on the Character card'),
+        "type" => "activeplayer",
+        "args" => "argCharacter6_ability",
+        "possibleactions" => array("replaceStudents"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 8: choose a student color, students of that color won't add up to island influence this turn 
+    55 => array(
+        "name" => "character8_ability",
+        "description" => clienttranslate('${actplayer} must choose a color of Student'),
+        "descriptionmyturn" => clienttranslate('${you} must choose a color of Student'),
+        "type" => "activeplayer",
+        "possibleactions" => array("deactivateStudentColor"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 9: replace up to 2 students from dining hall with students in your School entrance
+    56 => array(
+        "name" => "character9_ability",
+        "description" => clienttranslate('${actplayer} may replace up to 3 Students from your School dining hall with Students in your School entrance'),
+        "descriptionmyturn" => clienttranslate('${you} may replace up to 3 Students from your School dining hall with Students in your School entrance'),
+        "type" => "activeplayer",
+        "args" => "argCharacter9_ability",
+        "possibleactions" => array("replaceStudents"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 10: take student and place on dining hall (then draw a new one)
+    57 => array(
+        "name" => "character10_ability",
+        "description" => clienttranslate('${actplayer} must must move a Student from the Character card to your School dining hall'),
+        "descriptionmyturn" => clienttranslate('${you} must must move a Student from the Character card to your School dining hall'),
+        "type" => "activeplayer",
+        "args" => "character10_ability",
+        "possibleactions" => array("moveStudent"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    // CHAR 11: all players must return 3 students of chosen color from their respective School dining room to the students bag
+    58 => array(
+        "name" => "character11_ability",
+        "description" => clienttranslate('${you} must choose a color of Student'),
+        "descriptionmyturn" => clienttranslate('${you} must choose a color of Student'),
+        "type" => "activeplayer",
+        "args" => "argCharacter11_ability",
+        "possibleactions" => array("returnStudents"),
+        "transitions" => array("endAbility" => 60, "zombiePass" => 99)
+    ),
+
+    60 => array(
+        "name" => "endCharacterAbility",
+        "type" => "game",
+        "action" => "stEndCharacterAbility",
+        "transitions" => array("moveStudents" => 20, "moveMona" => 30, "cloudTileDrafting" => 40)
     ),
 
 // --- --- --- //

@@ -279,12 +279,19 @@ function (dojo, declare) {
                             }
                                 
                             break;
+                        
+                        case 'no_entry':
+                            if (island[color] == 1) {
+                                let token = document.querySelector(`#island_${island.island_pos} .no-entry_token`);
+                                token.classList.remove('mock');
+                            }
+                            break;
+
                     }
                 }
             });
 
             // PLACE MOther NAture (MONA)
-            //document.querySelector(`#island_${gamedatas.mother_nature} .influence_cont`).insertAdjacentHTML('afterbegin',this.format_block('jstpl_mother_nature'));
             document.querySelector(`#island_${gamedatas.mother_nature} .mother_nature`).classList.remove('mock');
             document.querySelector('.mother_nature:not(.mock)').closest('.island').style.zIndex = 5;
 
@@ -305,6 +312,7 @@ function (dojo, declare) {
                     if (character.cost_mod > 0) charCost.style.visibility = 'unset';
 
                     if (character.active == 1) charEl.classList.add("activated");
+                    if (character.used == 1) charEl.classList.add("used");
 
                     if (character.data) {
                         let data = JSON.parse(character.data);
@@ -337,15 +345,9 @@ function (dojo, declare) {
                         }
                         
                     }
-
-                    this.addTooltipHtml(charEl.id,this.format_block('jstpl_cardTooltip', {
-                        img: charEl.outerHTML,
-                        effectLable: _('EFFECT')+': ',
-                        effect: _(character.tooltip),
-                        costLable: _('COST')+': ',
-                        cost: character.cost
-                    }));
                 }
+
+                this.updateCharactersTooltips();
             } else {
 
                 $('characters').style.display = 'none';
@@ -552,6 +554,10 @@ function (dojo, declare) {
                             args[key] = "<div class='cloud_type_multi cloud_tile'></div>";
                         }
 
+                        if (key == 'no_entry_token') {
+                            args[key] = "<div class='no-entry_token'></div>";
+                        }
+
                         if (key.includes('student_')) {
                             args[key] = this.format_block('jstpl_student',{color: args.color});
                         }
@@ -747,17 +753,24 @@ function (dojo, declare) {
         },
 
         onEnteringState_moveStudents: function(args) {
-            let entrance = document.querySelector(`#school_${this.getActivePlayerId()} .school_entrance`);
 
-            entrance.classList.add('active');
+            this.deactivateStudentsDestinations();
+            if (!args.from_char) this.activateCharacters();
+
+            let origin;
+            if (args.from_char) origin = document.querySelector(`#character_${args.from_char} .character_tokens`);
+            else origin = document.querySelector(`#school_${this.getActivePlayerId()} .school_entrance`);
+
+            origin.classList.add('active');
 
             if (!this.isCurrentPlayerActive()) return;
 
             this.gamedatas.gamestate.clientData = {};
+            this.gamedatas.gamestate.activeChar = args.from_char;
 
             let actionText = this.gamedatas.gamestate.descriptionmyturn;
 
-            entrance.childNodes.forEach(student => {
+            origin.childNodes.forEach(student => {
 
                 student.classList.add('selectable');
 
@@ -769,8 +782,9 @@ function (dojo, declare) {
 
                         this.gamedatas.gamestate.descriptionmyturn = _('${you} must choose where to move your student');
                         this.updatePageTitle();
+                        if (!args.from_char) this.activateCharacters();
 
-                        let previousSelected = document.querySelector(`.school_entrance .student.selected`);
+                        let previousSelected = document.querySelector(`.student.selected`);
                         if (previousSelected) {
 
                             previousSelected.classList.remove('selected');
@@ -784,7 +798,7 @@ function (dojo, declare) {
 
                         this.gamedatas.gamestate.clientData.student = this.getStudentElementColor(student);
 
-                        this.activateStudentsDestinations(student);
+                        this.activateStudentsDestinations();
 
                     } else {
 
@@ -793,13 +807,10 @@ function (dojo, declare) {
 
                         student.classList.remove('selected');
 
-                        this.deactivateStudentsDestinations(student);
+                        this.deactivateStudentsDestinations();
                     }                
                 }
             });
-
-            // characters
-            this.activateCharacters();
         },
 
         onEnteringState_moveMona: function(args) {
@@ -808,7 +819,6 @@ function (dojo, declare) {
                 let group = $('island_group_'+g);
                 group.classList.add('active');
 
-                console.log('INC MOVEMENT ACTIVE',args.incMovement);
                 if (args.incMovement) {
                     if (i == args.destinations.length-1 || i == args.destinations.length-2) {
                         group.style.setProperty('--act-color','#ff6400');
@@ -825,7 +835,7 @@ function (dojo, declare) {
             });
 
             // characters
-            this.activateCharacters();
+            if (!args.from_char) this.activateCharacters();
         },
 
         onEnteringState_cloudTileDrafting: function(args) {
@@ -847,6 +857,27 @@ function (dojo, declare) {
             this.activateCharacters();
         },
 
+        onEnteringState_character1_ability: function(args) {
+            this.onEnteringState_moveStudents(args);
+        },
+
+        onEnteringState_character2_ability: function(args) {
+            this.onEnteringState_moveMona(args);
+        },
+
+        onEnteringState_character4_ability: function(args) {
+            
+            document.querySelectorAll('.island .influence_cont').forEach(island => {
+                island.classList.add('active');
+
+                island.onclick = () => { this.ajaxcallwrapper('placeNoEntry', { island: island.parentElement.id.split("_").pop() }); };
+            });
+        },
+
+        onEnteringState_character10_ability: function(args) {
+            this.onEnteringState_moveStudents(args);
+        },
+
         onLeavingState: function(stateName) {
             console.log('Leaving state: '+stateName);
             
@@ -858,11 +889,17 @@ function (dojo, declare) {
                     });
                     break;
 
-                case 'moveStudents': document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = ''; });
+                case 'character11_ability':
+                case 'character10_ability':
+                case 'moveStudents':
+                    document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = ''; });
+                    if (this.gamedatas.gamestate.from_char) document.querySelector(`#character_${this.gamedatas.gamestate.from_char} .character_tokens`).classList.remove('active');
+                    else document.querySelector(`#school_${this.getActivePlayerId()} .school_entrance`).classList.remove('active');
                     break;
 
-                case 'moveMona': 
-                    document.querySelectorAll(`.island_group`).forEach(group => { group.onclick = ''; group.style = ''});
+                case 'character2_ability':
+                case 'moveMona':
+                    document.querySelectorAll(`.island_group`).forEach(group => { group.classList.remove('active'); group.onclick = ''; group.style = ''});
                     break;
                 
                 case 'cloudTileDrafting':
@@ -872,9 +909,6 @@ function (dojo, declare) {
                         document.querySelectorAll('.character').forEach(char => { char.onclick = ''; char.classList.remove('active','activated','used')});
                     }
                     break;
-
-
-
             }               
         }, 
     
@@ -1096,9 +1130,7 @@ function (dojo, declare) {
             if (el.className.includes('blue')) return 'blue';
         },
 
-        activateStudentsDestinations: function(selectedStudent) {
-
-            // activate islands
+        activateStudentsIslands: function() {
             document.querySelectorAll('.island .influence_cont').forEach(island => {
                 island.classList.add('active');
 
@@ -1112,12 +1144,15 @@ function (dojo, declare) {
                         this.showMessage(_("You need to first select a student to send to this island"),'error');
                     }
                 }
-            })
+            });
+        },
 
-            // activate students table
-            if (this.gamedatas.gamestate.args.free_tables.includes(this.getStudentElementColor(selectedStudent))) {
+        activateStudentsTable: function() {
+            let col = this.getStudentElementColor(document.querySelector('.student.selected'));
 
-                let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(selectedStudent)}_row .students_table`);
+            if (this.gamedatas.gamestate.args.free_tables.includes(col)) {
+
+                let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${col}_row .students_table`);
                 students_table.classList.add('active');
 
                 students_table.onclick = evt => {
@@ -1132,17 +1167,28 @@ function (dojo, declare) {
             }
         },
 
-        deactivateStudentsDestinations: function(selectedStudent) {
-            // deactivate islands
+        activateStudentsDestinations: function() {
+            if (this.gamedatas.gamestate.activeChar != 10) this.activateStudentsIslands();
+            if (this.gamedatas.gamestate.activeChar != 1) this.activateStudentsTable();
+        },
+
+        deactivateStudentsIslands: function() {
             document.querySelectorAll('.island .influence_cont').forEach(island => {
                 island.classList.remove('active');
                 island.onclick = null;
             })
+        },
 
-            // deactivate students table
-            let students_table = document.querySelector(`#school_${this.getActivePlayerId()} .${this.getStudentElementColor(selectedStudent)}_row .students_table`);
-            students_table.classList.remove('active');
-            students_table.onclick = null;
+        deactivateStudentsTables: function() {
+            document.querySelectorAll(`#school_${this.getActivePlayerId()} .students_table`).forEach(table => {
+                table.classList.remove('active');
+                table.onclick = null;
+            });
+        },
+
+        deactivateStudentsDestinations: function() {
+            this.deactivateStudentsIslands();
+            this.deactivateStudentsTables();
         },
 
         updateFactionsIslandsInfluence: function(influenceData) {
@@ -1194,14 +1240,8 @@ function (dojo, declare) {
                     }
                 });
 
-                let character_prev = this.format_block('jstpl_characterActionBarPreview',{
-                    text: _("or activate one of the Characters' abilities"),
-                    characters: $('characters').outerHTML,
-                });
-
                 if (this.isCurrentPlayerActive() && this.gamedatas.gamestate.args.avail_characters.length > 0) {
-                    //this.gamedatas.gamestate.descriptionmyturn += '<br><span style="display:inline-block;">'+character_prev+'</span>';
-                    this.gamedatas.gamestate.descriptionmyturn += '<br>' + _("or activate one of the <a>Characters</a> abilities");
+                    this.gamedatas.gamestate.descriptionmyturn += "  |  " + _(" or activate one of the <a>Characters</a> abilities");
                     this.updatePageTitle();
 
                     document.querySelector('#pagemaintitletext a').onclick = () => {
@@ -1229,6 +1269,23 @@ function (dojo, declare) {
                     }
                 }
             }
+        },
+
+        updateCharactersTooltips: function() {
+
+            document.querySelectorAll(`#characters .character`).forEach(charEl => {
+
+                let charId = charEl.id.split('_').pop();
+                let charObj = this.gamedatas.characters[charId];
+
+                this.addTooltipHtml(charEl.id,this.format_block('jstpl_cardTooltip', {
+                    img: charEl.outerHTML,
+                    effectLable: _('EFFECT')+': ',
+                    effect: _(charObj.tooltip),
+                    costLable: _('COST')+': ',
+                    cost: 1*charObj.cost + 1*charObj.cost_mod
+                }));
+            });
         },
 
         // #endregion
@@ -1267,6 +1324,9 @@ function (dojo, declare) {
             dojo.subscribe('useCharacter', this, "notif_useCharacter");
             this.notifqueue.setSynchronous('useCharacter',500);
 
+            dojo.subscribe('endCharacterAbility', this, "notif_endCharacterAbility");
+            this.notifqueue.setSynchronous('endCharacterAbility',100);
+            
             dojo.subscribe('gainProfessor', this, "notif_gainProfessor");
             this.notifqueue.setSynchronous('gainProfessor',500);
 
@@ -1287,6 +1347,15 @@ function (dojo, declare) {
 
             dojo.subscribe('refillClouds', this, "notif_refillClouds");
             this.notifqueue.setSynchronous('refillClouds');
+
+            dojo.subscribe('refillCharStudent', this, "notif_refillCharStudent");
+            this.notifqueue.setSynchronous('refillCharStudent',1000);
+
+            dojo.subscribe('placeNoEntry', this, "notif_placeNoEntry");
+            this.notifqueue.setSynchronous('placeNoEntry',500);
+
+            dojo.subscribe('blockInfluenceResolve', this, "notif_blockInfluenceResolve");
+            this.notifqueue.setSynchronous('blockInfluenceResolve',500);
         },
 
         // debugging notif
@@ -1412,22 +1481,28 @@ function (dojo, declare) {
 
             // fetch student and clean interactables
             let student;
+            let origin;
 
-            if (this.isCurrentPlayerActive()) {
-                student = document.querySelector(`#school_${notif.args.player_id} .student.selected`);
-                
-                this.deactivateStudentsDestinations(student);
-
-                student.classList.remove('selected');
-                document.querySelectorAll(`#school_${notif.args.player_id} .school_entrance .student.selectable`).forEach(s => {
-                    s.classList.remove('selectable');
-                });
-                
+            if (notif.args.from_char) {
+                origin = `#character_${notif.args.from_char}`;
             } else {
-                student = document.querySelector(`#school_${notif.args.player_id} .school_entrance .student_${notif.args.color}`);
+                origin = `#school_${notif.args.player_id} .school_entrance`;
             }
 
-            document.querySelector(`#school_${notif.args.player_id} .school_entrance`).classList.remove('active');
+            if (this.isCurrentPlayerActive()) {                
+                this.deactivateStudentsDestinations();
+
+                student = document.querySelector(`${origin} .student_${notif.args.color}.selected`);
+
+                student.classList.remove('selected');
+                student.parentElement.childNodes.forEach(s => {
+                    s.classList.remove('selectable');
+                });   
+            } else {
+                student = document.querySelector(`${origin} .student_${notif.args.color}`);
+            }
+
+            student.parentElement.classList.remove('active');
 
             // fetch destination element
             let destination;
@@ -1439,11 +1514,6 @@ function (dojo, declare) {
 
                 onEnd = () => {
                     let infCounter = this.counters.islandsInfluence[notif.args.destination][notif.args.color];
-
-                    console.log(`UPDATING ISLAND ${notif.args.destination} COMPACT STUDENT DISPLAY`);
-                    console.log(`ADDING ${notif.args.color}`);
-                    console.log('COUNTER',infCounter);
-                    console.log('COUNTER SPAN',infCounter.span);
                     
                     infCounter.incValue(1);
                     infCounter.span.parentElement.style.display = '';
@@ -1510,8 +1580,21 @@ function (dojo, declare) {
                     this.counters.playerBoard[notif.args.player_id]['coins'].incValue(-notif.args.n);
 
                     this.gamedatas.characters[notif.args.char_id].cost_mod = 1;
+
+                    this.updateCharactersTooltips();
                 });
             },300);
+        },
+
+        notif_endCharacterAbility: function(notif) {
+            document.querySelectorAll('.character.activated').forEach(char => {
+                let id = char.id.split('_').pop();
+
+                if (id != 3 && id != 5 && id != 7 && id != 12) {
+                    char.classList.remove('activated');
+                    char.classList.add('used');
+                }
+            });
         },
 
         notif_gainProfessor: function(notif) {
@@ -1551,7 +1634,6 @@ function (dojo, declare) {
             this.notifqueue.setSynchronousDuration(notif.args.stops.length * 550);
 
             // deactivate islands
-            // TODO: shouldn't this also remove handler?
             document.querySelectorAll('.island_group.active').forEach(g => g.classList.remove('active'));
 
             document.querySelector('.mother_nature:not(.mock)').closest('.island').style.zIndex = ''; // reset island z-index (was needed to not make mona appear behind other islands)
@@ -1707,8 +1789,6 @@ function (dojo, declare) {
                 totRefilledStudents += cloud.reduce((a, b) => a + b, 0);
             });
 
-            console.log('totRefilledStudents',totRefilledStudents);
-
             setTimeout(() => {
                 Object.values(notif.args.clouds).forEach((cloud,id) => { // for each cloud to fill                    
                     
@@ -1739,6 +1819,55 @@ function (dojo, declare) {
 
                 this.updateStudentsBagCounter(notif.args.students_left);
             }, (this.instantaneousMode)?0:500);
+        },
+
+        notif_refillCharStudent: function(notif) {
+
+            let bag = $('students_bag'); // fetch bag
+            if (this.instantaneousMode) bag.style.animationDuration = '0ms';
+            bag.classList.add('draw_animation');
+
+            let studentsSet = ['green','red','yellow','pink','blue'];
+
+            setTimeout(() => {
+                bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[notif.args.student]}));
+                let student = bag.lastElementChild;
+                this.moveElementAndAppend(student,document.querySelector(`#character_${notif.args.char} .character_tokens`),null,500,0,() => {
+                    this.updateCharactersTooltips();
+                });
+
+                bag.classList.remove('draw_animation');
+                this.updateStudentsBagCounter(notif.args.students_left);
+                
+            }, (this.instantaneousMode)?0:500);
+        },
+
+        notif_placeNoEntry: function(notif) {
+
+            let token = document.querySelector('#character_4 .no-entry_token:last-child');
+            let destination = document.querySelector(`#island_${notif.args.island} .no-entry_token`);
+
+            this.moveElement(token,destination,null,500,0,() => {
+                destination.classList.remove('mock');
+                token.remove();
+
+                this.updateCharactersTooltips();
+            });
+        },
+
+        notif_blockInfluenceResolve: function(notif) {
+
+            let token = document.querySelector(`#island_${notif.args.blocked_island} .no-entry_token`);
+            let destination = document.querySelector('#character_4 .character_tokens');
+
+            console.log(token);
+            let movingToken = token.cloneNode();
+            token.after(movingToken);
+            token.classList.add('mock');
+
+            this.moveElementAndAppend(movingToken,destination,null,500,0,() => {
+                this.updateCharactersTooltips();
+            });
         },
 
         // #endregion

@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS `island_influence` (
     `white_tower` BIT NOT NULL DEFAULT 0,
     `black_tower` BIT NOT NULL DEFAULT 0,
     `grey_tower` BIT NOT NULL DEFAULT 0,
+    `no_entry` BIT NOT NULL DEFAULT 0,
     PRIMARY KEY (`island_pos`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -121,12 +122,7 @@ CREATE TABLE IF NOT EXISTS `character` (
     `cost` TINYINT UNSIGNED NOT NULL,
     `cost_mod` TINYINT UNSIGNED NOT NULL DEFAULT 0,
     `active` BIT NOT NULL DEFAULT 0,
+    `used` BIT NOT NULL DEFAULT 0,
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- modifiers:
---  > ignoreTowers
---  > incMonaMovement
---  > incInfluence
---  > winTieProfessors
 

@@ -727,21 +727,25 @@ html {
     border: solid white 1px;
 }
 
-.school_entrance .student.selectable {
+.school_entrance.active .student.selectable,
+.character_tokens .student.selectable {
     transition: all 200ms ease-in;
 }
 
-.school_entrance .student.selectable:hover {
+.school_entrance.active .student.selectable:hover,
+.character_tokens .student.selectable:hover {
     transform: scale(1.1);
 }
 
-.school_entrance .student.selected {
+.school_entrance.active .student.selected,
+.character_tokens .student.selected {
     transform: translate(0px, -4px);
     box-shadow: 0px 4px red;
     border-radius: 0px 0px 9px 9px;
 }
 
-.school_entrance .student.selected:hover {
+.school_entrance.active .student.selected:hover,
+.character_tokens .student.selected:hover {
     transform: translate(0px, -4px);
 }
 
@@ -881,11 +885,7 @@ html {
     transform: translateZ(-1px);
 }
 
-.mother_nature.mock {
-    visibility: hidden;
-}
-
-.tower.mock {
+.island .mock {
     visibility: hidden;
 }
 
@@ -929,6 +929,13 @@ html {
 
 .tower_black {
     background-position-x:calc(var(--scale) * -1710px);
+}
+
+.island .no-entry_token {
+    --scale: 0.34;
+    position: absolute;
+    left: 50px;
+    bottom: 13px;
 }
 
 /* #endregion */
@@ -1003,18 +1010,18 @@ html {
     transition: 250ms ease-in;
 }
 
-.character.active {
+#characters .character.active {
     box-shadow: inset 0px 0px 15px white;
     outline: solid 3px #ff8700;
     cursor: pointer;
 }
 
-.character.activated {
+#characters .character.activated {
     transform: translate(0, -7px);
     filter: drop-shadow(0px 7px 0px red);
 }
 
-.character.used::after {
+#characters .character.used::after {
     content: '';
     position: absolute;
     top: 0px;
@@ -1048,11 +1055,22 @@ html {
     text-shadow: 0px 0px 5px red;
 }
 
-.character_tokens.type-students {
+.character_tokens {
+    padding: 5px;
+    border-radius: 10px;
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 1px;
+    right: 1px;
     display: grid;
+}
+
+.character_tokens.active {
+    cursor: pointer;
+    border: solid white 1px;
+    box-shadow: inset 0px 0px 10px white;
+}
+
+.character_tokens.type-students {
     grid-template-columns: 1fr 1fr;
 }
 
@@ -1061,10 +1079,6 @@ html {
 }
 
 .character_tokens.type-no-entry {
-    position: absolute;
-    right: 5px;
-    top: 5px;
-    display: grid;
     grid-template-rows: repeat(4,5px);
 }
 
@@ -1789,6 +1803,16 @@ html {
     position: relative;
     top: 8px;
     margin-top: -6px;
+}
+
+.chatwindowlogs_zone .no-entry_token,
+#replaylogs .no-entry_token,
+#logs .no-entry_token {
+    --scale: 0.2;
+    display: inline-block;
+    position: relative;
+    top: 5px;
+    margin-top: -7px;
 }
 
 .chatwindowlogs_zone span,

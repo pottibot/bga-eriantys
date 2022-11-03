@@ -44,6 +44,15 @@ class action_eriantyspas extends APP_GameAction {
         self::ajaxResponse();
     }
 
+    public function placeNoEntry() {
+
+        self::setAjaxMode();
+        $i = self::getArg("island", AT_int, false, true);
+        $this->game->placeNoEntry($i);
+
+        self::ajaxResponse();
+    }
+
     public function moveMona() {
 
         self::setAjaxMode();

@@ -118,6 +118,7 @@ let jstpl_point = "<div class='point' style='left:${left}px; top:${top}px;'></di
 let jstpl_island = "<div id='island_${pos}'class='island island_type_${type}' style='left:${left}px; top:${top}px;'>\
                         <div class='mother_nature mock'></div>\
                         <div class='tower mock'></div>\
+                        <div class='no-entry_token mock'></div>\
                         <div class='influence_cont'>\
                             <div class='students_influence'></div>\
                             <div class='students_influence_alt'>\

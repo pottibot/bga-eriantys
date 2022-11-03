@@ -41,7 +41,7 @@ $this->characters = [
         'tooltip' => clienttranslate("When resolving a Conquering on an Island, Towers do not count towards influence."),
     ],
 
-    // (DRAFT NEW STUDENTS) replace up to 3 students from school entrance with students on this card [setup: draw 6 stud on this card]
+    // (REPLACE STUDENT) replace up to 3 students from school entrance with students on this card [setup: draw 6 stud on this card]
     6 => [
         'cost' => 1,
         'tooltip' => clienttranslate("You may take up to 3 Students from this card and replace them with the same number of Students from your Entrance."),
@@ -53,13 +53,13 @@ $this->characters = [
         'tooltip' => clienttranslate("During the influence calculation this turn, you count as having 2 more influence."),
     ],
 
-    // (INFLUENCE CALC) student of chosen color don't add up to total influence this turn
+    // (PICK STUDENT COLOR) student of chosen color don't add up to total influence this turn
     8 => [
         'cost' => 3,
         'tooltip' => clienttranslate("Choose a color of Student: during the influence calculation this turn, that color adds no influence."),
     ],
 
-    // (MOVE STUDENT) replace up to 2 students from dining room to school entrance 
+    // (REPLACE STUDENT) replace up to 2 students from dining room to school entrance 
     9 => [
         'cost' => 1,
         'tooltip' => clienttranslate("You may exchange up to 2 Students between your Entrance and your Dining Room."),
@@ -71,7 +71,7 @@ $this->characters = [
         'tooltip' => clienttranslate("Take 1 Student from this card and place it in your Dining Room. Then, draw a new Student from the Bag and place it on this card."),
     ],
 
-    // (MOVE STUDENT) ALL players return 3 students of the chosen color from the dining room to the students bag
+    // (PICK STUDENT COLOR) ALL players return 3 students of the chosen color from the dining room to the students bag
     11 => [
         'cost' => 3,
         'tooltip' => clienttranslate("Choose a type of Student: every player (including yourself) must return 3 Students of that type from their Dining Room to the bag. If any player has fewer than 3 Students of that type, return as many Students as they have."),

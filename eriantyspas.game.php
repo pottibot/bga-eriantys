@@ -51,6 +51,7 @@ class eriantyspas extends Table {
         $sql = "INSERT INTO player (player_id, player_color, player_alternative_color, player_canal, player_name, player_avatar) VALUES ";
         $sql2 = "INSERT INTO player_assistants (player) VALUES ";
         $sql3 = "INSERT INTO played_assistants (player) VALUES ";
+        $sql4 = "INSERT INTO last_coin_gained_position (player) VALUES ";
         $values = array();
         $values2 = array();
         foreach($players as $player_id => $player) {
@@ -67,6 +68,8 @@ class eriantyspas extends Table {
         self::DbQuery($sql2);
         $sql3 .= implode($values2,',');
         self::DbQuery($sql3);
+        $sql4 .= implode($values2,',');
+        self::DbQuery($sql4);
 
         self::DbQuery("INSERT INTO professor_steals (color) VALUES ('green'),('red'),('yellow'),('pink'),('blue')");
 
@@ -837,6 +840,8 @@ class eriantyspas extends Table {
             
             // if team/player has professor of color add the amount of student of that color in the island to total team/player influence
             foreach ($inf as $col => $amt) {
+                if (self::isCharacterActive(8) && self::getUniqueValueFromDb("SELECT `data` FROM `character` WHERE id = 8") == $col) $amt = 0;
+
                 if ($professors[$col]) $totinf += $amt;
             }
         }
@@ -876,6 +881,10 @@ class eriantyspas extends Table {
         }
 
         return true;
+    }
+
+    function controlsProfessor($col, $teamCol) {
+        return self::getUniqueValueFromDb("SELECT SUM(".$col."_professor) FROM school JOIN player ON player = player_id WHERE player_color = '$teamCol' GROUP BY player_color") > 0;
     }
 
     // resolve any islands group influence and notif place tower if owner changed
@@ -1143,7 +1152,7 @@ class eriantyspas extends Table {
                     'player_name2' => (is_null($stealFrom))? null : self::getPlayerNameById($stealFrom),
                     'professor' => [
                         'log' => '${professor_'.$color.'}',
-                        'args' => ["professor_$color" => self::getStudentProfessorTranslation($color,false), 'color' => $color],
+                        'args' => ["professor_$color" => self::getStudentProfessorTranslation($color,false)],
                         'i18n' => ["professor_$color"]
                     ]) 
                 );
@@ -1178,6 +1187,15 @@ class eriantyspas extends Table {
                 // check ignore towers modifier for active team;
                 if (self::controlsIslandGroup($g,$f) && $f != $activeTeam && self::isCharacterActive(5)) {
                     $ret[$g]['mod'][$f] = 'down';
+                }
+
+                if (self::isCharacterActive(8)) {
+                    $ignoreColor = self::getUniqueValueFromDb("SELECT `data` FROM `character` WHERE id = 8");
+                    if (!empty($ignoreColor)){
+                        if (self::controlsProfessor($ignoreColor,$f) && self::getUniqueValueFromDb("SELECT SUM($ignoreColor) FROM island_influence JOIN island ON island_pos = pos WHERE `group` = $g GROUP BY `group`") > 0) {
+                            $ret[$g]['mod'][$f] = 'down';
+                        }
+                    }
                 }
 
                 // set stats for each player of faction
@@ -1237,7 +1255,7 @@ class eriantyspas extends Table {
 
     function getAvailableCharacters($id) {
         $coins = self::getPlayerCoins($id);
-        return self::getObjectListFromDb("SELECT id FROM `character` WHERE cost + cost_mod <= $coins AND active = 0",true);
+        return self::getObjectListFromDb("SELECT id FROM `character` WHERE cost + cost_mod <= $coins AND active = 0 AND used = 0",true);
     }
 
     function activateCharacter($id) {
@@ -1415,24 +1433,33 @@ function moveStudentToSchool($color, $player, $fromChar = null) {
         'from_char' => $fromChar,
         'student' => [
             'log' => '${student_'.$color.'}',
-            'args' => ["student_$color" => self::getStudentProfessorTranslation($color), 'color' => $color],
+            'args' => ["student_$color" => self::getStudentProfessorTranslation($color)],
             'i18n' => ["student_$color"]
         ])
     );
 
-    if (self::getGameStateValue('characters') == 1 && self::getUniqueValueFromDb("SELECT $color FROM school WHERE player = $player") % 3 == 0) {
-        self::dbQuery("UPDATE school SET coins = coins + 1 WHERE player = $player");
-        
-        self::notifyAllPlayers('gainCoin', clienttranslate('${player_name} gains 1 ${coins}'), array(
-            'player_id' => self::getActivePlayerId(),
-            'player_name' => self::getActivePlayerName(),
-            'coins' => clienttranslate('coin(s)'),
-            'i18n' => ['coins'],
-            'color' => $color
-        ));
+    if (self::getGameStateValue('characters') == 1 &&
+        self::getUniqueValueFromDb("SELECT $color FROM school WHERE player = $player") >= self::getUniqueValueFromDb("SELECT $color FROM last_coin_gained_position WHERE player = $player")+3) {
+            self::gainCoin($player,$color);
     }
 
     self::resolveProfessorInfluence($color,$player);
+}
+
+function gainCoin($player,$color) {
+    self::dbQuery("UPDATE school SET coins = coins + 1 WHERE player = $player");
+    self::dbQuery("UPDATE last_coin_gained_position SET $color = $color + 3 WHERE player = $player");
+
+    $position = self::getUniqueValueFromDb("SELECT $color FROM last_coin_gained_position WHERE player = $player");
+    
+    self::notifyAllPlayers('gainCoin', clienttranslate('${player_name} gains 1 ${coins}'), array(
+        'player_id' => self::getActivePlayerId(),
+        'player_name' => self::getActivePlayerName(),
+        'coins' => clienttranslate('coin(s)'),
+        'i18n' => ['coins'],
+        'color' => $color,
+        'position' => $position
+    ));
 }
 
 // sub step of moveStudent
@@ -1451,7 +1478,7 @@ function moveStudentToIsland($color, $island, $fromChar = null) {
         'from_char' => $fromChar,
         'student' => [
             'log' => '${student_'.$color.'}',
-            'args' => ["student_$color" => self::getStudentProfessorTranslation($color), 'color' => $color],
+            'args' => ["student_$color" => self::getStudentProfessorTranslation($color)],
             'i18n' => ["student_$color"]
         ])
     );
@@ -1518,22 +1545,16 @@ function chooseCloudTile($cloud) {
         self::dbQuery("UPDATE cloud SET green=0, red=0, yellow=0, pink=0, blue=0 WHERE id = $cloud");
 
         $cloudLog = [];
-        $cloudLogargs = [];
-        $j = 0;
+        $cloudArgs = [];
         foreach ($cloudarr as $col => $n) {
             for ($i=0; $i < $n; $i++) { 
-                $cloudLog[] = "student_$j";
-                $cloudLogargs["student_$j"] = [
-                    'log' => '${student_'.$col.'}',
-                    'args' => ["student_$col" => self::getStudentProfessorTranslation($col), 'color' => $col],
-                    'i18n' => ["student_$col"]
-                ];
-                $j++;
+                $cloudLog[] = '${student_'.$col.'}';
+                $cloudArgs["student_$col"] = self::getStudentProfessorTranslation($col);
             }
         }
 
-        $cloudLoglog = '${'.implode('} ${',$cloudLog).'}';
-        $cloudLog[] = 'cloud_tile_text';
+        $cloudLog = implode(' ',$cloudLog);
+        $cloudi18n = array_keys($cloudArgs);
 
         self::notifyAllPlayers('chooseCloudTile', clienttranslate('${player_name} chooses ${cloud_tile} <span class="cloud_group">(${students})</span>'), array(
             'player_id' => self::getActivePlayerId(),
@@ -1542,13 +1563,10 @@ function chooseCloudTile($cloud) {
             'cloud_tile' => clienttranslate('Cloud tile'),
             'i18n' => ['cloud_tile'],
             'students' => [
-                'log' => $cloudLoglog,
-                'args' => $cloudLogargs,
-                'i18n' => $cloudLog
+                'log' => $cloudLog,
+                'args' => $cloudArgs,
+                'i18n' => $cloudi18n
             ],
-            /* 'cloudlog' => $cloudLoglog,
-            'cloudargs' => $cloudLogargs,
-            'cloudi18n' => ['cloud_tile_text'] */
         ));
 
         $this->gamestate->nextState('endTurn');
@@ -1644,7 +1662,7 @@ function useCharacter($chid) {
 
             case 9:
                 if (self::getUniqueValueFromDb("SELECT green + red + yellow + pink + blue FROM school WHERE player = $id") < 1)
-                    throw new BgaUserException(clienttranslate("You don't have any Stuent in the dining hall to replace"));
+                    throw new BgaUserException(clienttranslate("You don't have any Student in the dining hall to replace"));
                 else $this->gamestate->nextState('char_9');
                 break;
             case 4:
@@ -1684,6 +1702,207 @@ function placeNoEntry($island) {
             'i18n' => ['no_entry_token'],
             'island' => $island
         ]);
+
+        $this->gamestate->nextState('endAbility');
+    }
+}
+
+function replaceStudents($selLoc1, $selLoc2) {
+    if ($this->checkAction('replaceStudents')) {
+
+        $id = self::getActivePlayerId();
+        $students = ['green', 'red', 'yellow', 'pink', 'blue'];
+        $loc1 = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM school_entrance WHERE player = $id");
+        $loc2;
+        $amt;
+
+        if (self::isCharacterActive(6)) {
+            $loc2_name = clienttranslate('on the Character card');
+
+            $loc2 = ['green' => 0, 'red' => 0, 'yellow' => 0, 'pink' => 0, 'blue' => 0];
+            $charStudents = json_decode(self::getUniqueValueFromDb("SELECT `data` FROM `character` WHERE id = 6"),true)['students'];
+            foreach ($charStudents as $colIndex) {
+                $loc2[$students[$colIndex]] += 1;
+            }
+
+            $amt = 3;
+        }
+
+        if (self::isCharacterActive(9)) {
+            $loc2_name = clienttranslate('in the School Dining Hall');
+            $loc2 = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM school WHERE player = $id");
+
+            $amt = 2;
+        }
+
+        self::dump("//selLoc1",$selLoc1);
+        self::dump("//loc1",$loc1);
+
+        self::dump("//selLoc2",$selLoc2);
+        self::dump("//loc2",$loc2);
+
+        // check sel students are equal amt in both loc
+        if (count($selLoc1) != count($selLoc1)) throw new BgaSystemException("You need to select at least one student from both locations");
+        // check sel students are not zero
+        else if (count($selLoc1) == 0) throw new BgaSystemException("You need to select the same number of students to replace in both locations");
+            // check sel students are not zero
+            else if (count($selLoc1) > $amt) throw new BgaSystemException("You cannot replace this many students");
+        
+        // check each location has those students
+        // loc 1
+        $selLoc1obj = ['green' => 0, 'red' => 0, 'yellow' => 0, 'pink' => 0, 'blue' => 0];
+        foreach ($selLoc1 as $colIndex) {
+            $selLoc1obj[$students[$colIndex]] += 1;
+        }
+        foreach ($selLoc1obj as $col => $q) {
+            if ($loc1[$col] < $q) throw new BgaSystemException("Location 1 doesn't hold the selected students");
+        }
+
+        // loc 2
+        $selLoc2obj = ['green' => 0, 'red' => 0, 'yellow' => 0, 'pink' => 0, 'blue' => 0];
+        foreach ($selLoc2 as $colIndex) {
+            $selLoc2obj[$students[$colIndex]] += 1;
+        }
+        foreach ($selLoc2obj as $col => $q) {
+            if ($loc2[$col] < $q) throw new BgaSystemException("Location 2 doesn't hold the selected students");
+        }
+
+        // apply changes to db
+        // format changes
+        foreach ($selLoc1obj as $col => $q) {
+            $loc1[$col] -= $q;
+            $loc2[$col] += $q;
+        }
+
+        foreach ($selLoc2obj as $col => $q) {
+            $loc2[$col] -= $q;
+            $loc1[$col] += $q;
+        }
+
+        
+        // apply changes for loc 1
+        ['green' => $green, 'red' => $red, 'yellow' => $yellow, 'pink' => $pink, 'blue' => $blue] = $loc1;
+        self::dbQuery("UPDATE school_entrance SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE player = $id");
+
+        if (self::isCharacterActive(6)) {
+            $charStudents = [];
+
+            foreach ($loc2 as $col => $q) {
+                $colIndex = array_search($col,$students);
+                for ($i=0; $i < $q; $i++) { 
+                    $charStudents[] = $colIndex;
+                }
+            }
+
+            $charData = ['students' => $charStudents];
+            $charData = json_encode($charData);
+
+            self::dbQuery("UPDATE `character` SET `data` = '$charData' WHERE id = 6");
+        }
+        
+        if (self::isCharacterActive(9)) {
+            ['green' => $green, 'red' => $red, 'yellow' => $yellow, 'pink' => $pink, 'blue' => $blue] = $loc2;
+            self::dbQuery("UPDATE school SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE player = $id");
+        }
+
+
+        // format log to inject imgs
+        $loc_students = [];
+        foreach ([$selLoc1,$selLoc2] as $i => $selLoc) {
+
+            $selLoc_log = [];
+            $selLoc_args = [];
+            foreach ($selLoc as $colIndex) {
+                $col = $students[$colIndex];
+                $selLoc_log[] = '$'."{student_$col}";
+                $selLoc_args["student_$col"] = self::getStudentProfessorTranslation($col);
+            }
+
+            $selLoc_i18n = array_keys($selLoc_args);
+            $selLoc_log = implode(', ',$selLoc_log);
+
+            $loc_students[$i+1] = [
+                'log' => $selLoc_log,
+                'args' => $selLoc_args,
+                'i18n' => $selLoc_i18n
+            ];
+        }
+
+        self::notifyAllPlayers('replaceStudents',clienttranslate('${player_name} replaces ${loc1_students} form School Entrance with ${loc2_students} ${loc2_name}'),[
+            'player_id' => $id, 
+            'player_name' => self::getActivePlayerName(),
+            'character' => self::isCharacterActive(9)? 9 : 6,
+            'sel_loc1' => $selLoc1,
+            'sel_loc2' => $selLoc2,
+            'loc1_students' => $loc_students[1],
+            'loc2_students' => $loc_students[2],
+            'loc2_name' => $loc2_name,
+            'i18n' => ['loc2_name']
+        ]);
+
+        if (self::isCharacterActive(9)) {
+            foreach ($loc2 as $col => $q) {
+                if ($q >= self::getUniqueValueFromDb("SELECT $col FROM last_coin_gained_position WHERE player = $id")+3) {
+                    self::gainCoin($id,$col);
+                }
+
+                self::resolveProfessorInfluence($col,$id);
+            }
+        }
+
+        // stats?
+
+        $this->gamestate->nextState('endAbility');
+    }
+}
+
+function pickStudentColor($color) {
+    if ($this->checkAction('pickStudentColor')) {
+
+        self::dump('// PICKED COLOR',$color);
+
+        $char;
+        if (self::isCharacterActive(8)) $char = 8;
+        if (self::isCharacterActive(11)) $char = 11;
+
+        $students = ['green', 'red', 'yellow', 'pink', 'blue'];
+
+        switch ($char) {
+            case 8:
+                self::dbQuery("UPDATE `character` SET `data` = '$color' WHERE id = 8");
+
+                self::notifyAllPlayers('pickStudentColor',clienttranslate('${student} adds to no influence this turn'),[
+                    'student' => [
+                        'log' => '${student_'.$color.'}',
+                        'args' => ["student_$color" => self::getStudentProfessorTranslation($color)],
+                        'i18n' => ["student_$color"]
+                    ]
+                ]);
+
+                break;
+            
+            case 11:
+                self::notifyAllPlayers('pickStudentColor',clienttranslate('Every player returns 3 ${student} to the Student bag'),[
+                    'student' => [
+                        'log' => '${student_'.$color.'}',
+                        'args' => ["student_$color" => self::getStudentProfessorTranslation($color)],
+                        'i18n' => ["student_$color"]
+                    ]
+                ]);
+
+                foreach (self::getObjectListFromDb("SELECT player_id FROM player ORDER BY player_turn_position ASC",true) as $pid) {
+                    $q = self::getUniqueValueFromDb("SELECT $color FROM school WHERE player = $pid");
+                    $q = max(0,$q-3);
+                    self::dbQuery("UPDATE school SET $color = $q WHERE player = $pid");
+
+                    self::notifyAllPlayers('returnStudentsToBag','',[
+                        'player_id' => $pid,
+                        'color' => $color,
+                        'to_value' => $q
+                    ]);
+                }
+                break;
+        }
 
         $this->gamestate->nextState('endAbility');
     }
@@ -1843,6 +2062,7 @@ function stNextPlayerAction() {
 
     // clear modifiers if present
     if (self::getGameStateValue('characters') == 1) {
+        self::dbQuery("UPDATE `character` SET `data` = '' WHERE id = 8");
         self::dbQuery("UPDATE `character` SET active = 0, used = 0");
         self::updateInfluenceData();
     }
@@ -1875,7 +2095,7 @@ function stNextPlayerAction() {
 function stEndCharacterAbility() {
     $prevState = $this->gamestate->states[self::getGameStateValue('charPausedState')];
 
-    self::dbQuery("UPDATE `character` SET active = 0, used = 1 WHERE active = 1 AND used = 0 AND id != 3 AND id != 5 AND id != 7 AND id != 12");
+    self::dbQuery("UPDATE `character` SET active = 0, used = 1 WHERE active = 1 AND used = 0 AND id != 3 AND id != 5 AND id != 7 AND id != 8 AND id != 12");
     self::notifyAllPlayers("endCharacterAbility",'',[]);
 
     self::dump("// NOW JUMPING BACK TO ",$prevState['name']);

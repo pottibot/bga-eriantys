@@ -314,7 +314,7 @@ function (dojo, declare) {
                     if (character.active == 1) charEl.classList.add("activated");
                     if (character.used == 1) charEl.classList.add("used");
 
-                    if (character.data) {
+                    if (character.data && chId != 8) {
                         let data = JSON.parse(character.data);
                         console.log(data);
 
@@ -559,11 +559,14 @@ function (dojo, declare) {
                         }
 
                         if (key.includes('student_')) {
-                            args[key] = this.format_block('jstpl_student',{color: args.color});
+                            let col = key.split('_').pop();
+
+                            args[key] = this.format_block('jstpl_student',{color: col});
                         }
 
                         if (key.includes('professor_')) {
-                            args[key] = this.format_block('jstpl_professor',{color: args.color});
+                            let col = key.split('_').pop();
+                            args[key] = this.format_block('jstpl_professor',{color: col});
                         }
 
                         if (key.includes('assistant_')) {
@@ -874,8 +877,150 @@ function (dojo, declare) {
             });
         },
 
+        onEnteringState_character6_ability: function(args) {
+            this.replaceStudents(6);
+        },
+
+        onEnteringState_character9_ability: function(args) {
+            this.replaceStudents(9);
+        },
+
+        onEnteringState_character8_ability: function(args) {
+            this.pickStudentColor(8);
+        },
+
         onEnteringState_character10_ability: function(args) {
             this.onEnteringState_moveStudents(args);
+        },
+
+        onEnteringState_character11_ability: function(args) {
+            this.pickStudentColor(11);
+        },
+
+        // state function for characater 6 and 9
+        replaceStudents: function(char) {
+
+            this.gamedatas.gamestate.clientData = { selLoc1: [], selLoc2: [] };
+
+            let loc1 = `#school_${this.getActivePlayerId()} .school_entrance`;
+            let loc2;
+            let amt;
+
+            switch (char) {
+                case 6: 
+                    loc2 = `#character_6 .character_tokens`;
+                    amt = 3;
+                    
+                    break;
+
+                case 9: 
+                    loc2 = `#school_${this.getActivePlayerId()} .tables`;
+                    amt = 2;
+
+                    break;
+            }
+
+            [loc1,loc2].forEach((loc,i) => {
+                document.querySelector(loc).classList.add('active','replacing_students');
+                if (loc == loc2) document.querySelector(loc).classList.add('highlight_blue');
+
+                document.querySelectorAll(loc+' .student').forEach(student => {
+                    student.classList.add('selectable');
+
+                    student.onclick = () => {
+                        let sel = this.gamedatas.gamestate.clientData[['selLoc'+(1+i)]];
+                        if (student.classList.contains('selected')) {
+
+                            student.classList.remove('selected');
+
+                            sel.splice(sel.indexOf(this.getStudentElementColor(student)),1);
+
+                        } else {
+                            if (sel.length == amt) return;
+
+                            student.classList.add('selected');
+                            sel.push(this.getStudentElementColor(student));
+                        }
+
+                        console.log(sel);
+                        this.gamedatas.gamestate.clientData[['selLoc'+(1+i)]] = sel;
+                    }
+                });
+            });
+
+            this.addActionButton('confirmReplacement_button',_('Confirm'),evt => {
+
+                let studentsSet = ['green','red','yellow','pink','blue'];
+
+                let loc1 = this.gamedatas.gamestate.clientData.selLoc1;
+                let loc2 = this.gamedatas.gamestate.clientData.selLoc2;
+
+                if (loc1.length == loc2.length) {
+                    if (loc1.length == 0) {
+                        this.showMessage(_("You need to select at least one student from both locations"),'error');
+                        return;
+                    }
+
+                    loc1.forEach((c,i) => {
+                        loc1[i] = studentsSet.indexOf(c);
+                    });
+
+                    loc2.forEach((c,i) => {
+                        loc2[i] = studentsSet.indexOf(c);
+                    });
+
+                    this.ajaxcallwrapper('replaceStudents',{
+                        loc1: loc1.join(','),
+                        loc2: loc2.join(',')
+                    });
+                } else {
+                    this.showMessage(_("You need to select the same number of students to replace in both locations"),'error');
+                    return;
+                }
+            })
+        },
+
+        pickStudentColor: function(char) {
+
+            this.gamedatas.gamestate.clientData = {};
+
+            let studentsSet = ['green','red','yellow','pink','blue'];
+            let studentsDisplay = '';
+
+            studentsSet.forEach(col => {
+                studentsDisplay += this.format_block('jstpl_student',{color: col});
+            });
+
+            studentsDisplay = `<div id='pick_student_display'>${studentsDisplay}</div>`;
+
+            this.gamedatas.gamestate.descriptionmyturn += studentsDisplay;
+            this.updatePageTitle();
+
+            document.querySelectorAll(`#pick_student_display .student`).forEach(student => {
+                student.classList.add('selectable');
+                student.onclick = () => {
+
+                    if (student.classList.contains('selected')) {
+                        student.classList.remove('selected');
+                        this.gamedatas.gamestate.clientData.selected = '';
+
+                    } else {
+                        document.querySelectorAll(`.student.selected`).forEach(s => s.classList.remove('selected'));
+                        student.classList.add('selected');
+                        this.gamedatas.gamestate.clientData.selected = this.getStudentElementColor(student);
+                    }
+                }
+            });
+
+            this.addActionButton('confirmPickStudentColor_button',_('Confirm'),evt => {
+                if (this.gamedatas.gamestate.clientData.selected) {
+                    this.ajaxcallwrapper('pickStudentColor',{
+                        color: this.gamedatas.gamestate.clientData.selected
+                    });
+                } else {
+                    this.showMessage(_("You need to select a Student"),'error');
+                } 
+            });
         },
 
         onLeavingState: function(stateName) {
@@ -892,7 +1037,7 @@ function (dojo, declare) {
                 case 'character11_ability':
                 case 'character10_ability':
                 case 'moveStudents':
-                    document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = ''; });
+                    document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = '';  student.classList.remove('selectable','selected'); });
                     if (this.gamedatas.gamestate.from_char) document.querySelector(`#character_${this.gamedatas.gamestate.from_char} .character_tokens`).classList.remove('active');
                     else document.querySelector(`#school_${this.getActivePlayerId()} .school_entrance`).classList.remove('active');
                     break;
@@ -908,6 +1053,12 @@ function (dojo, declare) {
                     if (this.gamedatas.characters) {
                         document.querySelectorAll('.character').forEach(char => { char.onclick = ''; char.classList.remove('active','activated','used')});
                     }
+                    break;
+
+                case 'character6_ability':
+                case 'character9_ability':
+                    document.querySelectorAll(`.active .student`).forEach(student => { student.onclick = '';  student.classList.remove('selectable','selected'); });
+                    document.querySelector(`.replacing_students.active`).classList.remove('replacing_students','active');
                     break;
             }               
         }, 
@@ -1356,6 +1507,12 @@ function (dojo, declare) {
 
             dojo.subscribe('blockInfluenceResolve', this, "notif_blockInfluenceResolve");
             this.notifqueue.setSynchronous('blockInfluenceResolve',500);
+
+            dojo.subscribe('replaceStudents', this, "notif_replaceStudents");
+            this.notifqueue.setSynchronous('replaceStudents');
+
+            dojo.subscribe('returnStudentsToBag', this, "notif_returnStudentsToBag");
+            this.notifqueue.setSynchronous('returnStudentsToBag');
         },
 
         // debugging notif
@@ -1534,13 +1691,15 @@ function (dojo, declare) {
 
         notif_gainCoin: function(notif) {
 
+            console.log(notif);
+
             setTimeout(() => {
 
                 // fetch coin student pos
-                let lastStudent = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .student:last-child`);
-                console.log(lastStudent);
-                lastStudent.insertAdjacentHTML('beforeend',this.format_block('jstpl_coin'));
-                let movingCoin = lastStudent.lastElementChild;
+                let coinStudent = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .student:nth-child(${notif.args.position})`);
+                console.log(coinStudent);
+                coinStudent.insertAdjacentHTML('beforeend',this.format_block('jstpl_coin'));
+                let movingCoin = coinStudent.lastElementChild;
                 console.log(movingCoin);
 
                 // fetch destination
@@ -1590,7 +1749,7 @@ function (dojo, declare) {
             document.querySelectorAll('.character.activated').forEach(char => {
                 let id = char.id.split('_').pop();
 
-                if (id != 3 && id != 5 && id != 7 && id != 12) {
+                if (id != 3 && id != 5 && id != 7 && id != 8 && id != 12) {
                     char.classList.remove('activated');
                     char.classList.add('used');
                 }
@@ -1868,6 +2027,78 @@ function (dojo, declare) {
             this.moveElementAndAppend(movingToken,destination,null,500,0,() => {
                 this.updateCharactersTooltips();
             });
+        },
+
+        notif_replaceStudents: function(notif) {
+
+            console.log(notif);
+
+            let studentsSet = ['green','red','yellow','pink','blue'];
+
+            let loc1 = `#school_${notif.args.player_id} .school_entrance`;
+            let loc2;
+
+            if (notif.args.character == 6) {
+                loc2 = `#character_6 .character_tokens`;
+            } else {
+                loc2 = `#school_${notif.args.player_id} .tables`;
+            }
+
+            let selLoc1 = notif.args.sel_loc1;
+            let selLoc2 = notif.args.sel_loc2;
+
+            let selected = (this.isCurrentPlayerActive())? '.selected':'';
+
+            for (let i = 0; i < selLoc1.length; i++) {
+                
+                let s1 = studentsSet[selLoc1[i]];
+                let s2 = studentsSet[selLoc2[i]];
+
+                let student1 = document.querySelector(`${loc1} .student_${s1}${selected}`);
+                student1.classList.remove('selected');
+                let destination_s1 = (notif.args.character == 6)? document.querySelector(loc2) : document.querySelector(`${loc2} .${s1}_row .students_table`);
+                console.log(student1,destination_s1);
+
+                let student2 = document.querySelector(`${loc2} .student_${s2}${selected}`);
+                student2.classList.remove('selected');
+                let destination_s2 = document.querySelector(loc1);
+                console.log(student2,destination_s2);
+
+                this.moveElementAndAppend(student1,destination_s1,null,500);
+                this.moveElementAndAppend(student2,destination_s2,null,500);
+            }
+
+            this.notifqueue.setSynchronousDuration(selLoc1.length*500 + 100);
+        },
+
+        notif_returnStudentsToBag: function(notif) {
+
+            let studentsOfColor = document.querySelectorAll(`#school_${notif.args.player_id} .${notif.args.color}_row .student`).length;
+            let i = 0;
+            let destination = $('students_bag');
+
+            console.log(notif.args);
+            console.log(`#school_${notif.args.player_id} .${notif.args.color}_row .student`);
+            console.log(studentsOfColor);
+            
+            if (studentsOfColor > 0) while (studentsOfColor > notif.args.to_value) {
+                console.log(studentsOfColor);
+                console.log('removing a student of color',notif.args.color);
+
+                let student = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .student:nth-child(${studentsOfColor})`);
+
+                setTimeout(() => {
+                    this.moveElementAndAppend(student,destination,null,500,0,() => {
+                        destination.lastElementChild.remove();
+                    });
+                }, 500*i);
+
+                studentsOfColor--;
+                i++;
+
+                if (studentsOfColor == notif.args.to_value) this.notifqueue.setSynchronousDuration(i*500 + 100);
+            }
+            else this.notifqueue.setSynchronousDuration(100);
         },
 
         // #endregion

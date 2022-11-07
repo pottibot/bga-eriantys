@@ -133,7 +133,6 @@ $machinestates = array(
         "description" => clienttranslate('${actplayer} may replace up to 3 Students from his/her School entrance with Students on the Character card'),
         "descriptionmyturn" => clienttranslate('${you} may replace up to 3 Students from your School entrance with Students on the Character card'),
         "type" => "activeplayer",
-        "args" => "argCharacter6_ability",
         "possibleactions" => array("replaceStudents"),
         "transitions" => array("endAbility" => 60, "zombiePass" => 99)
     ),
@@ -141,18 +140,18 @@ $machinestates = array(
     // CHAR 8: choose a student color, students of that color won't add up to island influence this turn 
     55 => array(
         "name" => "character8_ability",
-        "description" => clienttranslate('${actplayer} must choose a color of Student'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a color of Student'),
+        "description" => clienttranslate('${actplayer} must choose a Student color'),
+        "descriptionmyturn" => clienttranslate('${you} must choose a Student color'),
         "type" => "activeplayer",
-        "possibleactions" => array("deactivateStudentColor"),
+        "possibleactions" => array("pickStudentColor"),
         "transitions" => array("endAbility" => 60, "zombiePass" => 99)
     ),
 
     // CHAR 9: replace up to 2 students from dining hall with students in your School entrance
     56 => array(
         "name" => "character9_ability",
-        "description" => clienttranslate('${actplayer} may replace up to 3 Students from his/her School Dining Hall with Students in your School entrance'),
-        "descriptionmyturn" => clienttranslate('${you} may replace up to 3 Students from your School Dining Hall with Students in your School entrance'),
+        "description" => clienttranslate('${actplayer} may replace up to 2 Students from his/her School entrance with Students in his/her School Dining Hall'),
+        "descriptionmyturn" => clienttranslate('${you} may replace up to 2 Students from your School entrance with Students in your School Dining Hall'),
         "type" => "activeplayer",
         "possibleactions" => array("replaceStudents"),
         "transitions" => array("endAbility" => 60, "zombiePass" => 99)
@@ -172,11 +171,10 @@ $machinestates = array(
     // CHAR 11: all players must return 3 students of chosen color from their respective School dining room to the students bag
     58 => array(
         "name" => "character11_ability",
-        "description" => clienttranslate('${you} must choose a color of Student'),
-        "descriptionmyturn" => clienttranslate('${you} must choose a color of Student'),
+        "description" => clienttranslate('${actplayer} must choose a Student color'),
+        "descriptionmyturn" => clienttranslate('${you} must choose a Student color'),
         "type" => "activeplayer",
-        "args" => "argCharacter11_ability",
-        "possibleactions" => array("returnStudents"),
+        "possibleactions" => array("pickStudentColor"),
         "transitions" => array("endAbility" => 60, "zombiePass" => 99)
     ),
 

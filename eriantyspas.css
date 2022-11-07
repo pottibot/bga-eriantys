@@ -727,31 +727,54 @@ html {
     border: solid white 1px;
 }
 
-.school_entrance.active .student.selectable,
-.character_tokens .student.selectable {
+.tables.active {
+    cursor: pointer;
+    border: solid 1px white;
+    border-radius: 10px;
+    box-shadow: inset 0px 0px 10px white;
+}
+
+#pick_student_display {
+    display: inline-flex;
+    gap: 10px;
+    margin-left: 15px;
+    margin-right: 7px;
+    position: relative;
+    top: 3px;
+}
+
+.school .active .student.selectable,
+.character_tokens.active .student.selectable,
+#pick_student_display .student.selectable{
     transition: all 200ms ease-in;
 }
 
-.school_entrance.active .student.selectable:hover,
-.character_tokens .student.selectable:hover {
+.school .active .student.selectable:hover,
+.character_tokens.active .student.selectable:hover,
+#pick_student_display .student.selectable:hover {
     transform: scale(1.1);
 }
 
-.school_entrance.active .student.selected,
-.character_tokens .student.selected {
+.school .active .student.selected,
+.character_tokens.active .student.selected,
+#pick_student_display .student.selected {
     transform: translate(0px, -4px);
     box-shadow: 0px 4px red;
     border-radius: 0px 0px 9px 9px;
 }
 
-.school_entrance.active .student.selected:hover,
-.character_tokens .student.selected:hover {
+.highlight_blue.active .student.selected {
+    box-shadow: 0px 4px blue;
+}
+
+.school .active .student.selected:hover,
+.character_tokens.active .student.selected:hover,
+#pick_student_display .student.selected:hover {
     transform: translate(0px, -4px);
 }
 
 .school_hall {
     width: 65%;
-    height: 100%;
 
     display: flex;
     justify-content: space-around;
@@ -760,6 +783,8 @@ html {
 .tables {
     width: 345px;
     height: 100%;
+
+    padding: 10px;
 
     display: flex;
     flex-direction: column;

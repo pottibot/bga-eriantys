@@ -82,4 +82,25 @@ class action_eriantyspas extends APP_GameAction {
 
         self::ajaxResponse();
     }
+
+    public function replaceStudents() {
+
+        self::setAjaxMode();
+
+        $loc1 = explode(',',self::getArg("loc1", AT_numberlist, true));
+        $loc2 = explode(',',self::getArg("loc2", AT_numberlist, true));
+        $this->game->replaceStudents($loc1,$loc2);
+
+        self::ajaxResponse();
+    }
+
+    public function pickStudentColor() {
+
+        self::setAjaxMode();
+
+        $color = self::getArg("color", AT_alphanum, true);
+        $this->game->pickStudentColor($color);
+
+        self::ajaxResponse();
+    }
 }

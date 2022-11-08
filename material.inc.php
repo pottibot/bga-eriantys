@@ -9,6 +9,7 @@
  * -----
  */
 
+$this->studentsReference = ['green', 'red', 'yellow', 'pink', 'blue'];
 
 $this->characters = [
     // (MOVE STUDENT) take student and place on island [setup: draw 4 stud on this card]

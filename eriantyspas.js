@@ -24,14 +24,15 @@ function (dojo, declare) {
 
         constructor: function(){
 
-            console.log('eriantyspas constructor');
+            //console.log('eriantyspas constructor');
 
             this.counters = {};
+            this.studentsSet = ['green','red','yellow','pink','blue'];
         },
         
         setup: function(gamedatas) {
 
-            console.log( "Starting game setup" );
+            //console.log( "Starting game setup" );
 
             // INIT PLAYER BOARDS COUNTERS
             this.counters.playerBoard = {};
@@ -181,7 +182,6 @@ function (dojo, declare) {
 
                 let p = Object.values(gamedatas.players).filter(p => p.turnPos == i+1)[0];
                 let col = p.color;
-                console.log(i+1,p.id,col);
 
                 $('assistant_cards_played').insertAdjacentHTML('beforeend',this.format_block('jstpl_assistant_placeholder',{color: '#'+col, altcol: '#'+p.alt_col, id: p.id, name:p.name}));
 
@@ -219,7 +219,6 @@ function (dojo, declare) {
             // SETUP ISLANDS GROUPS
             gamedatas.islandsGroups.forEach(g => {
                 $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_island_group', {id: g}));
-                //$('island_group_'+g).addEventListener('click', evt => {console.log(evt.target.parentElement.id);})
             });
 
             // set islands groups counter
@@ -297,9 +296,8 @@ function (dojo, declare) {
 
             // PLACE CHARACTERS
             if (gamedatas.characters) {
-                console.log('CHARACTERS',gamedatas.characters);
+                //console.log('CHARACTERS',gamedatas.characters);
                 for (const chId in gamedatas.characters) {
-                    console.log('CHARACTER',chId);
                     let character = gamedatas.characters[chId];
                     $('characters').insertAdjacentHTML('beforeend',this.format_block('jstpl_character', {n: chId}));
                     let charEl = $('characters').lastElementChild;
@@ -316,7 +314,6 @@ function (dojo, declare) {
 
                     if (character.data && chId != 8) {
                         let data = JSON.parse(character.data);
-                        console.log(data);
 
                         charEl.insertAdjacentHTML('beforeend','<div class="character_tokens"></div>');
                         let charTokens = charEl.lastChild;
@@ -326,10 +323,8 @@ function (dojo, declare) {
                                 case 'students':
                                     charTokens.classList.add('type-students');
 
-                                    let studentsSet = ['green','red','yellow','pink','blue'];
-
                                     data['students'].forEach(s => {
-                                        charTokens.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[s]}));
+                                        charTokens.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: this.studentsSet[s]}));
                                     });
                                     
                                     break;
@@ -380,7 +375,7 @@ function (dojo, declare) {
             // SETUP PREFERENCE OBSERVER
             this.initPreferencesObserver();
 
-            console.log( "Ending game setup" );
+            //console.log( "Ending game setup" );
         },
 
         // setup zoom and screen adapt controls for islands
@@ -410,14 +405,11 @@ function (dojo, declare) {
 
             // ASSITANT DRAWER ARROW
             let arrow = $('assistants_drawer_arrow');
-            console.log('arrow',arrow);
             arrow.addEventListener('click', () => {
 
                 let drawer = $('assistant_cards_drawer');
 
                 if (arrow.classList.contains('open_drawer')) {
-
-                    console.log('opening assistant drawer');
                     
                     drawer.style.height = 'fit-content';
                     let h = drawer.offsetHeight;
@@ -433,8 +425,6 @@ function (dojo, declare) {
                 } else {
 
                     if (document.documentElement.classList.contains('drawer-fixed')) return;
-
-                    console.log('closing assistant drawer');
 
                     let h = drawer.offsetHeight;
                     drawer.style.height = h + 'px';
@@ -532,6 +522,10 @@ function (dojo, declare) {
                 players_school.style.maxHeight = '';
                 players_school.style.overflowY = '';
             }
+
+            let oc = $('overall-content');
+            if (oc.clientWidth > oc.clientHeight) document.documentElement.style.backgroundSize = "100% auto";
+            else document.documentElement.style.backgroundSize = "auto 100%";
         },
 
         // needed to inject html into log, imported from doc
@@ -592,7 +586,7 @@ function (dojo, declare) {
 
         // preference change observer (copyed from doc)
         initPreferencesObserver: function () {      
-            console.log('Initiating preferences observer');
+            //console.log('Initiating preferences observer');
             // Call onPreferenceChange() when any value changes
             dojo.query('.preference_control').on('change', (e) => {
                 const match = e.target.id.match(/^preference_[cf]ontrol_(\d+)$/);
@@ -605,7 +599,7 @@ function (dojo, declare) {
                 this.onPreferenceChange(pref, newValue);
             });
 
-            console.log('Checking all preferences');
+            //console.log('Checking all preferences');
             // Call onPreferenceChange() now
             dojo.forEach(
                 dojo.query("#ingame_menu_content .preference_control"),
@@ -621,7 +615,7 @@ function (dojo, declare) {
 
         // change preference programmatically (copyed from doc)
         updatePreference: function(prefId, newValue) {
-            console.log("Updating preference", prefId, newValue);
+            //console.log("Updating preference", prefId, newValue);
             // Select preference value in control:
             dojo.query('#preference_control_' + prefId + ' > option[value="' + newValue
             // Also select fontrol to fix a BGA framework bug:
@@ -633,7 +627,7 @@ function (dojo, declare) {
         },
         
         onPreferenceChange: function (prefId, prefValue) {
-            console.log("Preference changed", prefId, prefValue);
+            //console.log("Preference changed", prefId, prefValue);
 
             let prefSelect = $('pref_select_'+prefId)
             if (prefSelect) prefSelect.value = prefValue;
@@ -697,14 +691,14 @@ function (dojo, declare) {
         // #region
         
         onEnteringState: function(stateName,args) {
-            console.log('Entering state: '+stateName);
-            console.log('State arguments: ',args.args);
+            //console.log('Entering state: '+stateName);
+            //console.log('State arguments: ',args.args);
 
             // way of calling state handlers dinamically without big f switch
             // Call appropriate method
             var methodName = "onEnteringState_" + stateName;
             if (this[methodName] !== undefined) {             
-                console.log('Calling ' + methodName, args.args);
+                //console.log('Calling ' + methodName, args.args);
                 this[methodName](args.args);
             }
         },
@@ -721,7 +715,6 @@ function (dojo, declare) {
                 else el.classList.add('unselected');
 
                 el.onclick = evt => {
-                    console.log('clicked on assistant',el);
 
                     if (!this.isCurrentPlayerActive()) {
                         this.showMessage(_('It is not your turn'),'error');
@@ -734,13 +727,10 @@ function (dojo, declare) {
                     }
 
                     if (el.classList.contains('selected')) {
-                        console.log('unselecting assistant');
                         this.gamedatas.gamestate.clientData.selected = null;
                         el.classList.remove('selected');
                         el.classList.add('unselected');
                     } else {
-                        console.log('selecting assistant');
-
                         document.querySelectorAll('#assistant_cards_myhand .assistant').forEach( el2 => {
                             el2.classList.remove('selected');
                             el2.classList.add('unselected');
@@ -778,8 +768,6 @@ function (dojo, declare) {
                 student.classList.add('selectable');
 
                 student.onclick = evt => {
-
-                    console.log('clicked on student');
 
                     if (!student.classList.contains('selected')) {
 
@@ -942,15 +930,12 @@ function (dojo, declare) {
                             sel.push(this.getStudentElementColor(student));
                         }
 
-                        console.log(sel);
                         this.gamedatas.gamestate.clientData[['selLoc'+(1+i)]] = sel;
                     }
                 });
             });
 
             this.addActionButton('confirmReplacement_button',_('Confirm'),evt => {
-
-                let studentsSet = ['green','red','yellow','pink','blue'];
 
                 let loc1 = this.gamedatas.gamestate.clientData.selLoc1;
                 let loc2 = this.gamedatas.gamestate.clientData.selLoc2;
@@ -962,11 +947,11 @@ function (dojo, declare) {
                     }
 
                     loc1.forEach((c,i) => {
-                        loc1[i] = studentsSet.indexOf(c);
+                        loc1[i] = this.studentsSet.indexOf(c);
                     });
 
                     loc2.forEach((c,i) => {
-                        loc2[i] = studentsSet.indexOf(c);
+                        loc2[i] = this.studentsSet.indexOf(c);
                     });
 
                     this.ajaxcallwrapper('replaceStudents',{
@@ -983,11 +968,9 @@ function (dojo, declare) {
         pickStudentColor: function(char) {
 
             this.gamedatas.gamestate.clientData = {};
-
-            let studentsSet = ['green','red','yellow','pink','blue'];
             let studentsDisplay = '';
 
-            studentsSet.forEach(col => {
+            this.studentsSet.forEach(col => {
                 studentsDisplay += this.format_block('jstpl_student',{color: col});
             });
 
@@ -1024,7 +1007,7 @@ function (dojo, declare) {
         },
 
         onLeavingState: function(stateName) {
-            console.log('Leaving state: '+stateName);
+            //console.log('Leaving state: '+stateName);
             
             switch ( stateName ) {
                 case 'playAssistant': 
@@ -1064,13 +1047,12 @@ function (dojo, declare) {
         }, 
     
         onUpdateActionButtons: function(stateName, args) {
-            console.log('onUpdateActionButtons: '+stateName);
-            console.log(args);
+            //console.log('onUpdateActionButtons: '+stateName);
                       
             if( this.isCurrentPlayerActive()) {            
                 var methodName = "onUpdateActionButtons_" + stateName;
                 if (this[methodName] !== undefined) {             
-                    console.log('Calling ' + methodName, args);
+                    //console.log('Calling ' + methodName, args);
                     this[methodName](args);
                 }
             }
@@ -1081,7 +1063,6 @@ function (dojo, declare) {
             this.addActionButton('confirmAssistant_button',_('Confirm'),evt => {
                 let selected = this.gamedatas.gamestate.clientData.selected;
                 if (selected) {
-                    console.log('confirmed', selected);
                     this.ajaxcallwrapper('playAssistant',{n:selected});
                 } else {
                     this.showMessage(_("You need to select an Assistant card to play"),'error')
@@ -1354,8 +1335,6 @@ function (dojo, declare) {
                 let inner = [];
                 for (const f in g.influence) {
 
-                    console.log(f,g.influence[f]);
-
                     inner.push(this.format_block('jstpl_island_faction_influence',{
                         col: f,
                         invcol: this.getInverseColor(f),
@@ -1398,7 +1377,6 @@ function (dojo, declare) {
                     document.querySelector('#pagemaintitletext a').onclick = () => {
 
                         let y = $('characters').getBoundingClientRect().y - 300 - document.documentElement.getBoundingClientRect().y;
-                        console.log(y);
 
                         window.scroll({
                             top: y,
@@ -1455,10 +1433,10 @@ function (dojo, declare) {
         // #region
 
         setupNotifications: function() {
-            console.log( 'notifications subscriptions setup' );
+            //console.log( 'notifications subscriptions setup' );
 
-            dojo.subscribe('displayPoints', this, "notif_displayPoints");
-            this.notifqueue.setSynchronous('displayPoints', 10);
+            /* dojo.subscribe('displayPoints', this, "notif_displayPoints");
+            this.notifqueue.setSynchronous('displayPoints', 10); */
 
             dojo.subscribe('playAssistant', this, "notif_playAssistant");
             this.notifqueue.setSynchronous('playAssistant');
@@ -1516,9 +1494,7 @@ function (dojo, declare) {
         },
 
         // debugging notif
-        notif_displayPoints: function(notif) {
-
-            console.log('DISPLAYING POINTS',notif.args);
+        /* notif_displayPoints: function(notif) {
 
             document.querySelectorAll('.point').forEach(p => {
                 p.remove();
@@ -1527,10 +1503,10 @@ function (dojo, declare) {
             notif.args.points.forEach(p => {
                 $('islands_cont').insertAdjacentHTML('beforeend',this.format_block('jstpl_point', {left: p.x, top: -p.y}));
             });
-        },
+        }, */
 
         notif_playAssistant: function(notif) {
-            console.log(notif.args);
+            //console.log(notif.args);
 
             this.openAssistantDrawer(() => {
 
@@ -1554,7 +1530,7 @@ function (dojo, declare) {
         },
 
         notif_resolvePlanning: function(notif) {
-            console.log(notif.args);
+            //console.log(notif.args);
 
             // open drawer if closed, on end: ..
             this.openAssistantDrawer(() => {
@@ -1562,14 +1538,10 @@ function (dojo, declare) {
                 let d = 0;
                 notif.args.players.forEach(player => {
 
-                    console.log('player',player);
-
                     let a = document.querySelector(`#placeholder_${player.id} .assistant`);
 
                     // animate turn position indicator
                     setTimeout(() => {
-
-                        console.log('turn indicator for player',player);
 
                         // place turn indicator
                         a.insertAdjacentHTML('beforeend',this.format_block('jstpl_turn_position_indicator',{turnPos: player.turn_pos}));
@@ -1594,8 +1566,6 @@ function (dojo, declare) {
 
                     // same as above for different icon
                     setTimeout(() => {
-
-                        console.log('movement indicator for player',player);
 
                         a.insertAdjacentHTML('beforeend',this.format_block('jstpl_turn_steps_indicator',{steps: player.steps}));
                         let indicator = a.lastChild;
@@ -1634,7 +1604,7 @@ function (dojo, declare) {
         },
 
         notif_moveStudent: function(notif) {
-            console.log(notif.args);
+            //console.log(notif.args);
 
             // fetch student and clean interactables
             let student;
@@ -1685,26 +1655,23 @@ function (dojo, declare) {
                 };
             }
 
-            console.log(student,destination);
             this.moveElementAndAppend(student,destination,null,500,0,onEnd);
         },
 
         notif_gainCoin: function(notif) {
 
-            console.log(notif);
+            //console.log(notif);
 
             setTimeout(() => {
 
                 // fetch coin student pos
                 let coinStudent = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .student:nth-child(${notif.args.position})`);
-                console.log(coinStudent);
+
                 coinStudent.insertAdjacentHTML('beforeend',this.format_block('jstpl_coin'));
                 let movingCoin = coinStudent.lastElementChild;
-                console.log(movingCoin);
 
                 // fetch destination
                 let coinCont = document.querySelector(`#player_coins_cont_${notif.args.player_id}`);
-                console.log(coinCont);
             
                 this.moveElement(movingCoin,coinCont,null,500,0,() => {
                     movingCoin.remove();
@@ -1863,7 +1830,7 @@ function (dojo, declare) {
 
         notif_joinIslandsGroups: function(notif) {
 
-            console.log(notif.args);
+            //console.log(notif.args);
 
             let transitionCount = 0;
 
@@ -1892,9 +1859,6 @@ function (dojo, declare) {
             }, (this.instantaneousMode)?0:1500);
 
             this.counters.islands_groups.incValue(-1);
-
-            /* let joinGroup = notif.args.groups.filter(g => g.id != notif.args.groupTo).pop()['id'];
-            console.log(joinGroup); */
         },
 
         notif_updateInfluence: function(notif) {
@@ -1903,7 +1867,7 @@ function (dojo, declare) {
 
         notif_chooseCloudTile: function(notif) {
 
-            console.log(notif.args);
+            //console.log(notif.args);
 
             let cloud = $('cloud_'+notif.args.cloud); // fetch el (selected cloud)
             let school_entrance = document.querySelector(`#school_${notif.args.player_id} .school_entrance`); // fetch destination (player school entrance)
@@ -1932,9 +1896,7 @@ function (dojo, declare) {
 
         notif_refillClouds: function(notif) {
 
-            console.log(notif.args);
-
-            let studentsSet = ['green','red','yellow','pink','blue'];
+            //console.log(notif.args);
 
             let k = 0;
 
@@ -1959,7 +1921,7 @@ function (dojo, declare) {
                             setTimeout(() => {
 
                                 // insert student and trigger move animation to cloud
-                                bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[sc]}));
+                                bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: this.studentsSet[sc]}));
                                 let student = bag.lastElementChild;
                                 this.moveElementAndAppend(student,$('cloud_'+(id+1)),null,500);
 
@@ -1986,10 +1948,8 @@ function (dojo, declare) {
             if (this.instantaneousMode) bag.style.animationDuration = '0ms';
             bag.classList.add('draw_animation');
 
-            let studentsSet = ['green','red','yellow','pink','blue'];
-
             setTimeout(() => {
-                bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: studentsSet[notif.args.student]}));
+                bag.insertAdjacentHTML('beforeend',this.format_block('jstpl_student', {color: this.studentsSet[notif.args.student]}));
                 let student = bag.lastElementChild;
                 this.moveElementAndAppend(student,document.querySelector(`#character_${notif.args.char} .character_tokens`),null,500,0,() => {
                     this.updateCharactersTooltips();
@@ -2019,7 +1979,6 @@ function (dojo, declare) {
             let token = document.querySelector(`#island_${notif.args.blocked_island} .no-entry_token`);
             let destination = document.querySelector('#character_4 .character_tokens');
 
-            console.log(token);
             let movingToken = token.cloneNode();
             token.after(movingToken);
             token.classList.add('mock');
@@ -2031,9 +1990,7 @@ function (dojo, declare) {
 
         notif_replaceStudents: function(notif) {
 
-            console.log(notif);
-
-            let studentsSet = ['green','red','yellow','pink','blue'];
+            //console.log(notif);
 
             let loc1 = `#school_${notif.args.player_id} .school_entrance`;
             let loc2;
@@ -2051,18 +2008,16 @@ function (dojo, declare) {
 
             for (let i = 0; i < selLoc1.length; i++) {
                 
-                let s1 = studentsSet[selLoc1[i]];
-                let s2 = studentsSet[selLoc2[i]];
+                let s1 = this.studentsSet[selLoc1[i]];
+                let s2 = this.studentsSet[selLoc2[i]];
 
                 let student1 = document.querySelector(`${loc1} .student_${s1}${selected}`);
                 student1.classList.remove('selected');
                 let destination_s1 = (notif.args.character == 6)? document.querySelector(loc2) : document.querySelector(`${loc2} .${s1}_row .students_table`);
-                console.log(student1,destination_s1);
 
                 let student2 = document.querySelector(`${loc2} .student_${s2}${selected}`);
                 student2.classList.remove('selected');
                 let destination_s2 = document.querySelector(loc1);
-                console.log(student2,destination_s2);
 
                 this.moveElementAndAppend(student1,destination_s1,null,500);
                 this.moveElementAndAppend(student2,destination_s2,null,500);
@@ -2076,14 +2031,8 @@ function (dojo, declare) {
             let studentsOfColor = document.querySelectorAll(`#school_${notif.args.player_id} .${notif.args.color}_row .student`).length;
             let i = 0;
             let destination = $('students_bag');
-
-            console.log(notif.args);
-            console.log(`#school_${notif.args.player_id} .${notif.args.color}_row .student`);
-            console.log(studentsOfColor);
             
             if (studentsOfColor > 0) while (studentsOfColor > notif.args.to_value) {
-                console.log(studentsOfColor);
-                console.log('removing a student of color',notif.args.color);
 
                 let student = document.querySelector(`#school_${notif.args.player_id} .${notif.args.color}_row .student:nth-child(${studentsOfColor})`);
 

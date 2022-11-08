@@ -311,11 +311,7 @@ class eriantyspas extends Table {
 /* ----------------------- */
 #region 
 
-    // -- DEBUGGING METHODS --
-
-        function dumpStates() {
-            self::dump("// DUMP STATES",$this->gamestate->states);
-        }
+    /* // -- DEBUGGING METHODS --
 
         function testPassiveCharacters() {
 
@@ -383,36 +379,7 @@ class eriantyspas extends Table {
             }
         }
 
-        function isLastRound() {
-            self::dump('// IS LAST ROUND',self::getGameStateValue('last_round'));
-        }
-
         function test() {
-            /* $array = ['a','b','c'];
-            self::dump("// RESULT",implode('',$array)); */
-            $count = [
-                'G' => 0,
-                'R' => 0,
-                'Y' => 0,
-                'P' => 0,
-                'B' => 0,
-            ];
-
-            for ($i=0; $i < 130; $i++) { 
-                $s = self::drawStudents()[0];
-
-                $count[$s] += 1;
-
-                if ($i == 9 || $i == 74 || $i == 129) {
-                    self::dump("// RESULTS AT $i",[
-                        'G' => $count['G'] / $i,
-                        'R' => $count['R'] / $i,
-                        'Y' => $count['Y'] / $i,
-                        'P' => $count['P'] / $i,
-                        'B' => $count['B'] / $i, 
-                    ]);
-                }
-            }
         }
 
         // display an array of EriantysPoints on UI
@@ -432,12 +399,12 @@ class eriantyspas extends Table {
         }
 
         function populateSchools() {
-            $professors = ['green', 'red', 'yellow', 'pink', 'blue'];
+            $professors = $this->studentsReference;
 
             foreach (self::getObjectListFromDb("SELECT player FROM school",true) as $pid) {
                 $values = [];
                 
-                foreach (['green', 'red', 'yellow', 'pink', 'blue'] as $col) {
+                foreach ($this->studentsReference as $col) {
 
                     $values[$col] = bga_rand(0,6);
 
@@ -511,7 +478,7 @@ class eriantyspas extends Table {
             self::DbQuery($sql);
         }
 
-    // -- --- --
+    // -- --- -- */
 
     function getStudentsLeft() {
         return strlen(self::getUniqueValueFromDb("SELECT students FROM students_bag"));
@@ -700,12 +667,10 @@ class eriantyspas extends Table {
         // starting from a certain pos and angle depending on side, increse angle by 2*30deg every two islands
         switch ($side) {
             case 'left':
-                self::trace("// ISLAND $pos ATTACHING FROM LEFT");
                 return 7*M_PI/6 + -2*M_PI/6 * floor(($pos+1)/2);  
                 break;
 
             case 'right':
-                self::trace("// ISLAND $pos ATTACHING FROM RIGHT");
                 return 11*M_PI/6 + -2*M_PI/6 * floor($pos/2);
                 break;
 
@@ -861,7 +826,6 @@ class eriantyspas extends Table {
             $totinf -= count($groupIslands);
         }
 
-        //self::dump("// INFLUENCE ON ISLAND GROUP $islandsGroup FOR TEAM $teamCol",$totinf);
         return $totinf;
     }
 
@@ -1068,7 +1032,7 @@ class eriantyspas extends Table {
                 //self::trace("// NEXT GROUP $nextGroup");
 
                 if (self::controlsIslandGroup($prevGroup,$winningTeam)) {
-                    self::trace("// MERGING WITH PREV");
+                    //self::trace("// MERGING WITH PREV");
                     self::joinIslandsGroups($prevGroup,$islandsGroup);
 
                     foreach (self::getObjectListFromDb("SELECT player_id FROM player WHERE player_color = '$winningTeam'",true) as $pid) {
@@ -1077,7 +1041,7 @@ class eriantyspas extends Table {
                 }
 
                 if (self::controlsIslandGroup($nextGroup,$winningTeam)) {
-                    self::trace("// MERGING WITH NEXT");
+                    //self::trace("// MERGING WITH NEXT");
                     self::joinIslandsGroups($nextGroup,$islandsGroup);
 
                     foreach (self::getObjectListFromDb("SELECT player_id FROM player WHERE player_color = '$winningTeam'",true) as $pid) {
@@ -1136,7 +1100,7 @@ class eriantyspas extends Table {
                     self::setStat(
                         array_search(
                             self::getUniqueValueFromDb("SELECT color FROM professor_steals ORDER BY steals DESC LIMIT 1"),
-                            ['green', 'red', 'yellow', 'pink', 'blue']),
+                            $this->studentsReference),
                         'contended_professor'
                     );
 
@@ -1165,10 +1129,10 @@ class eriantyspas extends Table {
     // returns influence for each faction on each islands. array indexed by island group with field $influence, indexed by faction color and field $mid containing island id on where to display data
     function updateInfluenceData() {
 
-        $contestedGroup = self::getStat('contested_group');
-
         $ret = [];
         foreach (self::getAllIslandsGroups() as $g) {
+            $contestedGroup = self::getStat('contested_group');
+
             $ret[$g]['mid'] = self::getGroupMid($g);
             $totIslInf = 0;
             foreach (self::getAllFactions() as $f) {
@@ -1288,7 +1252,7 @@ function playAssistant($n) {
 
         $mov = ceil($n / 2);
 
-        self::notifyAllPlayers('playAssistant', clienttranslate('${player_name} plays Assistant ${num}' . ' <span>(${steps})</span>'), array(
+        self::notifyAllPlayers('playAssistant', clienttranslate('${player_name} plays Assistant ${num} <span>(${steps})</span>'), array(
             'player_id' => self::getActivePlayerId(),
             'player_name' => self::getActivePlayerName(),
             'n' => $n,
@@ -1316,18 +1280,14 @@ function moveStudent($color, $place) {
 
     if ($this->checkAction('moveStudent')) {
 
-        self::trace("// COLOR $color //");
-        self::trace("// PLACE $place //");
-
         $id = self::getActivePlayerId();
 
-        $studentsReference = ['green', 'red', 'yellow', 'pink', 'blue'];
+        $sRef = $this->studentsReference;
 
         $from_char = $this->gamestate->state()['args']['from_char'];
-        self::trace("// FROM CHAR $from_char //");
 
         if (is_null($from_char)) {
-            if (!in_array($color,$studentsReference)) throw new BgaVisibleSystemException("Invalid student color");
+            if (!in_array($color,$sRef)) throw new BgaVisibleSystemException("Invalid student color");
             if (!is_null($place) && ($place < 0 || $place > 11)) throw new BgaVisibleSystemException("Invalid student destination");
             if (self::getObjectFromDb("SELECT * FROM school_entrance WHERE player = $id")[$color] < 1) throw new BgaVisibleSystemException("You don't have a Student of this color in your school entrance");
             if (is_null($place) && !in_array($color,self::argMoveStudents()['free_tables'])) throw new BgaVisibleSystemException("You cannot have more than 10 students of the same color in your School Hall");    
@@ -1337,13 +1297,11 @@ function moveStudent($color, $place) {
 
         } else {
             $charStudents = json_decode(self::getUniqueValueFromDB("SELECT `data` FROM `character` WHERE id = $from_char"),true)['students'];
-            $colIndex = array_search($color,$studentsReference);
-            self::dump("// CHAR STUDENTS //",$charStudents);
-            self::trace("// COL INDEX $colIndex //");
+            $colIndex = array_search($color,$sRef);
         
             if (is_null($place) && $from_char == 1) throw new BgaVisibleSystemException("You cannot send Students to the Dining Hall using this Character");
             if (!is_null($place) && $from_char == 10) throw new BgaVisibleSystemException("You cannot send Students to the Islands using this Character");
-            if (!in_array($color,$studentsReference)) throw new BgaVisibleSystemException("Invalid student color");
+            if (!in_array($color,$sRef)) throw new BgaVisibleSystemException("Invalid student color");
             if (!is_null($place) && ($place < 0 || $place > 11)) throw new BgaVisibleSystemException("Invalid student destination");
             if (!in_array($colIndex,$charStudents)) throw new BgaVisibleSystemException("The Character doesn't hold a Student of this color");
             if (is_null($place) && !in_array($color,self::argMoveStudents()['free_tables'])) throw new BgaVisibleSystemException("You cannot have more than 10 students of the same color in your School Hall");
@@ -1360,7 +1318,8 @@ function moveStudent($color, $place) {
         asort($totStudentsMoved);
         $totStudentsMoved = array_reverse($totStudentsMoved);
         foreach ($totStudentsMoved as $col => $tot) {
-            self::setStat(array_search($col,$studentsReference),'favourite_student',$id);
+            self::setStat(array_search($col,$sRef),'favourite_student',$id);
+            break;
         }
 
         if (is_null($place)) {
@@ -1388,17 +1347,17 @@ function moveStudentFromChar($charId, $color, $place) {
 
         $id = self::getActivePlayerId();
 
-        $studentsReference = ['green', 'red', 'yellow', 'pink', 'blue'];
+        $sRef = $this->studentsReference;
 
         $charData = json_decode(self::getUniqueValueFromDB("SELECT `data` FROM `character` WHERE id = $charId"));
         
-        if (!in_array($color,$studentsReference)) throw new BgaVisibleSystemException("Invalid student color");
+        if (!in_array($color,$sRef)) throw new BgaVisibleSystemException("Invalid student color");
         if (!is_null($place) && ($place < 0 || $place > 11)) throw new BgaVisibleSystemException("Invalid student destination");
-        if (!in_array($studentsReference[$color],$charData['students'])) throw new BgaVisibleSystemException("The Character doesn't hold a Student of this color");
+        if (!in_array($sRef[$color],$charData['students'])) throw new BgaVisibleSystemException("The Character doesn't hold a Student of this color");
         if (is_null($place) && !in_array($color,self::argMoveStudents()['free_tables'])) throw new BgaVisibleSystemException("You cannot have more than 10 students of the same color in your School Hall");
 
         // remove replace students from char card with a new one;
-        $charData['students'][array_search($studentsReference[$color],$charData['students'])] = self::drawStudents(1)[0];
+        $charData['students'][array_search($sRef[$color],$charData['students'])] = self::drawStudents(1)[0];
         self::dbQuery("UPDATE `character` SET `data` = $charData WHERE id = $charId");
 
         self::dbQuery("UPDATE player SET player_tot_$color = player_tot_$color + 1 WHERE player_id = $id");
@@ -1406,7 +1365,8 @@ function moveStudentFromChar($charId, $color, $place) {
         asort($totStudentsMoved);
         $totStudentsMoved = array_reverse($totStudentsMoved);
         foreach ($totStudentsMoved as $col => $tot) {
-            self::setStat(array_search($col,$studentsReference),'favourite_student',$id);
+            self::setStat(array_search($col,$sRef),'favourite_student',$id);
+            break;
         }
 
         if (is_null($place)) {
@@ -1424,7 +1384,7 @@ function moveStudentFromChar($charId, $color, $place) {
 function moveStudentToSchool($color, $player, $fromChar = null) {
 
     self::dbQuery("UPDATE school SET $color = $color + 1 WHERE player = $player");
-    self::incStat(1,'islands_students',$player);
+    self::incStat(1,'hall_students',$player);
 
     self::notifyAllPlayers('moveStudent', clienttranslate('${player_name} moves ${student} inside his/her school'), array(
         'player_id' => $player,
@@ -1465,10 +1425,10 @@ function gainCoin($player,$color) {
 // sub step of moveStudent
 function moveStudentToIsland($color, $island, $fromChar = null) {
     $id = self::getActivePlayerId();
-    $studentsReference = ['green', 'red', 'yellow', 'pink', 'blue'];
+    $sRef = $this->studentsReference;
     
     self::dbQuery("UPDATE island_influence SET $color = $color +1 WHERE island_pos = $island");
-    self::incStat(1,'hall_students',$id);
+    self::incStat(1,'islands_students',$id);
 
     self::notifyAllPlayers('moveStudent', clienttranslate('${player_name} sent ${student} to an island'), array(
         'player_id' => self::getActivePlayerId(),
@@ -1489,7 +1449,8 @@ function moveStudentToIsland($color, $island, $fromChar = null) {
     asort($students_populations);
     $students_populations = array_reverse($students_populations,true);
     foreach ($students_populations as $col => $tot) {
-        self::setStat(array_search($col,$studentsReference),'powerful_student');
+        self::setStat(array_search($col,$sRef),'powerful_student');
+        break;
     }
 }
 
@@ -1500,7 +1461,6 @@ function moveMona($group) {
         $arg = self::argMoveMona();
         if (!in_array($group,$arg['destinations'])) throw new BgaVisibleSystemException("Invalid Mother Nature destination");
 
-        self::dump("// CHAR ",$arg['from_char']);
         if ($arg['from_char'] != 2) {
 
             $islandsStops = [];
@@ -1601,6 +1561,8 @@ function useCharacter($chid) {
 
         self::setGameStateValue('charPausedState',$this->gamestate->state_id());
 
+        self::incStat(1,'characters_used',$id);
+
         switch ($chid) {
 
             case 3:
@@ -1653,7 +1615,7 @@ function useCharacter($chid) {
                     'player_id' => $id
                 ]);
 
-                foreach (['green', 'red', 'yellow', 'pink', 'blue'] as $col) {
+                foreach ($this->studentsReference as $col) {
                     self::resolveProfessorInfluence($col,$id);
                 }
 
@@ -1711,7 +1673,7 @@ function replaceStudents($selLoc1, $selLoc2) {
     if ($this->checkAction('replaceStudents')) {
 
         $id = self::getActivePlayerId();
-        $students = ['green', 'red', 'yellow', 'pink', 'blue'];
+        $sRef = $this->studentsReference;
         $loc1 = self::getObjectFromDb("SELECT green, red, yellow, pink, blue FROM school_entrance WHERE player = $id");
         $loc2;
         $amt;
@@ -1722,7 +1684,7 @@ function replaceStudents($selLoc1, $selLoc2) {
             $loc2 = ['green' => 0, 'red' => 0, 'yellow' => 0, 'pink' => 0, 'blue' => 0];
             $charStudents = json_decode(self::getUniqueValueFromDb("SELECT `data` FROM `character` WHERE id = 6"),true)['students'];
             foreach ($charStudents as $colIndex) {
-                $loc2[$students[$colIndex]] += 1;
+                $loc2[$sRef[$colIndex]] += 1;
             }
 
             $amt = 3;
@@ -1735,12 +1697,6 @@ function replaceStudents($selLoc1, $selLoc2) {
             $amt = 2;
         }
 
-        self::dump("//selLoc1",$selLoc1);
-        self::dump("//loc1",$loc1);
-
-        self::dump("//selLoc2",$selLoc2);
-        self::dump("//loc2",$loc2);
-
         // check sel students are equal amt in both loc
         if (count($selLoc1) != count($selLoc1)) throw new BgaSystemException("You need to select at least one student from both locations");
         // check sel students are not zero
@@ -1752,7 +1708,7 @@ function replaceStudents($selLoc1, $selLoc2) {
         // loc 1
         $selLoc1obj = ['green' => 0, 'red' => 0, 'yellow' => 0, 'pink' => 0, 'blue' => 0];
         foreach ($selLoc1 as $colIndex) {
-            $selLoc1obj[$students[$colIndex]] += 1;
+            $selLoc1obj[$sRef[$colIndex]] += 1;
         }
         foreach ($selLoc1obj as $col => $q) {
             if ($loc1[$col] < $q) throw new BgaSystemException("Location 1 doesn't hold the selected students");
@@ -1761,7 +1717,7 @@ function replaceStudents($selLoc1, $selLoc2) {
         // loc 2
         $selLoc2obj = ['green' => 0, 'red' => 0, 'yellow' => 0, 'pink' => 0, 'blue' => 0];
         foreach ($selLoc2 as $colIndex) {
-            $selLoc2obj[$students[$colIndex]] += 1;
+            $selLoc2obj[$sRef[$colIndex]] += 1;
         }
         foreach ($selLoc2obj as $col => $q) {
             if ($loc2[$col] < $q) throw new BgaSystemException("Location 2 doesn't hold the selected students");
@@ -1788,7 +1744,7 @@ function replaceStudents($selLoc1, $selLoc2) {
             $charStudents = [];
 
             foreach ($loc2 as $col => $q) {
-                $colIndex = array_search($col,$students);
+                $colIndex = array_search($col,$sRef);
                 for ($i=0; $i < $q; $i++) { 
                     $charStudents[] = $colIndex;
                 }
@@ -1803,6 +1759,23 @@ function replaceStudents($selLoc1, $selLoc2) {
         if (self::isCharacterActive(9)) {
             ['green' => $green, 'red' => $red, 'yellow' => $yellow, 'pink' => $pink, 'blue' => $blue] = $loc2;
             self::dbQuery("UPDATE school SET green = $green, red = $red, yellow = $yellow, pink = $pink, blue = $blue WHERE player = $id");
+
+
+            // update stat
+            foreach ($selLoc1obj as $color => $v) {
+                self::dbQuery("UPDATE player SET player_tot_$color = player_tot_$color + $v WHERE player_id = $id");
+            }
+            foreach ($selLoc2obj as $color => $v) {
+                self::dbQuery("UPDATE player SET player_tot_$color = player_tot_$color - $v WHERE player_id = $id");
+            }
+            
+            $totStudentsMoved = self::getObjectFromDb("SELECT player_tot_green as green, player_tot_red as red, player_tot_yellow as yellow, player_tot_pink as pink, player_tot_blue as blue FROM player WHERE player_id = $id");
+            asort($totStudentsMoved);
+            $totStudentsMoved = array_reverse($totStudentsMoved);
+            foreach ($totStudentsMoved as $col => $tot) {
+                self::setStat(array_search($col,$this->studentsReference),'favourite_student',$id);
+                break;
+            }
         }
 
 
@@ -1813,7 +1786,7 @@ function replaceStudents($selLoc1, $selLoc2) {
             $selLoc_log = [];
             $selLoc_args = [];
             foreach ($selLoc as $colIndex) {
-                $col = $students[$colIndex];
+                $col = $sRef[$colIndex];
                 $selLoc_log[] = '$'."{student_$col}";
                 $selLoc_args["student_$col"] = self::getStudentProfessorTranslation($col);
             }
@@ -1859,13 +1832,9 @@ function replaceStudents($selLoc1, $selLoc2) {
 function pickStudentColor($color) {
     if ($this->checkAction('pickStudentColor')) {
 
-        self::dump('// PICKED COLOR',$color);
-
         $char;
         if (self::isCharacterActive(8)) $char = 8;
         if (self::isCharacterActive(11)) $char = 11;
-
-        $students = ['green', 'red', 'yellow', 'pink', 'blue'];
 
         switch ($char) {
             case 8:
@@ -2001,19 +1970,14 @@ function argCloudTileDrafting() {
 #region 
 
 function stNextPlayerPlanning() {
-    self::trace('// NEXT PLAYER PLANNING');
 
     $id = self::getActivePlayerId();
     $turnPos = self::getUniqueValueFromDb("SELECT player_turn_position FROM player WHERE player_id = $id");
     $nextTurnPos = $turnPos+1;
-    self::trace("// TURN POS: $turnPos");
-    self::trace("// NEXT TURN POS: $nextTurnPos");
     if ($nextTurnPos <= self::getPlayersNumber()) {
 
         // activate next player
         $np = self::getUniqueValueFromDb("SELECT player_id FROM player WHERE player_turn_position = $nextTurnPos");
-
-        self::trace("// ACTIVATE NEXT PLAYER: $np");
 
         self::giveExtraTime($np);
         $this->gamestate->changeActivePlayer($np);
@@ -2098,7 +2062,6 @@ function stEndCharacterAbility() {
     self::dbQuery("UPDATE `character` SET active = 0, used = 1 WHERE active = 1 AND used = 0 AND id != 3 AND id != 5 AND id != 7 AND id != 8 AND id != 12");
     self::notifyAllPlayers("endCharacterAbility",'',[]);
 
-    self::dump("// NOW JUMPING BACK TO ",$prevState['name']);
     $this->gamestate->nextState($prevState['name']);
 }
 

@@ -59,7 +59,7 @@ $stats_type = array(
 
         "powerful_student" => array(
             "id"=> 18,
-            "name" => totranslate("Most powerful student (biggest population on the totality of the islands)"),
+            "name" => totranslate("Most powerful student (largest population on the totality of the islands)"),
             "type" => "int"
         ),
     ),
@@ -128,8 +128,8 @@ $stats_type = array(
         ),
         
         "hall_students" => array(
-            "id"=> 18,
-            "name" => totranslate("Students in the Dining Hall"),
+            "id"=> 24,
+            "name" => totranslate("Students sent to the Dining Hall"),
             "type" => "int"
         ),
         
@@ -157,22 +157,22 @@ $stats_type = array(
 			0 => totranslate("Frog (green)"),
 			1 => totranslate("Dragon (red)"), 
 			2 => totranslate("Gnome (yellow)"), 
-			3 => totranslate("Unicorn (blue)"), 
-			4 => totranslate("Fairy (cyan)")
+			3 => totranslate("Fairy (pink)"), 
+			4 => totranslate("Unicorn (blue)")
 		),
         18 => array( 
 			0 => totranslate("Frog (green)"),
 			1 => totranslate("Dragon (red)"), 
 			2 => totranslate("Gnome (yellow)"), 
-			3 => totranslate("Unicorn (blue)"), 
-			4 => totranslate("Fairy (cyan)")
+			3 => totranslate("Fairy (pink)"), 
+			4 => totranslate("Unicorn (blue)")
 		),
         22 => array( 
 			0 => totranslate("Frog (green)"),
 			1 => totranslate("Dragon (red)"), 
 			2 => totranslate("Gnome (yellow)"), 
-			3 => totranslate("Unicorn (blue)"), 
-			4 => totranslate("Fairy (cyan)")
+			3 => totranslate("Fairy (pink)"), 
+			4 => totranslate("Unicorn (blue)")
 		),
 	)
 

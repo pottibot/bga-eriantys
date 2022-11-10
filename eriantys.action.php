@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * eriantyspas implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
+ * eriantys implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on https://boardgamearena.com.
  * See http://en.doc.boardgamearena.com/Studio for more information.
@@ -10,7 +10,7 @@
  */
   
   
-class action_eriantyspas extends APP_GameAction {
+class action_eriantys extends APP_GameAction {
 
    	public function __default() {
 
@@ -18,7 +18,7 @@ class action_eriantyspas extends APP_GameAction {
             $this->view = "common_notifwindow";
   	        $this->viewArgs['table'] = self::getArg("table", AT_posint, true);
   	    } else {
-            $this->view = "eriantyspas_eriantyspas";
+            $this->view = "eriantys_eriantys";
             self::trace( "Complete reinitialization of board game" );
         }
   	}

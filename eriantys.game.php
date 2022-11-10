@@ -2,7 +2,7 @@
  /**
   *------
   * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
-  * eriantyspas implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
+  * eriantys implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
   * 
   * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
   * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -12,7 +12,7 @@
 require_once(APP_GAMEMODULE_PATH.'module/table/table.game.php');
 require_once('modules/EriantysPoint.php');
 
-class eriantyspas extends Table {
+class eriantys extends Table {
 
 /* ------------- */
 /* --- SETUP --- */
@@ -32,7 +32,7 @@ class eriantyspas extends Table {
 	}
 	
     protected function getGameName() {
-        return "eriantyspas";
+        return "eriantys";
     }	
 
     protected function setupNewGame($players, $options = array()) {
@@ -854,7 +854,7 @@ class eriantyspas extends Table {
     // resolve any islands group influence and notif place tower if owner changed
     function resolveIslandGroupInfluence($islandsGroup) {
 
-        $blockedIsland = self::getUniqueValueFromDb("SELECT island_pos FROM island_influence JOIN island ON island_pos = island_pos WHERE no_entry = 1 LIMIT 1");
+        $blockedIsland = self::getUniqueValueFromDb("SELECT island_pos FROM island_influence JOIN island ON island_pos = pos WHERE no_entry = 1 AND `group` = $islandsGroup LIMIT 1");
         if (!is_null($blockedIsland)) {
 
             self::dbQuery("UPDATE island_influence SET no_entry = 0 WHERE island_pos = $blockedIsland");
@@ -1576,7 +1576,7 @@ function useCharacter($chid) {
                     'i18n' => ['mother_nature'],
                 ]);
 
-                $this->gamestate->nextState('endAbility');
+                $this->gamestate->nextState('useCharacter');
                 break;
 
             case 5:
@@ -1590,7 +1590,7 @@ function useCharacter($chid) {
 
                 self::updateInfluenceData();
 
-                $this->gamestate->nextState('endAbility');
+                $this->gamestate->nextState('useCharacter');
                 break;
 
             case 7:
@@ -1604,7 +1604,7 @@ function useCharacter($chid) {
 
                 self::updateInfluenceData();
 
-                $this->gamestate->nextState('endAbility');
+                $this->gamestate->nextState('useCharacter');
                 break;
 
             case 12:
@@ -1619,7 +1619,7 @@ function useCharacter($chid) {
                     self::resolveProfessorInfluence($col,$id);
                 }
 
-                $this->gamestate->nextState('endAbility');
+                $this->gamestate->nextState('useCharacter');
                 break;
 
             case 9:
@@ -1847,6 +1847,8 @@ function pickStudentColor($color) {
                         'i18n' => ["student_$color"]
                     ]
                 ]);
+
+                self::updateInfluenceData();
 
                 break;
             

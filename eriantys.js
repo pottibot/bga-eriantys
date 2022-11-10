@@ -1,7 +1,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * eriantyspas implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
+ * eriantys implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -15,7 +15,7 @@ define([
 ],
 function (dojo, declare) {
 
-    return declare("bgagame.eriantyspas", ebg.core.gamegui, {
+    return declare("bgagame.eriantys", ebg.core.gamegui, {
 
         // ------------- //
         // --- SETUP --- //
@@ -24,7 +24,7 @@ function (dojo, declare) {
 
         constructor: function(){
 
-            //console.log('eriantyspas constructor');
+            //console.log('eriantys constructor');
 
             this.counters = {};
             this.studentsSet = ['green','red','yellow','pink','blue'];
@@ -1023,6 +1023,12 @@ function (dojo, declare) {
                     document.querySelectorAll(`#school_${this.getActivePlayerId()} .school_entrance .student`).forEach(student => { student.onclick = '';  student.classList.remove('selectable','selected'); });
                     if (this.gamedatas.gamestate.from_char) document.querySelector(`#character_${this.gamedatas.gamestate.from_char} .character_tokens`).classList.remove('active');
                     else document.querySelector(`#school_${this.getActivePlayerId()} .school_entrance`).classList.remove('active');
+                    this.deactivateStudentsDestinations();
+                    break;
+
+                
+                case 'character4_ability':
+                    document.querySelectorAll(`.island .influence_cont`).forEach(island => { island.onclick = '';  island.classList.remove('active'); });
                     break;
 
                 case 'character2_ability':
@@ -1041,7 +1047,7 @@ function (dojo, declare) {
                 case 'character6_ability':
                 case 'character9_ability':
                     document.querySelectorAll(`.active .student`).forEach(student => { student.onclick = '';  student.classList.remove('selectable','selected'); });
-                    document.querySelector(`.replacing_students.active`).classList.remove('replacing_students','active');
+                    document.querySelectorAll(`.replacing_students.active`).forEach(actcont => { actcont.classList.remove('replacing_students','active','highlight_blue'); }); 
                     break;
             }               
         }, 
@@ -1683,9 +1689,12 @@ function (dojo, declare) {
 
         notif_useCharacter: function(notif) {
 
+            document.querySelectorAll('.character').forEach(char => {
+                char.classList.remove('active');
+                char.onclick = '';
+            });
+
             let character = $(`character_${notif.args.char_id}`);
-            character.classList.remove('active');
-            character.onclick = '';
             character.classList.add('activated');
 
             // fetch coin
@@ -1697,7 +1706,6 @@ function (dojo, declare) {
             let charCoin = document.querySelector(`#character_${notif.args.char_id} .character_coin`);
 
             setTimeout(() => {
-
                 this.moveElement(movingCoin,charCoin,null,500,0,() => {
                     charCoin.style.visibility = 'unset';
 
@@ -1713,6 +1721,7 @@ function (dojo, declare) {
         },
 
         notif_endCharacterAbility: function(notif) {
+
             document.querySelectorAll('.character.activated').forEach(char => {
                 let id = char.id.split('_').pop();
 

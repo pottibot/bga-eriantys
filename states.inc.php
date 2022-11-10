@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * eriantyspas implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
+ * eriantys implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -49,7 +49,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argMoveStudents",
         "possibleactions" => array("moveStudent","useCharacter"),
-        "transitions" => array_merge(array("next" => 21, "useCharacter" => 50, "zombiePass" => 99),$charAbilities)
+        "transitions" => array_merge(array("next" => 21, "useCharacter" => 60, "zombiePass" => 99),$charAbilities)
     ),
 
     21 => array(
@@ -66,7 +66,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argMoveMona",
         "possibleactions" => array("moveMona","useCharacter"),
-        "transitions" => array_merge(array("pickCloud" => 40, "useCharacter" => 50, "endTurn" => 41, "gameEnd" => 99, "zombiePass" => 99),$charAbilities)
+        "transitions" => array_merge(array("pickCloud" => 40, "useCharacter" => 60, "endTurn" => 41, "gameEnd" => 99, "zombiePass" => 99),$charAbilities)
     ),
 
     40 => array(
@@ -76,7 +76,7 @@ $machinestates = array(
         "type" => "activeplayer",
         "args" => "argCloudTileDrafting",
         "possibleactions" => array("chooseCloudTile","useCharacter"),
-        "transitions" => array_merge(array("endTurn" => 41, "useCharacter" => 50, "zombiePass" => 99),$charAbilities)
+        "transitions" => array_merge(array("endTurn" => 41, "useCharacter" => 60, "zombiePass" => 99),$charAbilities)
     ),
 
     41 => array(

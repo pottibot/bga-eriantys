@@ -3,7 +3,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * eriantyspas implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
+ * eriantys implementation : © Pietro Luigi Porcedda <pietro.l.porcedda@gmail.com>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -122,7 +122,7 @@ $stats_type = array(
         ),
         
         "islands_students" => array(
-            "id"=> 17,
+            "id"=> 25,
             "name" => totranslate("Students sent to the islands"),
             "type" => "int"
         ),

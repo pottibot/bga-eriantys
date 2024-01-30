@@ -561,7 +561,7 @@ class eriantys extends Table {
 
             if (count($drawn) < $drawNum || self::getStudentsLeft() == 0) {
                 self::setGameStateValue('last_round',1);
-                self::notifyAllPlayers('lastRound',clienttranslate('Game end has been triggered: there are no more Students in the bag. <b>This is the last round</b>.'),[]);
+                self::notifyAllPlayers('lastRound',clienttranslate('Game end has been triggered: there are no more Students in the bag. This is the last round.'),[]);
                 break;
             }
         }
@@ -1194,10 +1194,10 @@ class eriantys extends Table {
 
             if (self::getPlayersNumber() == 4) {
                 $winner = self::getTeamFullName($winnerFaction);
-                $log = clienttranslate('<b>${player_name} place their last tower and win the game!</b>');
+                $log = clienttranslate('${player_name} place their last tower and win the game!');
             } else {
                 $winner = self::getUniqueValueFromDb("SELECT player_name FROM player WHERE player_color = '$winnerFaction'");
-                $log = clienttranslate('<b>${player_name} places his/her last tower and wins the game!</b>');
+                $log = clienttranslate('${player_name} places his/her last tower and wins the game!');
             }
 
             self::notifyAllPlayers('gameEnd',$log,[
@@ -1269,7 +1269,7 @@ function playAssistant($n) {
 
         if (self::getUniqueValueFromDb("SELECT count(player) FROM player_assistants WHERE `1` + `2` + `3` + `4` + `5` + `6` + `7` + `8` + `9` + `10` = 0") > 0) {
             self::setGameStateValue('last_round',1);
-            self::notifyAllPlayers('lastRound',clienttranslate('Game end has been triggered: the last Assistant has been played. <b>This is the last round</b>.'),[]);
+            self::notifyAllPlayers('lastRound',clienttranslate('Game end has been triggered: the last Assistant has been played. This is the last round.'),[]);
         }
 
         $this->gamestate->nextState('next');
